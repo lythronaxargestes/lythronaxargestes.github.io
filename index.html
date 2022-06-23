@@ -1,20 +1,97 @@
 <head>
     <title>Rex Chen</title>
     <link rel="stylesheet" href="https://unpkg.com/purecss@2.1.0/build/pure-min.css" integrity="sha384-yHIFVG6ClnONEA5yB5DJXfW2/KC173DIQrYoZMEtBvGzmf0PKiGyNEqe9N6BNDBH" crossorigin="anonymous">
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        div {
-            margin-left: 5%;
+        h2 {
+            color: #777 !important;
+        }
+        .pure-menu-item {
+            height: auto;
+        }
+        .pure-u-1-2, .pure-u-1-3 {
+            vertical-align: middle;
+        }
+        div.split > div:not(:last-child) {
             margin-right: 5%;
+        }
+        img.profile {
+            width: 100%;
+            border-radius: 50%;
+        }
+        .content {
+            margin-left: 20%;
+            margin-right: auto;
         }
     </style>
 </head>
 <body>
-    <div>
-    <a href="/"><h1>Rex Chen</h1></a>
-    <h2>Institute of Software Research, School of Computer Science, Carnegie Mellon University</h2>
+<!-- Menu toggle -->
+    <a href="#menu" id="menuLink" class="menu-link">
+        <!-- Hamburger icon -->
+        <span></span>
+    </a>
+    <div id="menu">
+        <div class="pure-menu">
+            <span class="pure-menu-heading">Rex Chen</span>
+            <ul class="pure-menu-list">
+                <li class="pure-menu-item"><a href="/" class="pure-menu-link">Home</a></li>
+                <li class="pure-menu-item"><a href="/cv.pdf" class="pure-menu-link">CV</a></li>
+                <li class="pure-menu-item"><a href="https://scholar.google.ca/citations?user=EfFKymQAAAAJ" class="pure-menu-link">Google Scholar</a></li>                
+                <li class="pure-menu-item"><a href="https://www.linkedin.com/in/rex-chen-cmu/" class="pure-menu-link">LinkedIn</a></li>
+            </ul>
+        </div>
     </div>
-    <hr>
-    <div>
-        <a href="/cv.pdf" target="_blank">Link to CV</a>
+    <div id="main">
+        <div class="header">
+            <h1>Rex Chen</h1>
+            <h2>School of Computer Science</h2>
+            <h2>Carnegie Mellon University</h2>
+        </div>
+        <div class="content">     
+            <h2 class="content-subhead">About</h2>
+            <div class="split">
+            <div class="pure-u-1-2">
+                <p>
+                    I am a second-year PhD candidate in the Societal Computing program at the Institute for Software Research at CMU. My research interests lie at the intersection of reinforcement learning, combinatorial optimization, and game theory, with a focus on applications to socially impactful domains such as transportation and digital privacy. My work aims to evaluate the impact of real-world uncertainty and user behaviour on AI algorithms designed for these domains, with the goal of moving them from sanitized simulations into actionable deployments.
+                </p>     
+            </div>
+            <div class="pure-u-1-3">
+                <img src="./photo.jpg" alt="Image of Rex Chen" class="profile">
+            </div>      
+            </div>
+            <p>
+                My current advisors are <a href="https://feifang.info">Fei Fang</a> and <a href="https://www.normsadeh.org">Norman Sadeh</a>. For my undergraduate degree, I was advised at the University of British Columbia by <a href="https://www.cs.ubc.ca/~kevinlb/">Kevin Leyton-Brown</a> and his PhD students, <a href="https://www.cs.ubc.ca/~cchris13/">Chris Cameron</a> and <a href="https://mila.quebec/en/person/jason-hartford/">Jason Hartford</a>.
+            </p>
+            <p>
+                <a href="mailto:&#114;&#101;&#120;&#099;&#064;&#099;&#109;&#117;&#046;&#101;&#100;&#117;" class="pure-button pure-button-primary">Link to email</a>
+            </p>
+        
+            <h2 class="content-subhead">CV</h2>
+            <p>
+                I don't believe in unnecessary repetition. Instead of duplicating (and forgetting to duplicate) my CV on various content pages, I will regularly update the genuine article, which is available at the link below.
+            </p>
+            <p>
+                Links to my work are available in my CV; where possible, I try to publish in open-access venues. Please also feel free to email me using the link above for copies of my published work.
+            </p>
+            <p>
+                <a href="/cv.pdf" class="pure-button pure-button-primary">Link to current CV</a>
+            </p>
+            <p>
+                <b>Last updated:</b> June 23, 2022
+            </p>
+            <p>
+                My Google Scholar and LinkedIn profiles are accessible via the menu at left.
+            </p>
+            
+            <h2 class="content-subhead">Credits</h2>
+            <p>
+                The stylesheet for this page was created by the <a href="https://purecss.io/">Pure.CSS</a> project, which is available under a Yahoo BSD License. The favicon was generated using <a href="https://realfavicongenerator.net/">realfavicongenerator.net</a>.
+            </p>
+        </div>
     </div>
+    <script src="./ui.js"></script>
 </body>
