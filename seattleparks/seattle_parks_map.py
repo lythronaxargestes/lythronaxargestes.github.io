@@ -139,6 +139,22 @@ Extract park names/addresses from these sources:
     address field at all, so address is left blank for every park here.
     Polygon geometry, so each park's location is its centroid, as with
     Kirkland/Shoreline/Auburn/Lake Forest Park.
+  - Bothell: scraped live from the city's own parks directory page and each
+    linked individual park page (~23 of them), rather than its ArcGIS Server
+    (found, but its "BothellParks" layer is stale — last edited 2017 — and is
+    missing 4 parks that are on the live site today, plus it has 2 garbage
+    rows, a duplicate, and several blank addresses). The directory's own
+    left-nav accordion (scoped to the Parks page's child pages specifically,
+    so it can't pick up unrelated site links) gives the exact current list;
+    each park's own page has a clean "Address" heading followed by a bullet
+    list whose first item is the street address, geocoded via the free US
+    Census geocoder (no coordinates anywhere on either the directory or
+    individual pages).
+
+Dog parks and cemeteries are excluded from every source (by a name-keyword
+check applied after fetching, not per-source) — this project tracks parks
+in the traditional sense, not off-leash areas or burial grounds. One
+exception: Seattle's Grand Army of the Republic Cemetery is kept.
 
 Writes everything to a CSV with a Visited (Y/N) column and a Visited Date
 (YYYY-MM-DD) column, then plots it on an interactive map, titled "Seattle
@@ -201,6 +217,10 @@ FEDERAL_WAY_URL = "https://www.federalwaywa.gov/page/our-parks"
 AUBURN_URL = "https://gis.auburnwa.gov/hosting/rest/services/Administration/BoundariesB/MapServer/0/query"
 LAKE_FOREST_PARK_URL = "https://services7.arcgis.com/LD3i16TenysvoOyS/arcgis/rest/services/Parks_Map_WFL1/FeatureServer/14/query"
 KENMORE_URL = "https://gwa.kenmorewa.gov/arcgis/rest/services/Parks/FeatureServer/20/query"
+BOTHELL_BASE_URL = "https://www.bothellwa.gov"
+BOTHELL_LIST_URL = "https://www.bothellwa.gov/250/Parks"
+EXCLUDED_NAME_KEYWORDS = ("dog park", "cemetery", "cemetary")
+EXCLUDED_NAME_EXCEPTIONS = {("Grand Army of the Republic Cemetery", "Seattle")}
 USER_AGENT = "seattle-parks-map-script/1.0 (personal park-tracking project)"
 CSV_PATH = "seattle_parks.csv"
 MAP_PATH = "seattle_parks_map.html"
@@ -1329,6 +1349,74 @@ def fetch_new_kenmore_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     return new_parks
 
 
+def _bothell_park_links(page_html: str) -> list[tuple[str, str]]:
+    """Extract (name, url) for each park listed in the Parks page's own left-nav
+    accordion, scoped to that page's child pages specifically (data-parent="250")
+    so it can't pick up unrelated site links."""
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(page_html, "html.parser")
+    nav = soup.find("ol", attrs={"data-parent": "250"})
+    if nav is None:
+        return []
+    links = []
+    for a in nav.select('a.navMainItem[data-type="SecondaryMainItem"]'):
+        name = a.get_text(strip=True)
+        href = a.get("href")
+        if name and href:
+            links.append((name, BOTHELL_BASE_URL + href))
+    return links
+
+
+def _parse_bothell_park_page(page_html: str) -> str:
+    """Extract the street address from an individual park page: an "Address"
+    heading is always followed by a bullet list whose first item is the address."""
+    match = re.search(r">Address\s*</h2>\s*<ul>\s*<li[^>]*>(.*?)</li>", page_html, re.DOTALL)
+    if not match:
+        return ""
+    return html.unescape(re.sub(r"<[^>]+>", "", match.group(1))).strip()
+
+
+def fetch_new_bothell_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+    """Scrape Bothell's parks directory page plus each individual park page it
+    links to (~23 of them), geocoding each address via the free Census geocoder
+    (neither page has coordinates). Used instead of the city's ArcGIS Server,
+    whose "BothellParks" layer is stale (last edited 2017), missing several
+    current parks, and has garbage/duplicate rows."""
+    resp = requests.get(BOTHELL_LIST_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
+    resp.raise_for_status()
+
+    new_parks = []
+    skipped = 0
+    for name, url in _bothell_park_links(resp.text):
+        page = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=30)
+        page.raise_for_status()
+        time.sleep(0.2)
+        address = _parse_bothell_park_page(page.text)
+        if (name, address) in existing_keys:
+            continue
+        geocoded = _geocode_census(address, "Bothell") if address else None
+        if geocoded is None:
+            skipped += 1
+            continue
+        lat, lon, zip_code = geocoded
+        new_parks.append(
+            {
+                "name": name,
+                "address": address,
+                "city": "Bothell",
+                "zip_code": zip_code,
+                "latitude": lat,
+                "longitude": lon,
+                "visited": "N",
+                "visited_date": "",
+            },
+        )
+    if skipped:
+        print(f"Skipped {skipped} Bothell park(s) with no address or that couldn't be geocoded.", file=sys.stderr)
+    return new_parks
+
+
 def sync_parks() -> list[dict]:
     """Fetch from all sources. Existing CSV rows are kept exactly as-is (order and
     edits untouched); only parks not already present are appended."""
@@ -1367,6 +1455,8 @@ def sync_parks() -> list[dict]:
     new_lake_forest_park = fetch_new_lake_forest_park_parks(existing_keys)
     existing_keys |= {(p["name"], p["address"]) for p in new_lake_forest_park}
     new_kenmore = fetch_new_kenmore_parks(existing_keys)
+    existing_keys |= {(p["name"], p["address"]) for p in new_kenmore}
+    new_bothell = fetch_new_bothell_parks(existing_keys)
     new_parks = (
         new_seattle
         + new_shoreline
@@ -1385,7 +1475,14 @@ def sync_parks() -> list[dict]:
         + new_auburn
         + new_lake_forest_park
         + new_kenmore
+        + new_bothell
     )
+    new_parks = [
+        p
+        for p in new_parks
+        if (p["name"], p["city"]) in EXCLUDED_NAME_EXCEPTIONS
+        or not any(kw in p["name"].lower() for kw in EXCLUDED_NAME_KEYWORDS)
+    ]
     if existing:
         print(f"Found {len(new_parks)} new park(s) to add to the existing {len(existing)}.")
     return existing + new_parks
