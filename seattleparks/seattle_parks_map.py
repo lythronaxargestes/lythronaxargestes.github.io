@@ -8,11 +8,6 @@ Extract park names/addresses from three sources:
     different host does not). Park addresses come straight from that layer's
     ADDRESS field; since it stores polygons, not points, each park's map
     location is the polygon's area-weighted centroid.
-  - Edmonds: scraped live from the city's own "Visit A Park" webpage (its
-    GIS layers have no usable address field), then geocoded via the free US
-    Census geocoder since the page has no coordinates. A plain default
-    User-Agent gets a 403 from this site, so requests use a descriptive
-    custom one instead.
   - Bellevue: scraped live from the city's own parks directory page and each
     linked individual park page (~80 of them). Each park page embeds clean
     <meta property="latitude/longitude"> tags and a structured address (the
