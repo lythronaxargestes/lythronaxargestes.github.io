@@ -125,6 +125,20 @@ Extract park names/addresses from these sources:
     city/zip_code columns, same as Federal Way's page-scraped addresses.
     Each park's location is its polygon centroid, as with Kirkland/Shoreline/
     Auburn.
+  - Kenmore: kenmorewa.gov itself is blocked by the same Akamai WAF as
+    Shoreline/Kirkland/SeaTac, but its parks page embeds an ArcGIS Experience
+    Builder "Parks Tour" app; that app's item metadata (via the ArcGIS Online
+    sharing API) led to a web map, whose operational-layer URL is the city's
+    own ArcGIS Server on a separate gwa.kenmorewa.gov host (not WAF-blocked).
+    That "Parks" layer is a regional dataset (its own description says so)
+    spanning multiple agencies — state parks, WDFW, King County, Seattle
+    Public Utilities, and a private marina all appear in its OWNER field
+    alongside the city itself — so it's filtered to OWNER='City of Kenmore'.
+    Several names have embedded newlines from the source editor (e.g. "Jack
+    Crawford \nSkate Park"), collapsed to single spaces. The layer has no
+    address field at all, so address is left blank for every park here.
+    Polygon geometry, so each park's location is its centroid, as with
+    Kirkland/Shoreline/Auburn/Lake Forest Park.
 
 Writes everything to a CSV with a Visited (Y/N) column and a Visited Date
 (YYYY-MM-DD) column, then plots it on an interactive map, titled "Seattle
@@ -186,6 +200,7 @@ DES_MOINES_ADDRESS_URL = "https://maps.desmoineswa.gov/dmgis/rest/services/Parks
 FEDERAL_WAY_URL = "https://www.federalwaywa.gov/page/our-parks"
 AUBURN_URL = "https://gis.auburnwa.gov/hosting/rest/services/Administration/BoundariesB/MapServer/0/query"
 LAKE_FOREST_PARK_URL = "https://services7.arcgis.com/LD3i16TenysvoOyS/arcgis/rest/services/Parks_Map_WFL1/FeatureServer/14/query"
+KENMORE_URL = "https://gwa.kenmorewa.gov/arcgis/rest/services/Parks/FeatureServer/20/query"
 USER_AGENT = "seattle-parks-map-script/1.0 (personal park-tracking project)"
 CSV_PATH = "seattle_parks.csv"
 MAP_PATH = "seattle_parks_map.html"
@@ -1262,6 +1277,58 @@ def fetch_new_lake_forest_park_parks(existing_keys: set[tuple[str, str]]) -> lis
     return new_parks
 
 
+def fetch_new_kenmore_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+    """Pull parks from Kenmore's own ArcGIS Server (found via an embedded
+    Experience Builder app on kenmorewa.gov, which is itself WAF-blocked like
+    Shoreline/Kirkland/SeaTac). The "Parks" layer is a regional dataset spanning
+    several agencies, so it's filtered to OWNER='City of Kenmore'. Some names have
+    embedded newlines from the source editor, collapsed to single spaces. No
+    address field exists on this layer, so address is always blank. Each park's
+    location is its polygon centroid, as with Kirkland/Shoreline/Auburn/Lake
+    Forest Park."""
+    resp = requests.get(
+        KENMORE_URL,
+        params={
+            "where": "OWNER='City of Kenmore'",
+            "outFields": "SITENAME",
+            "returnGeometry": "true",
+            "outSR": "4326",
+            "f": "json",
+        },
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+
+    new_parks = []
+    skipped = 0
+    for feature in data.get("features", []):
+        attrs = feature["attributes"]
+        name = re.sub(r"\s+", " ", (attrs.get("SITENAME") or "").strip())
+        rings = feature.get("geometry", {}).get("rings")
+        if not name or not rings:
+            skipped += 1
+            continue
+        if (name, "") in existing_keys:
+            continue
+        lat, lon = _polygon_centroid(rings)
+        new_parks.append(
+            {
+                "name": name,
+                "address": "",
+                "city": "Kenmore",
+                "zip_code": "",
+                "latitude": lat,
+                "longitude": lon,
+                "visited": "N",
+                "visited_date": "",
+            },
+        )
+    if skipped:
+        print(f"Skipped {skipped} Kenmore row(s) missing a name or geometry.", file=sys.stderr)
+    return new_parks
+
+
 def sync_parks() -> list[dict]:
     """Fetch from all sources. Existing CSV rows are kept exactly as-is (order and
     edits untouched); only parks not already present are appended."""
@@ -1298,6 +1365,8 @@ def sync_parks() -> list[dict]:
     new_auburn = fetch_new_auburn_parks(existing_keys)
     existing_keys |= {(p["name"], p["address"]) for p in new_auburn}
     new_lake_forest_park = fetch_new_lake_forest_park_parks(existing_keys)
+    existing_keys |= {(p["name"], p["address"]) for p in new_lake_forest_park}
+    new_kenmore = fetch_new_kenmore_parks(existing_keys)
     new_parks = (
         new_seattle
         + new_shoreline
@@ -1315,6 +1384,7 @@ def sync_parks() -> list[dict]:
         + new_federal_way
         + new_auburn
         + new_lake_forest_park
+        + new_kenmore
     )
     if existing:
         print(f"Found {len(new_parks)} new park(s) to add to the existing {len(existing)}.")
