@@ -113,6 +113,18 @@ Extract park names/addresses from these sources:
     is used since it's always populated and never abbreviated. Name and
     address are both in the same all-caps style as Kirkland/SeaTac/Kent, so
     this reuses that same recasing helper.
+  - Lake Forest Park: its ArcGIS Online organization, found via its Hub open-
+    data site's dataset metadata (the same discovery path as Kent/SeaTac);
+    the org's full service catalog (browsed directly, since the Hub page
+    itself doesn't list it) has a "Parks_Map_WFL1" service with a small,
+    clean "Park_Boundary" polygon layer (only 7 named city parks — this is a
+    small city — with clean SITENAME/Address fields, no jurisdiction or
+    status field needed). A second layer in the same service is an exact
+    duplicate of the first and is ignored. Addresses already include a
+    ", Lake Forest Park, WA <zip>" suffix that's split off into the
+    city/zip_code columns, same as Federal Way's page-scraped addresses.
+    Each park's location is its polygon centroid, as with Kirkland/Shoreline/
+    Auburn.
 
 Writes everything to a CSV with a Visited (Y/N) column and a Visited Date
 (YYYY-MM-DD) column, then plots it on an interactive map, titled "Seattle
@@ -173,6 +185,7 @@ DES_MOINES_PARKS_URL = "https://maps.desmoineswa.gov/dmgis/rest/services/ParksAn
 DES_MOINES_ADDRESS_URL = "https://maps.desmoineswa.gov/dmgis/rest/services/ParksAndRec/ParksMap/MapServer/2/query"
 FEDERAL_WAY_URL = "https://www.federalwaywa.gov/page/our-parks"
 AUBURN_URL = "https://gis.auburnwa.gov/hosting/rest/services/Administration/BoundariesB/MapServer/0/query"
+LAKE_FOREST_PARK_URL = "https://services7.arcgis.com/LD3i16TenysvoOyS/arcgis/rest/services/Parks_Map_WFL1/FeatureServer/14/query"
 USER_AGENT = "seattle-parks-map-script/1.0 (personal park-tracking project)"
 CSV_PATH = "seattle_parks.csv"
 MAP_PATH = "seattle_parks_map.html"
@@ -1194,6 +1207,61 @@ def fetch_new_auburn_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     return new_parks
 
 
+LAKE_FOREST_PARK_ADDRESS_RE = re.compile(r"^(.*?),\s*Lake Forest Park,\s*WA\s*(\d{5})$")
+
+
+def fetch_new_lake_forest_park_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+    """Pull the small "Park_Boundary" polygon layer from Lake Forest Park's ArcGIS
+    Online organization (found via its Hub site's dataset metadata, same discovery
+    path as Kent/SeaTac). Only 7 named parks, all clean. Each address already
+    includes a ", Lake Forest Park, WA <zip>" suffix that's split off; each park's
+    location is its polygon centroid, as with Kirkland/Shoreline/Auburn."""
+    resp = requests.get(
+        LAKE_FOREST_PARK_URL,
+        params={
+            "where": "1=1",
+            "outFields": "SITENAME,Address",
+            "returnGeometry": "true",
+            "outSR": "4326",
+            "f": "json",
+        },
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+
+    new_parks = []
+    skipped = 0
+    for feature in data.get("features", []):
+        attrs = feature["attributes"]
+        name = (attrs.get("SITENAME") or "").strip()
+        rings = feature.get("geometry", {}).get("rings")
+        if not name or not rings:
+            skipped += 1
+            continue
+        raw_address = (attrs.get("Address") or "").strip()
+        addr_match = LAKE_FOREST_PARK_ADDRESS_RE.match(raw_address)
+        address, zip_code = addr_match.groups() if addr_match else (raw_address, "")
+        if (name, address) in existing_keys:
+            continue
+        lat, lon = _polygon_centroid(rings)
+        new_parks.append(
+            {
+                "name": name,
+                "address": address,
+                "city": "Lake Forest Park",
+                "zip_code": zip_code,
+                "latitude": lat,
+                "longitude": lon,
+                "visited": "N",
+                "visited_date": "",
+            },
+        )
+    if skipped:
+        print(f"Skipped {skipped} Lake Forest Park row(s) missing a name or geometry.", file=sys.stderr)
+    return new_parks
+
+
 def sync_parks() -> list[dict]:
     """Fetch from all sources. Existing CSV rows are kept exactly as-is (order and
     edits untouched); only parks not already present are appended."""
@@ -1228,6 +1296,8 @@ def sync_parks() -> list[dict]:
     new_federal_way = fetch_new_federal_way_parks(existing_keys)
     existing_keys |= {(p["name"], p["address"]) for p in new_federal_way}
     new_auburn = fetch_new_auburn_parks(existing_keys)
+    existing_keys |= {(p["name"], p["address"]) for p in new_auburn}
+    new_lake_forest_park = fetch_new_lake_forest_park_parks(existing_keys)
     new_parks = (
         new_seattle
         + new_shoreline
@@ -1244,6 +1314,7 @@ def sync_parks() -> list[dict]:
         + new_des_moines
         + new_federal_way
         + new_auburn
+        + new_lake_forest_park
     )
     if existing:
         print(f"Found {len(new_parks)} new park(s) to add to the existing {len(existing)}.")
