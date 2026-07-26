@@ -93,6 +93,15 @@ Extract park names/addresses from these sources:
     always spell a park's name identically) — most parks end up with a blank
     address. One name ("Des Moines Creek Trail") repeats across two points,
     so this also dedups within its own batch.
+  - Federal Way: scraped live from the city's own "Our Parks" page, which is
+    fetchable (no WAF) and lists every park as an accordion item with a
+    "Location:" line and Google/Bing map links. Most entries' Bing link
+    encodes direct point coordinates (cp=<lat>~<lon>), used as-is with no
+    geocoding; a handful lack that (e.g. Olympic View Park has coordinates but
+    no clean street address, so its address is left blank) or lack coordinates
+    entirely, in which case the Location address is geocoded via the free US
+    Census geocoder instead. One park (BPA Trail) has neither a street address
+    nor coordinates and is skipped.
 
 Writes everything to a CSV with a Visited (Y/N) column and a Visited Date
 (YYYY-MM-DD) column, then plots it on an interactive map, titled "Seattle
@@ -151,6 +160,7 @@ SEATAC_URL = "https://services3.arcgis.com/DLryYCwhA8W7Jq7Q/ArcGIS/rest/services
 KENT_URL = "https://services3.arcgis.com/AME2ELqJ7UG0JjrU/ArcGIS/rest/services/KentParkPoints_view/FeatureServer/0/query"
 DES_MOINES_PARKS_URL = "https://maps.desmoineswa.gov/dmgis/rest/services/ParksAndRec/ParksMap/MapServer/1/query"
 DES_MOINES_ADDRESS_URL = "https://maps.desmoineswa.gov/dmgis/rest/services/ParksAndRec/ParksMap/MapServer/2/query"
+FEDERAL_WAY_URL = "https://www.federalwaywa.gov/page/our-parks"
 USER_AGENT = "seattle-parks-map-script/1.0 (personal park-tracking project)"
 CSV_PATH = "seattle_parks.csv"
 MAP_PATH = "seattle_parks_map.html"
@@ -1032,6 +1042,96 @@ def fetch_new_des_moines_parks(existing_keys: set[tuple[str, str]]) -> list[dict
     return new_parks
 
 
+FEDERAL_WAY_ADDRESS_RE = re.compile(r"^(.*?),\s*Federal Way,\s*WA\s*(\d{5})$")
+FEDERAL_WAY_COORD_RE = re.compile(r"cp=([\-0-9.]+)~([\-0-9.]+)")
+
+
+def _parse_federal_way_accordion(page_html: str) -> list[dict]:
+    """Extract (name, address, zip_code, latitude, longitude) for each park listed
+    as an accordion item on the "Our Parks" page. Most items' embedded Bing map
+    link encodes direct point coordinates (cp=<lat>~<lon>); for the rest, only the
+    plain "Location:" address text is returned (latitude/longitude left as None),
+    for the caller to geocode."""
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(page_html, "html.parser")
+    parks = []
+    for item in soup.select("div.accordion-item"):
+        button = item.find("button", class_="accordion")
+        panel = item.find("div", class_="panel-content")
+        if not button or not panel:
+            continue
+        name = button.get_text(strip=True)
+        if not name:
+            continue
+        text = panel.get_text("\n", strip=True)
+        location_match = re.search(r"Location:\s*(.+)", text)
+        location = location_match.group(1).split("\n")[0].strip() if location_match else ""
+        address, zip_code = "", ""
+        addr_match = FEDERAL_WAY_ADDRESS_RE.match(location)
+        if addr_match:
+            address, zip_code = addr_match.group(1), addr_match.group(2)
+        latitude, longitude = None, None
+        for a in panel.find_all("a", href=True):
+            coord_match = FEDERAL_WAY_COORD_RE.search(a["href"])
+            if coord_match:
+                latitude, longitude = float(coord_match.group(1)), float(coord_match.group(2))
+                break
+        parks.append(
+            {
+                "name": name,
+                "address": address,
+                "zip_code": zip_code,
+                "latitude": latitude,
+                "longitude": longitude,
+            },
+        )
+    return parks
+
+
+def fetch_new_federal_way_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+    """Scrape Federal Way's "Our Parks" page (fetchable, unlike several
+    neighboring cities' WAF-blocked sites). Most parks' coordinates come
+    straight from an embedded Bing map link; the few without one are geocoded
+    via the free Census geocoder from their Location address instead. A park
+    with neither (BPA Trail, whose "location" is just descriptive text with no
+    street address) is skipped."""
+    resp = requests.get(FEDERAL_WAY_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
+    resp.raise_for_status()
+
+    new_parks = []
+    skipped = 0
+    for park in _parse_federal_way_accordion(resp.text):
+        name, address = park["name"], park["address"]
+        if (name, address) in existing_keys:
+            continue
+        latitude, longitude, zip_code = park["latitude"], park["longitude"], park["zip_code"]
+        if latitude is None or longitude is None:
+            if not address:
+                skipped += 1
+                continue
+            geocoded = _geocode_census(address, "Federal Way")
+            if geocoded is None:
+                skipped += 1
+                continue
+            latitude, longitude, zip_code = geocoded
+        new_parks.append(
+            {
+                "name": name,
+                "address": address,
+                "city": "Federal Way",
+                "zip_code": zip_code,
+                "latitude": latitude,
+                "longitude": longitude,
+                "visited": "N",
+                "visited_date": "",
+            },
+        )
+    if skipped:
+        print(f"Skipped {skipped} Federal Way park(s) with no address or that couldn't be geocoded.", file=sys.stderr)
+    return new_parks
+
+
 def sync_parks() -> list[dict]:
     """Fetch from all sources. Existing CSV rows are kept exactly as-is (order and
     edits untouched); only parks not already present are appended."""
@@ -1062,6 +1162,8 @@ def sync_parks() -> list[dict]:
     new_kent = fetch_new_kent_parks(existing_keys)
     existing_keys |= {(p["name"], p["address"]) for p in new_kent}
     new_des_moines = fetch_new_des_moines_parks(existing_keys)
+    existing_keys |= {(p["name"], p["address"]) for p in new_des_moines}
+    new_federal_way = fetch_new_federal_way_parks(existing_keys)
     new_parks = (
         new_seattle
         + new_shoreline
@@ -1076,6 +1178,7 @@ def sync_parks() -> list[dict]:
         + new_seatac
         + new_kent
         + new_des_moines
+        + new_federal_way
     )
     if existing:
         print(f"Found {len(new_parks)} new park(s) to add to the existing {len(existing)}.")
