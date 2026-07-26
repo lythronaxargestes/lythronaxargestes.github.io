@@ -74,6 +74,14 @@ Extract park names/addresses from these sources:
     needed, unlike Renton), with direct point geometry. Addresses are in the
     same all-caps SITEADDR style as Kirkland's layer, so it reuses that same
     recasing helper.
+  - Kent: its public ArcGIS Server, found via its Open Data Hub's dataset
+    metadata (the Hub catalog itself doesn't list a parks dataset, but one
+    dataset's ArcGIS GeoService distribution URL revealed the underlying
+    org's REST services directory, which does have a dedicated parks point
+    layer). Direct point geometry and a clean parkname/address field pair;
+    addresses are all-caps like Kirkland/SeaTac's, so this reuses the same
+    recasing helper. Both "developed" and "undeveloped" status parks are
+    included — both represent real, currently-existing park properties.
 
 Writes everything to a CSV with a Visited (Y/N) column and a Visited Date
 (YYYY-MM-DD) column, then plots it on an interactive map, titled "Seattle
@@ -500,13 +508,15 @@ def fetch_new_medina_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     return _fetch_new_civicplus_parks(existing_keys, MEDINA_LIST_URL, MEDINA_BASE_URL, "Medina")
 
 
-def _normalize_allcaps_address(address: str) -> str:
-    """Recase an all-caps address value (e.g. "15305 119TH AVE NE") into normal
-    title case, keeping directional abbreviations (NE, SW, ...) uppercase and
-    ordinal suffixes (119TH -> 119th) lowercase. Shared by Kirkland and SeaTac,
-    whose ArcGIS layers both store addresses this way."""
+def _normalize_allcaps_text(text: str) -> str:
+    """Recase an all-caps value (e.g. "15305 119TH AVE NE", "VAN DOREN'S LANDING")
+    into normal title case: directional abbreviations (NE, SW, ...) stay uppercase,
+    ordinal suffixes (119TH -> 119th) go lowercase, and (unlike str.title())
+    apostrophes don't cause a following letter to capitalize ("DOREN'S" ->
+    "Doren's", not "Doren'S"). Shared by Kirkland/SeaTac (addresses) and Kent
+    (addresses and park names), whose ArcGIS layers all store text this way."""
     words = []
-    for word in address.split():
+    for word in text.split():
         if word.upper() in ALLCAPS_ADDRESS_DIRECTIONALS:
             words.append(word.upper())
             continue
@@ -539,7 +549,7 @@ def fetch_new_kirkland_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     for feature in data.get("features", []):
         attrs = feature["attributes"]
         name = (attrs.get("PROPNAME") or "").strip()
-        address = _normalize_allcaps_address((attrs.get("SITEADDR") or "").strip())
+        address = _normalize_allcaps_text((attrs.get("SITEADDR") or "").strip())
         rings = feature.get("geometry", {}).get("rings")
         if not name or not rings:
             skipped += 1
@@ -867,7 +877,7 @@ def fetch_new_seatac_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         if not name or not geometry:
             skipped += 1
             continue
-        address = _normalize_allcaps_address((attrs.get("Address") or "").strip())
+        address = _normalize_allcaps_text((attrs.get("Address") or "").strip())
         if (name, address) in existing_keys:
             continue
         new_parks.append(
@@ -884,6 +894,54 @@ def fetch_new_seatac_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         )
     if skipped:
         print(f"Skipped {skipped} SeaTac row(s) missing a name or geometry.", file=sys.stderr)
+    return new_parks
+
+
+def fetch_new_kent_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+    """Pull parks from Kent's public ArcGIS Server. Has direct point geometry and
+    a clean parkname/address field pair; addresses are recased from the same
+    all-caps style as Kirkland/SeaTac's layers. Both developed and undeveloped
+    status parks are included — both are real, currently-existing properties."""
+    resp = requests.get(
+        KENT_URL,
+        params={
+            "where": "1=1",
+            "outFields": "parkname,address",
+            "returnGeometry": "true",
+            "outSR": "4326",
+            "f": "json",
+        },
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+
+    new_parks = []
+    skipped = 0
+    for feature in data.get("features", []):
+        attrs = feature["attributes"]
+        name = _normalize_allcaps_text((attrs.get("parkname") or "").strip())
+        geometry = feature.get("geometry")
+        if not name or not geometry:
+            skipped += 1
+            continue
+        address = _normalize_allcaps_text((attrs.get("address") or "").strip())
+        if (name, address) in existing_keys:
+            continue
+        new_parks.append(
+            {
+                "name": name,
+                "address": address,
+                "city": "Kent",
+                "zip_code": "",
+                "latitude": geometry["y"],
+                "longitude": geometry["x"],
+                "visited": "N",
+                "visited_date": "",
+            },
+        )
+    if skipped:
+        print(f"Skipped {skipped} Kent row(s) missing a name or geometry.", file=sys.stderr)
     return new_parks
 
 
@@ -913,6 +971,8 @@ def sync_parks() -> list[dict]:
     new_renton = fetch_new_renton_parks(existing_keys)
     existing_keys |= {(p["name"], p["address"]) for p in new_renton}
     new_seatac = fetch_new_seatac_parks(existing_keys)
+    existing_keys |= {(p["name"], p["address"]) for p in new_seatac}
+    new_kent = fetch_new_kent_parks(existing_keys)
     new_parks = (
         new_seattle
         + new_shoreline
@@ -925,6 +985,7 @@ def sync_parks() -> list[dict]:
         + new_tukwila
         + new_renton
         + new_seatac
+        + new_kent
     )
     if existing:
         print(f"Found {len(new_parks)} new park(s) to add to the existing {len(existing)}.")
