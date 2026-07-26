@@ -1,5 +1,5 @@
 """
-Extract park names/addresses from three sources:
+Extract park names/addresses from these sources:
   - Seattle: the city's open-data API (the same endpoint
     https://www.seattle.gov/parks/parks#/1 loads its map data from).
   - Shoreline: the city's public ArcGIS Server (the same Feature Service
@@ -55,7 +55,7 @@ Extract park names/addresses from three sources:
     text after a "Location:" label (no consistent class/tag — sometimes bare
     text, sometimes wrapped in a Google Maps link), bounded by the enclosing
     </p> and any trailing \xa0. No coordinates anywhere on the page, so each
-    address is geocoded via the same free Census geocoder as Edmonds.
+    address is geocoded via the free US Census geocoder.
   - Renton: its public ArcGIS Server, found directly. The "Parks" layer has
     direct Latitude/Longitude fields (no centroid/geocoding needed), but it's
     a regional facilities dataset covering several neighboring jurisdictions
@@ -114,7 +114,6 @@ import requests
 
 API_URL = "https://data.seattle.gov/resource/ajyh-m2d3.json"
 SHORELINE_URL = "https://gis.shorelinewa.gov/server/rest/services/PublicFacing/Parks/MapServer/5/query"
-EDMONDS_PAGE_URL = "https://www.edmondswa.gov/government/departments/parks_and_recreation/parks"
 CENSUS_GEOCODE_URL = "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress"
 MERCER_ISLAND_BASE_URL = "https://www.mercerisland.gov"
 MERCER_ISLAND_LIST_URL = "https://www.mercerisland.gov/parksites"
@@ -130,6 +129,7 @@ BURIEN_LIST_URL = "https://www.burienwa.gov/residents/parks_recreation_cultural_
 TUKWILA_LIST_URL = "https://www.tukwilawa.gov/departments/parks-and-recreation/parks-and-trails/"
 RENTON_URL = "https://gismaps.rentonwa.gov/as03/rest/services/Operational/ParksAndRecreation/MapServer/9/query"
 SEATAC_URL = "https://services3.arcgis.com/DLryYCwhA8W7Jq7Q/ArcGIS/rest/services/Parks/FeatureServer/0/query"
+KENT_URL = "https://services3.arcgis.com/AME2ELqJ7UG0JjrU/ArcGIS/rest/services/KentParkPoints_view/FeatureServer/0/query"
 USER_AGENT = "seattle-parks-map-script/1.0 (personal park-tracking project)"
 CSV_PATH = "seattle_parks.csv"
 MAP_PATH = "seattle_parks_map.html"
@@ -292,38 +292,6 @@ def fetch_new_shoreline_parks(existing_keys: set[tuple[str, str]]) -> list[dict]
     return new_parks
 
 
-def _parse_edmonds_page(html: str) -> list[tuple[str, str]]:
-    """Extract (name, address) pairs from the "Visit A Park" page. Each park is an
-    <h3>Name</h3> followed by inline "Address: ..." text (sometimes split across
-    nested tags, so this walks sibling nodes rather than relying on a single regex
-    match)."""
-    from bs4 import BeautifulSoup
-
-    soup = BeautifulSoup(html, "html.parser")
-    results = []
-    for h3 in soup.find_all("h3"):
-        name = h3.get_text(strip=True)
-        if not name:
-            continue
-        addr_parts = []
-        found_label = False
-        for sib in h3.next_siblings:
-            if getattr(sib, "name", None) == "div":
-                break
-            text = sib.get_text() if hasattr(sib, "get_text") else str(sib)
-            if not found_label:
-                if "Address:" not in text:
-                    continue
-                found_label = True
-                text = text.split("Address:", 1)[1]
-            addr_parts.append(text)
-        if not found_label:
-            continue
-        address = " ".join("".join(addr_parts).replace("\xa0", " ").split())
-        results.append((name, address))
-    return results
-
-
 def _geocode_census(address: str, city: str, state: str = "WA") -> tuple[float, float, str] | None:
     """Look up (latitude, longitude, zip) for a one-line address via the free US
     Census geocoder. Returns None if it can't find a match (e.g. an address with
@@ -339,40 +307,6 @@ def _geocode_census(address: str, city: str, state: str = "WA") -> tuple[float, 
         return None
     match = matches[0]
     return match["coordinates"]["y"], match["coordinates"]["x"], match["addressComponents"].get("zip", "")
-
-
-def fetch_new_edmonds_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
-    """Scrape name/address pairs from Edmonds's own "Visit A Park" page (its GIS
-    layers have no usable address field) and geocode each via the free Census
-    geocoder, returning only ones not already in existing_keys."""
-    resp = requests.get(EDMONDS_PAGE_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
-    resp.raise_for_status()
-
-    new_parks = []
-    skipped = 0
-    for name, address in _parse_edmonds_page(resp.text):
-        if (name, address) in existing_keys:
-            continue
-        geocoded = _geocode_census(address, "Edmonds")
-        if geocoded is None:
-            skipped += 1
-            continue
-        lat, lon, zip_code = geocoded
-        new_parks.append(
-            {
-                "name": name,
-                "address": address,
-                "city": "Edmonds",
-                "zip_code": zip_code,
-                "latitude": lat,
-                "longitude": lon,
-                "visited": "N",
-                "visited_date": "",
-            },
-        )
-    if skipped:
-        print(f"Skipped {skipped} Edmonds park(s) that couldn't be geocoded.", file=sys.stderr)
-    return new_parks
 
 
 def _bellevue_park_links(html: str) -> list[str]:
@@ -962,8 +896,6 @@ def sync_parks() -> list[dict]:
     existing_keys |= {(p["name"], p["address"]) for p in new_seattle}
     new_shoreline = fetch_new_shoreline_parks(existing_keys)
     existing_keys |= {(p["name"], p["address"]) for p in new_shoreline}
-    new_edmonds = fetch_new_edmonds_parks(existing_keys)
-    existing_keys |= {(p["name"], p["address"]) for p in new_edmonds}
     new_bellevue = fetch_new_bellevue_parks(existing_keys)
     existing_keys |= {(p["name"], p["address"]) for p in new_bellevue}
     new_mercer_island = fetch_new_mercer_island_parks(existing_keys)
@@ -984,7 +916,6 @@ def sync_parks() -> list[dict]:
     new_parks = (
         new_seattle
         + new_shoreline
-        + new_edmonds
         + new_bellevue
         + new_mercer_island
         + new_kirkland
