@@ -61,6 +61,24 @@ Extract park names/addresses from three sources:
     text, sometimes wrapped in a Google Maps link), bounded by the enclosing
     </p> and any trailing \xa0. No coordinates anywhere on the page, so each
     address is geocoded via the same free Census geocoder as Edmonds.
+  - Renton: its public ArcGIS Server, found directly. The "Parks" layer has
+    direct Latitude/Longitude fields (no centroid/geocoding needed), but it's
+    a regional facilities dataset covering several neighboring jurisdictions
+    too (Seattle, King County, Tukwila, Newcastle, Kent, SeaTac all appear in
+    the OWNER field alongside Renton), so it's filtered to OWNER='Renton'.
+    The LOCATION field is inconsistently formatted ("<name> - <address>" most
+    of the time, but sometimes a different alias name, a bare description, or
+    equal to NAME with no real address at all), so it's parsed leniently
+    rather than dropped when imperfect. A couple of exact-duplicate records
+    exist in the source data, so — like Redmond — this also dedups within
+    its own batch, not just against existing_keys.
+  - SeaTac: seatacwa.gov itself is blocked by the same Akamai WAF as
+    Shoreline/Kirkland (domain-wide), so its public ArcGIS Server is used
+    instead — found directly, cleanly split into Name/Address/City/Zipcode
+    fields, all owned by "City of SeaTac" (no regional-dataset filtering
+    needed, unlike Renton), with direct point geometry. Addresses are in the
+    same all-caps SITEADDR style as Kirkland's layer, so it reuses that same
+    recasing helper.
 
 Writes everything to a CSV with a Visited (Y/N) column and a Visited Date
 (YYYY-MM-DD) column, then plots it on an interactive map, titled "Seattle
@@ -106,7 +124,7 @@ CENSUS_GEOCODE_URL = "https://geocoding.geo.census.gov/geocoder/locations/onelin
 MERCER_ISLAND_BASE_URL = "https://www.mercerisland.gov"
 MERCER_ISLAND_LIST_URL = "https://www.mercerisland.gov/parksites"
 KIRKLAND_URL = "https://maps.kirklandwa.gov/host/rest/services/Parks/FeatureServer/0/query"
-KIRKLAND_DIRECTIONALS = {"N", "S", "E", "W", "NE", "NW", "SE", "SW"}
+ALLCAPS_ADDRESS_DIRECTIONALS = {"N", "S", "E", "W", "NE", "NW", "SE", "SW"}
 REDMOND_URL = "https://gis.redmond.gov/arcgis/rest/services/PV/Cadastral/MapServer/2/query"
 MEDINA_BASE_URL = "https://www.medina-wa.gov"
 MEDINA_LIST_URL = "https://www.medina-wa.gov/publicworks/page/city-parks"
@@ -115,6 +133,8 @@ BELLEVUE_LIST_URL = "https://bellevuewa.gov/city-government/departments/parks/pa
 BURIEN_BASE_URL = "https://www.burienwa.gov"
 BURIEN_LIST_URL = "https://www.burienwa.gov/residents/parks_recreation_cultural_services/city_parks_trails_facilities"
 TUKWILA_LIST_URL = "https://www.tukwilawa.gov/departments/parks-and-recreation/parks-and-trails/"
+RENTON_URL = "https://gismaps.rentonwa.gov/as03/rest/services/Operational/ParksAndRecreation/MapServer/9/query"
+SEATAC_URL = "https://services3.arcgis.com/DLryYCwhA8W7Jq7Q/ArcGIS/rest/services/Parks/FeatureServer/0/query"
 USER_AGENT = "seattle-parks-map-script/1.0 (personal park-tracking project)"
 CSV_PATH = "seattle_parks.csv"
 MAP_PATH = "seattle_parks_map.html"
@@ -551,13 +571,14 @@ def fetch_new_medina_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     return _fetch_new_civicplus_parks(existing_keys, MEDINA_LIST_URL, MEDINA_BASE_URL, "Medina")
 
 
-def _normalize_kirkland_address(address: str) -> str:
-    """Recase an all-caps SITEADDR value (e.g. "15305 119TH AVE NE") into normal
+def _normalize_allcaps_address(address: str) -> str:
+    """Recase an all-caps address value (e.g. "15305 119TH AVE NE") into normal
     title case, keeping directional abbreviations (NE, SW, ...) uppercase and
-    ordinal suffixes (119TH -> 119th) lowercase."""
+    ordinal suffixes (119TH -> 119th) lowercase. Shared by Kirkland and SeaTac,
+    whose ArcGIS layers both store addresses this way."""
     words = []
     for word in address.split():
-        if word.upper() in KIRKLAND_DIRECTIONALS:
+        if word.upper() in ALLCAPS_ADDRESS_DIRECTIONALS:
             words.append(word.upper())
             continue
         ordinal = re.match(r"^(\d+)(ST|ND|RD|TH)$", word, re.IGNORECASE)
@@ -589,7 +610,7 @@ def fetch_new_kirkland_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     for feature in data.get("features", []):
         attrs = feature["attributes"]
         name = (attrs.get("PROPNAME") or "").strip()
-        address = _normalize_kirkland_address((attrs.get("SITEADDR") or "").strip())
+        address = _normalize_allcaps_address((attrs.get("SITEADDR") or "").strip())
         rings = feature.get("geometry", {}).get("rings")
         if not name or not rings:
             skipped += 1
@@ -823,6 +844,120 @@ def fetch_new_tukwila_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     return new_parks
 
 
+def _parse_renton_location(name: str, location: str) -> str:
+    """Best-effort address from the LOCATION field, which is inconsistently
+    formatted: usually "<name> - <address>" (possibly a different alias for
+    name), sometimes a bare description, sometimes just a repeat of NAME with
+    no real address. Returns "" rather than a redundant/uninformative value."""
+    location = (location or "").strip()
+    if not location or location == name:
+        return ""
+    if " - " in location:
+        location = location.split(" - ", 1)[1]
+    return " ".join(location.split())
+
+
+def fetch_new_renton_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+    """Pull parks from Renton's public ArcGIS Server, filtered to OWNER='Renton'
+    since this layer is a regional facilities dataset covering several
+    neighboring jurisdictions' parks too. Has direct Latitude/Longitude fields,
+    so no centroid computation or geocoding needed. A couple of exact-duplicate
+    records exist in the source data, so this also dedups within its own batch,
+    not just against existing_keys."""
+    resp = requests.get(
+        RENTON_URL,
+        params={
+            "where": "OWNER='Renton'",
+            "outFields": "NAME,LOCATION,Latitude,Longitude",
+            "returnGeometry": "false",
+            "f": "json",
+        },
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+
+    new_parks = []
+    seen = set()
+    skipped = 0
+    for feature in data.get("features", []):
+        attrs = feature["attributes"]
+        name = (attrs.get("NAME") or "").strip()
+        lat, lon = attrs.get("Latitude"), attrs.get("Longitude")
+        if not name or lat is None or lon is None:
+            skipped += 1
+            continue
+        address = _parse_renton_location(name, attrs.get("LOCATION") or "")
+        key = (name, address)
+        if key in existing_keys or key in seen:
+            continue
+        seen.add(key)
+        new_parks.append(
+            {
+                "name": name,
+                "address": address,
+                "city": "Renton",
+                "zip_code": "",
+                "latitude": float(lat),
+                "longitude": float(lon),
+                "visited": "N",
+                "visited_date": "",
+            },
+        )
+    if skipped:
+        print(f"Skipped {skipped} Renton row(s) missing a name or coordinates.", file=sys.stderr)
+    return new_parks
+
+
+def fetch_new_seatac_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+    """Pull parks from SeaTac's public ArcGIS Server (seatacwa.gov itself is
+    WAF-blocked, same as Shoreline/Kirkland). Has direct point geometry and
+    separate Name/Address/City/Zipcode fields, all owned by "City of SeaTac"
+    (no regional-dataset filtering needed). Addresses are recased from the
+    same all-caps style as Kirkland's layer."""
+    resp = requests.get(
+        SEATAC_URL,
+        params={
+            "where": "1=1",
+            "outFields": "Name,Address,Zipcode",
+            "returnGeometry": "true",
+            "outSR": "4326",
+            "f": "json",
+        },
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+
+    new_parks = []
+    skipped = 0
+    for feature in data.get("features", []):
+        attrs = feature["attributes"]
+        name = (attrs.get("Name") or "").strip()
+        geometry = feature.get("geometry")
+        if not name or not geometry:
+            skipped += 1
+            continue
+        address = _normalize_allcaps_address((attrs.get("Address") or "").strip())
+        if (name, address) in existing_keys:
+            continue
+        new_parks.append(
+            {
+                "name": name,
+                "address": address,
+                "city": "SeaTac",
+                "zip_code": (attrs.get("Zipcode") or "").strip(),
+                "latitude": geometry["y"],
+                "longitude": geometry["x"],
+                "visited": "N",
+                "visited_date": "",
+            },
+        )
+    if skipped:
+        print(f"Skipped {skipped} SeaTac row(s) missing a name or geometry.", file=sys.stderr)
+    return new_parks
+
+
 def sync_parks() -> list[dict]:
     """Fetch from all sources. Existing CSV rows are kept exactly as-is (order and
     edits untouched); only parks not already present are appended."""
@@ -847,6 +982,10 @@ def sync_parks() -> list[dict]:
     new_burien = fetch_new_burien_parks(existing_keys)
     existing_keys |= {(p["name"], p["address"]) for p in new_burien}
     new_tukwila = fetch_new_tukwila_parks(existing_keys)
+    existing_keys |= {(p["name"], p["address"]) for p in new_tukwila}
+    new_renton = fetch_new_renton_parks(existing_keys)
+    existing_keys |= {(p["name"], p["address"]) for p in new_renton}
+    new_seatac = fetch_new_seatac_parks(existing_keys)
     new_parks = (
         new_seattle
         + new_shoreline
@@ -858,6 +997,8 @@ def sync_parks() -> list[dict]:
         + new_medina
         + new_burien
         + new_tukwila
+        + new_renton
+        + new_seatac
     )
     if existing:
         print(f"Found {len(new_parks)} new park(s) to add to the existing {len(existing)}.")
