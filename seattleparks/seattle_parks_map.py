@@ -46,6 +46,12 @@ Extract park names/addresses from three sources:
     Drupal.settings map JSON for names/coordinates, same schema.org
     PostalAddress microdata per park page for addresses), so it reuses those
     same parsing helpers rather than duplicating them.
+  - Burien: scraped live from the city's own parks directory page (CivicLive,
+    same CMS family as Bellevue, but a different markup convention: no
+    per-field classes at all — just the page's own <h2 class="pageTitle">
+    for the name, the next plain <h2> for the address, and an embedded
+    Google Maps iframe URL for coordinates (!2d<lon>!3d<lat>) — no geocoding
+    needed.
 
 Writes everything to a CSV with a Visited (Y/N) column and a Visited Date
 (YYYY-MM-DD) column, then plots it on an interactive map, titled "Seattle
@@ -97,6 +103,8 @@ MEDINA_BASE_URL = "https://www.medina-wa.gov"
 MEDINA_LIST_URL = "https://www.medina-wa.gov/publicworks/page/city-parks"
 BELLEVUE_BASE_URL = "https://bellevuewa.gov"
 BELLEVUE_LIST_URL = "https://bellevuewa.gov/city-government/departments/parks/parks-and-trails/parks"
+BURIEN_BASE_URL = "https://www.burienwa.gov"
+BURIEN_LIST_URL = "https://www.burienwa.gov/residents/parks_recreation_cultural_services/city_parks_trails_facilities"
 USER_AGENT = "seattle-parks-map-script/1.0 (personal park-tracking project)"
 CSV_PATH = "seattle_parks.csv"
 MAP_PATH = "seattle_parks_map.html"
@@ -649,6 +657,82 @@ def fetch_new_redmond_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     return new_parks
 
 
+def _burien_park_links(page_html: str) -> list[str]:
+    """Extract unique individual park page URLs from the directory listing page's
+    sidebar navigation."""
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(page_html, "html.parser")
+    pattern = re.compile(
+        r"^/residents/parks_recreation_cultural_services/city_parks_trails_facilities/[a-z0-9_]+/$",
+    )
+    hrefs = {a["href"] for a in soup.find_all("a", href=pattern)}
+    return [BURIEN_BASE_URL + href for href in sorted(hrefs)]
+
+
+def _parse_burien_park_page(page_html: str) -> dict | None:
+    """Extract name/address/coordinates from an individual park page. The markup has
+    no per-field classes: the name is the page's <h2 class="pageTitle">, the address
+    is the next plain <h2>, and coordinates come from an embedded Google Maps iframe
+    URL (query params !2d<lon>!3d<lat>). Returns None if title or coordinates are
+    missing."""
+    title_match = re.search(r'<h2 class="pageTitle">([^<]+)</h2>', page_html)
+    if not title_match:
+        return None
+    name = html.unescape(title_match.group(1)).strip()
+    if not name:
+        return None
+
+    point_match = re.search(r"!2d(-?[\d.]+)!3d(-?[\d.]+)", page_html)
+    if not point_match:
+        return None
+
+    address_match = re.search(r"<h2>([^<]+)</h2>", page_html)
+    address = html.unescape(address_match.group(1)).strip() if address_match else ""
+
+    return {
+        "name": name,
+        "address": address,
+        "latitude": float(point_match.group(2)),
+        "longitude": float(point_match.group(1)),
+    }
+
+
+def fetch_new_burien_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+    """Scrape Burien's parks directory page plus each individual park page it links
+    to (~30 of them), returning only ones not already in existing_keys."""
+    resp = requests.get(BURIEN_LIST_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
+    resp.raise_for_status()
+
+    new_parks = []
+    skipped = 0
+    for url in _burien_park_links(resp.text):
+        page = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=30)
+        page.raise_for_status()
+        time.sleep(0.2)
+        park = _parse_burien_park_page(page.text)
+        if park is None:
+            skipped += 1
+            continue
+        if (park["name"], park["address"]) in existing_keys:
+            continue
+        new_parks.append(
+            {
+                "name": park["name"],
+                "address": park["address"],
+                "city": "Burien",
+                "zip_code": "",
+                "latitude": park["latitude"],
+                "longitude": park["longitude"],
+                "visited": "N",
+                "visited_date": "",
+            },
+        )
+    if skipped:
+        print(f"Skipped {skipped} Burien page(s) with no park coordinates.", file=sys.stderr)
+    return new_parks
+
+
 def sync_parks() -> list[dict]:
     """Fetch from all sources. Existing CSV rows are kept exactly as-is (order and
     edits untouched); only parks not already present are appended."""
@@ -669,6 +753,8 @@ def sync_parks() -> list[dict]:
     new_redmond = fetch_new_redmond_parks(existing_keys)
     existing_keys |= {(p["name"], p["address"]) for p in new_redmond}
     new_medina = fetch_new_medina_parks(existing_keys)
+    existing_keys |= {(p["name"], p["address"]) for p in new_medina}
+    new_burien = fetch_new_burien_parks(existing_keys)
     new_parks = (
         new_seattle
         + new_shoreline
@@ -678,6 +764,7 @@ def sync_parks() -> list[dict]:
         + new_kirkland
         + new_redmond
         + new_medina
+        + new_burien
     )
     if existing:
         print(f"Found {len(new_parks)} new park(s) to add to the existing {len(existing)}.")
