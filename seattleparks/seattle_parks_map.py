@@ -47,11 +47,11 @@ Extract park names/addresses from three sources:
     PostalAddress microdata per park page for addresses), so it reuses those
     same parsing helpers rather than duplicating them.
 
-Writes everything to a CSV with a Visited (Y/N) column and plots it on an
-interactive map, titled "Seattle Parks Project" in both the on-map overlay and
-the browser tab, with the Seattle city logo (seattle_favicon.png, embedded as
-a base64 data URI so the map stays a single self-contained HTML file) as the
-tab's favicon.
+Writes everything to a CSV with a Visited (Y/N) column and a Visited Date
+(YYYY-MM-DD) column, then plots it on an interactive map, titled "Seattle
+Parks Project" in both the on-map overlay and the browser tab, with the
+Seattle city logo (seattle_favicon.png, embedded as a base64 data URI so the
+map stays a single self-contained HTML file) as the tab's favicon.
 
 Usage:
     pip install requests folium beautifulsoup4 lxml
@@ -64,7 +64,8 @@ Usage:
     # get appended.
     python3 seattle_parks_map.py
 
-    # Edit the "Visited" column in seattle_parks.csv by hand (Y/N), then:
+    # Edit the "visited" (Y/N) and "visited_date" (YYYY-MM-DD) columns in
+    # seattle_parks.csv by hand, then:
     python3 seattle_parks_map.py --from-csv
     # ^ re-reads the CSV as-is (no API call) and regenerates the map with
     #   visited parks marked green.
@@ -79,6 +80,7 @@ import json
 import re
 import sys
 import time
+from datetime import datetime
 
 import requests
 
@@ -100,7 +102,7 @@ CSV_PATH = "seattle_parks.csv"
 MAP_PATH = "seattle_parks_map.html"
 MAP_TITLE = "Seattle Parks Project"
 FAVICON_PATH = "seattle_favicon.png"
-CSV_FIELDS = ["name", "address", "city", "zip_code", "latitude", "longitude", "visited"]
+CSV_FIELDS = ["name", "address", "city", "zip_code", "latitude", "longitude", "visited", "visited_date"]
 DEFAULT_CITY = "Seattle"
 
 # Visited is a state, not an identity, so it uses the dataviz status palette
@@ -115,6 +117,15 @@ def _is_visited(value: str) -> bool:
     return str(value).strip().upper() == "Y"
 
 
+def _format_visited_date(value: str) -> str | None:
+    """Parse a CSV visited_date value (YYYY-MM-DD) into "Month D, YYYY" for the
+    popup. Returns None if the value is blank."""
+    value = str(value).strip()
+    if not value:
+        return None
+    return datetime.strptime(value, "%Y-%m-%d").strftime("%B %-d, %Y")
+
+
 def load_parks_from_csv() -> list[dict]:
     """Read parks back from an existing CSV (e.g. after hand-editing the Visited column)."""
     with open(CSV_PATH, newline="", encoding="utf-8") as f:
@@ -127,6 +138,7 @@ def load_parks_from_csv() -> list[dict]:
                 "latitude": float(row["latitude"]),
                 "longitude": float(row["longitude"]),
                 "visited": row.get("visited", "N"),
+                "visited_date": row.get("visited_date", ""),
             }
             for row in csv.DictReader(f)
         ]
@@ -166,6 +178,7 @@ def fetch_new_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
                 "latitude": float(lat),
                 "longitude": float(lon),
                 "visited": "N",
+                "visited_date": "",
             },
         )
     if skipped:
@@ -230,6 +243,7 @@ def fetch_new_shoreline_parks(existing_keys: set[tuple[str, str]]) -> list[dict]
                 "latitude": lat,
                 "longitude": lon,
                 "visited": "N",
+                "visited_date": "",
             },
         )
     if skipped:
@@ -312,6 +326,7 @@ def fetch_new_edmonds_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
                 "latitude": lat,
                 "longitude": lon,
                 "visited": "N",
+                "visited_date": "",
             },
         )
     if skipped:
@@ -388,6 +403,7 @@ def fetch_new_bellevue_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
                 "latitude": park["latitude"],
                 "longitude": park["longitude"],
                 "visited": "N",
+                "visited_date": "",
             },
         )
     if skipped:
@@ -493,6 +509,7 @@ def _fetch_new_civicplus_parks(
                 "latitude": park["latitude"],
                 "longitude": park["longitude"],
                 "visited": "N",
+                "visited_date": "",
             },
         )
     return new_parks
@@ -563,6 +580,7 @@ def fetch_new_kirkland_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
                 "latitude": lat,
                 "longitude": lon,
                 "visited": "N",
+                "visited_date": "",
             },
         )
     if skipped:
@@ -615,6 +633,7 @@ def fetch_new_redmond_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
                 "latitude": lat,
                 "longitude": lon,
                 "visited": "N",
+                "visited_date": "",
             },
         )
     if skipped:
@@ -686,7 +705,11 @@ def plot_map(parks: list[dict]) -> None:
         color = VISITED_COLOR if _is_visited(p.get("visited", "N")) else UNVISITED_COLOR
         city_zip = " ".join(part for part in (p["city"], p["zip_code"]) if part)
         address_line = ", ".join(part for part in (p["address"], city_zip) if part)
-        popup = folium.Popup(f"<b>{p['name']}</b><br>{address_line}", max_width=250)
+        popup_html = f"<b>{p['name']}</b><br>{address_line}"
+        visited_date = _format_visited_date(p.get("visited_date", ""))
+        if visited_date:
+            popup_html += f"<br><b>Visited:</b> {visited_date}"
+        popup = folium.Popup(popup_html, max_width=250)
         folium.CircleMarker(
             location=[p["latitude"], p["longitude"]],
             radius=MARKER_RADIUS,
