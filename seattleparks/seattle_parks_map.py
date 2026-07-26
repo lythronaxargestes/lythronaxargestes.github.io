@@ -736,6 +736,11 @@ def plot_map(parks: list[dict]) -> None:
         if latest_park
         else ""
     )
+    visited_count = sum(1 for p in parks if _is_visited(p.get("visited", "N")))
+    progress_html = (
+        f'<div style="font-size: 14px; font-weight: 400; margin-top: 4px;">'
+        f"<b>Progress:</b> {visited_count} / {len(parks)}</div>"
+    )
     title_html = f"""
     <div style="position: fixed; top: 16px; left: 60px; z-index: 1000;
                 background: #fcfcfb; padding: 8px 22px; border: 1px solid #c3c2b7;
@@ -743,6 +748,7 @@ def plot_map(parks: list[dict]) -> None:
                 font-size: 24px; font-weight: 700; color: #0b0b0b;">
       {MAP_TITLE}
       {latest_html}
+      {progress_html}
     </div>
     """
     m.get_root().html.add_child(folium.Element(title_html))
@@ -765,7 +771,6 @@ def plot_map(parks: list[dict]) -> None:
     m.get_root().html.add_child(folium.Element(legend_html))
 
     m.save(MAP_PATH)
-    visited_count = sum(1 for p in parks if _is_visited(p.get("visited", "N")))
     print(f"Wrote map with {len(parks)} markers ({visited_count} visited) to {MAP_PATH}")
 
 
