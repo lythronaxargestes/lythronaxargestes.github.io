@@ -82,6 +82,17 @@ Extract park names/addresses from these sources:
     addresses are all-caps like Kirkland/SeaTac's, so this reuses the same
     recasing helper. Both "developed" and "undeveloped" status parks are
     included — both represent real, currently-existing park properties.
+  - Des Moines: desmoineswa.gov's own "Parks" page is just a redirect to a
+    static PDF map, no structured data, so its public ArcGIS Server is used
+    instead. The "Des Moines Parks By Class" point layer has direct point
+    geometry and clean names, filtered to ParkType='CITY' to drop schools/
+    state/county land, but has no address field of its own; a separate "City
+    Parks" polygon layer has a SiteAddress field but it's only populated on a
+    handful of records, so addresses are a best-effort join between the two
+    layers by name (with periods/whitespace stripped, since the layers don't
+    always spell a park's name identically) — most parks end up with a blank
+    address. One name ("Des Moines Creek Trail") repeats across two points,
+    so this also dedups within its own batch.
 
 Writes everything to a CSV with a Visited (Y/N) column and a Visited Date
 (YYYY-MM-DD) column, then plots it on an interactive map, titled "Seattle
@@ -138,6 +149,8 @@ TUKWILA_LIST_URL = "https://www.tukwilawa.gov/departments/parks-and-recreation/p
 RENTON_URL = "https://gismaps.rentonwa.gov/as03/rest/services/Operational/ParksAndRecreation/MapServer/9/query"
 SEATAC_URL = "https://services3.arcgis.com/DLryYCwhA8W7Jq7Q/ArcGIS/rest/services/Parks/FeatureServer/0/query"
 KENT_URL = "https://services3.arcgis.com/AME2ELqJ7UG0JjrU/ArcGIS/rest/services/KentParkPoints_view/FeatureServer/0/query"
+DES_MOINES_PARKS_URL = "https://maps.desmoineswa.gov/dmgis/rest/services/ParksAndRec/ParksMap/MapServer/1/query"
+DES_MOINES_ADDRESS_URL = "https://maps.desmoineswa.gov/dmgis/rest/services/ParksAndRec/ParksMap/MapServer/2/query"
 USER_AGENT = "seattle-parks-map-script/1.0 (personal park-tracking project)"
 CSV_PATH = "seattle_parks.csv"
 MAP_PATH = "seattle_parks_map.html"
@@ -945,6 +958,80 @@ def fetch_new_kent_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     return new_parks
 
 
+def _des_moines_name_key(name: str) -> str:
+    return re.sub(r"\s+", " ", name.replace(".", "")).strip().casefold()
+
+
+def fetch_new_des_moines_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+    """Pull parks from Des Moines' public ArcGIS Server (desmoineswa.gov's own
+    "Parks" page just redirects to a static PDF map, no structured data). The
+    point layer has no address field, so addresses come from a best-effort join
+    against the separate polygon layer's sparse SiteAddress field, matched by
+    name with periods/whitespace stripped (the two layers don't always spell a
+    park's name identically, e.g. "Cecil Powell Park" vs. the polygon layer's
+    misspelled "Cecil Powel Park" — mismatches like that are simply left with a
+    blank address rather than force-matched)."""
+    address_resp = requests.get(
+        DES_MOINES_ADDRESS_URL,
+        params={"where": "1=1", "outFields": "ParkName,SiteAddress", "returnGeometry": "false", "f": "json"},
+        timeout=30,
+    )
+    address_resp.raise_for_status()
+    address_by_key = {}
+    for feature in address_resp.json().get("features", []):
+        attrs = feature["attributes"]
+        raw_name = (attrs.get("ParkName") or "").strip()
+        raw_address = (attrs.get("SiteAddress") or "").strip()
+        if not raw_name or not raw_address:
+            continue
+        address_by_key[_des_moines_name_key(raw_name)] = _normalize_allcaps_text(re.sub(r"\s+", " ", raw_address))
+
+    resp = requests.get(
+        DES_MOINES_PARKS_URL,
+        params={
+            "where": "ParkType='CITY' AND ActiveFlag=1",
+            "outFields": "ParkName",
+            "returnGeometry": "true",
+            "outSR": "4326",
+            "f": "json",
+        },
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+
+    new_parks = []
+    seen = set()
+    skipped = 0
+    for feature in data.get("features", []):
+        attrs = feature["attributes"]
+        name = (attrs.get("ParkName") or "").strip()
+        geometry = feature.get("geometry")
+        if not name or not geometry:
+            skipped += 1
+            continue
+        address = address_by_key.get(_des_moines_name_key(name), "")
+        key = (name, address)
+        if key in existing_keys or key in seen:
+            continue
+        seen.add(key)
+        new_parks.append(
+            {
+                "name": name,
+                "address": address,
+                "city": "Des Moines",
+                "zip_code": "",
+                "latitude": geometry["y"],
+                "longitude": geometry["x"],
+                "visited": "N",
+                "visited_date": "",
+            },
+        )
+    if skipped:
+        print(f"Skipped {skipped} Des Moines row(s) missing a name or geometry.", file=sys.stderr)
+    return new_parks
+
+
 def sync_parks() -> list[dict]:
     """Fetch from all sources. Existing CSV rows are kept exactly as-is (order and
     edits untouched); only parks not already present are appended."""
@@ -973,6 +1060,8 @@ def sync_parks() -> list[dict]:
     new_seatac = fetch_new_seatac_parks(existing_keys)
     existing_keys |= {(p["name"], p["address"]) for p in new_seatac}
     new_kent = fetch_new_kent_parks(existing_keys)
+    existing_keys |= {(p["name"], p["address"]) for p in new_kent}
+    new_des_moines = fetch_new_des_moines_parks(existing_keys)
     new_parks = (
         new_seattle
         + new_shoreline
@@ -986,6 +1075,7 @@ def sync_parks() -> list[dict]:
         + new_renton
         + new_seatac
         + new_kent
+        + new_des_moines
     )
     if existing:
         print(f"Found {len(new_parks)} new park(s) to add to the existing {len(existing)}.")
