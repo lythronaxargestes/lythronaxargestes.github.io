@@ -171,6 +171,16 @@ check applied after fetching, not per-source) — this project tracks parks
 in the traditional sense, not off-leash areas or burial grounds. One
 exception: Seattle's Grand Army of the Republic Cemetery is kept.
 
+seattle_parks_missing_data_backup.csv is a hand-researched (web search)
+supplementary source for parks whose primary source had no address, or no
+coordinates at all. At render time only -- never written back to
+seattle_parks.csv -- it fills in blank addresses for parks already present
+(matched by name+city) and adds parks missing entirely from the main CSV when
+it found usable coordinates. Kept separate from the main CSV because each
+city's live fetch dedups on (name, address); baking a backup-found address
+into seattle_parks.csv would break that check on the next sync and cause the
+live source to re-add the same park with its own (blank) address.
+
 Writes everything to a CSV with a Visited (Y/N) column and a Visited Date
 (YYYY-MM-DD) column, then plots it on an interactive map, titled "Seattle
 Parks Project" in both the on-map overlay and the browser tab, with the
@@ -240,6 +250,7 @@ EXCLUDED_NAME_KEYWORDS = ("dog park", "cemetery", "cemetary")
 EXCLUDED_NAME_EXCEPTIONS = {("Grand Army of the Republic Cemetery", "Seattle")}
 USER_AGENT = "seattle-parks-map-script/1.0 (personal park-tracking project)"
 CSV_PATH = "seattle_parks.csv"
+BACKUP_CSV_PATH = "seattle_parks_missing_data_backup.csv"
 MAP_PATH = "seattle_parks_map.html"
 MAP_TITLE = "Seattle Parks Project"
 FAVICON_PATH = "seattle_favicon.png"
@@ -299,6 +310,60 @@ def _load_existing_parks() -> list[dict]:
         return load_parks_from_csv()
     except FileNotFoundError:
         return []
+
+
+def _apply_backup_data(parks: list[dict]) -> list[dict]:
+    """Enrich `parks` for display using seattle_parks_missing_data_backup.csv (hand
+    researched via web search for parks whose primary source had no address, or
+    no coordinates at all): fills in blank addresses for parks already present
+    (matched by name+city) when the backup found one, and adds parks that are
+    entirely missing from the main CSV (in_main_csv='N') when the backup found
+    usable coordinates. This never writes back to seattle_parks.csv -- it's
+    applied fresh at render time only, so the primary CSV's (name, address)
+    dedup keys, which each city's live fetch depends on to avoid re-adding
+    parks on the next sync, are never disturbed by backup-sourced values."""
+    try:
+        with open(BACKUP_CSV_PATH, newline="", encoding="utf-8") as f:
+            backup_rows = list(csv.DictReader(f))
+    except FileNotFoundError:
+        return parks
+
+    enriched = [dict(p) for p in parks]
+    by_key = {(p["name"], p["city"]): p for p in enriched}
+
+    for row in backup_rows:
+        key = (row["name"], row["city"])
+        found_address = (row.get("found_address") or "").strip()
+        found_zip = (row.get("found_zip") or "").strip()
+        found_lat = (row.get("found_latitude") or "").strip()
+        found_lon = (row.get("found_longitude") or "").strip()
+
+        if row.get("in_main_csv") == "Y":
+            park = by_key.get(key)
+            if park is not None and not park["address"] and found_address:
+                park["address"] = found_address
+                if found_zip:
+                    park["zip_code"] = found_zip
+        elif row.get("in_main_csv") == "N" and key not in by_key and found_lat and found_lon:
+            new_park = {
+                "name": row["name"],
+                "address": found_address,
+                "city": row["city"],
+                "zip_code": found_zip,
+                "latitude": float(found_lat),
+                "longitude": float(found_lon),
+                "visited": "N",
+                "visited_date": "",
+            }
+            enriched.append(new_park)
+            by_key[key] = new_park
+
+    return [
+        p
+        for p in enriched
+        if (p["name"], p["city"]) in EXCLUDED_NAME_EXCEPTIONS
+        or not any(kw in p["name"].lower() for kw in EXCLUDED_NAME_KEYWORDS)
+    ]
 
 
 def fetch_new_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
@@ -899,16 +964,19 @@ def _parse_renton_location(name: str, location: str) -> str:
 def fetch_new_renton_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     """Pull parks from Renton's public ArcGIS Server, filtered to OWNER='Renton'
     since this layer is a regional facilities dataset covering several
-    neighboring jurisdictions' parks too. Has direct Latitude/Longitude fields,
-    so no centroid computation or geocoding needed. A couple of exact-duplicate
-    records exist in the source data, so this also dedups within its own batch,
-    not just against existing_keys."""
+    neighboring jurisdictions' parks too. Most records have direct Latitude/
+    Longitude fields; a handful of real parks have those fields null but still
+    have valid polygon boundary geometry, so those fall back to a polygon
+    centroid (as with Kirkland/Shoreline/Auburn) rather than being skipped. A
+    couple of exact-duplicate records exist in the source data, so this also
+    dedups within its own batch, not just against existing_keys."""
     resp = requests.get(
         RENTON_URL,
         params={
             "where": "OWNER='Renton'",
             "outFields": "NAME,LOCATION,Latitude,Longitude",
-            "returnGeometry": "false",
+            "returnGeometry": "true",
+            "outSR": "4326",
             "f": "json",
         },
         timeout=30,
@@ -923,6 +991,10 @@ def fetch_new_renton_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         attrs = feature["attributes"]
         name = (attrs.get("NAME") or "").strip()
         lat, lon = attrs.get("Latitude"), attrs.get("Longitude")
+        if lat is None or lon is None:
+            rings = feature.get("geometry", {}).get("rings")
+            if rings:
+                lat, lon = _polygon_centroid(rings)
         if not name or lat is None or lon is None:
             skipped += 1
             continue
@@ -1700,14 +1772,14 @@ def main() -> None:
         except FileNotFoundError:
             print(f"{CSV_PATH} not found — run without --from-csv first.", file=sys.stderr)
             sys.exit(1)
-        plot_map(parks)
+        plot_map(_apply_backup_data(parks))
     else:
         parks = sync_parks()
         if not parks:
             print("No park data retrieved — aborting.", file=sys.stderr)
             sys.exit(1)
         write_csv(parks)
-        plot_map(parks)
+        plot_map(_apply_backup_data(parks))
 
 
 if __name__ == "__main__":
