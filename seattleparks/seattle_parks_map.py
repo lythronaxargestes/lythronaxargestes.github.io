@@ -117,6 +117,14 @@ def _is_visited(value: str) -> bool:
     return str(value).strip().upper() == "Y"
 
 
+def _latest_visited_park(parks: list[dict]) -> dict | None:
+    """Return the park with the most recent visited_date, or None if no park has one."""
+    dated = [p for p in parks if str(p.get("visited_date", "")).strip()]
+    if not dated:
+        return None
+    return max(dated, key=lambda p: p["visited_date"])
+
+
 def _format_visited_date(value: str) -> str | None:
     """Parse a CSV visited_date value (YYYY-MM-DD) into "Month D, YYYY" for the
     popup. Returns None if the value is blank."""
@@ -721,12 +729,20 @@ def plot_map(parks: list[dict]) -> None:
             popup=popup,
         ).add_to(m)
 
+    latest_park = _latest_visited_park(parks)
+    latest_html = (
+        f'<div style="font-size: 14px; font-weight: 400; margin-top: 4px;">'
+        f"<b>Latest park visited:</b> {latest_park['name']}</div>"
+        if latest_park
+        else ""
+    )
     title_html = f"""
     <div style="position: fixed; top: 16px; left: 60px; z-index: 1000;
                 background: #fcfcfb; padding: 8px 22px; border: 1px solid #c3c2b7;
                 border-radius: 4px; font-family: system-ui, -apple-system, sans-serif;
                 font-size: 24px; font-weight: 700; color: #0b0b0b;">
       {MAP_TITLE}
+      {latest_html}
     </div>
     """
     m.get_root().html.add_child(folium.Element(title_html))
