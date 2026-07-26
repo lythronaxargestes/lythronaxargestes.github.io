@@ -102,6 +102,17 @@ Extract park names/addresses from these sources:
     entirely, in which case the Location address is geocoded via the free US
     Census geocoder instead. One park (BPA Trail) has neither a street address
     nor coordinates and is skipped.
+  - Auburn: its own public ArcGIS Server, found indirectly — auburnwa.gov's
+    parks page embeds an ArcGIS Experience Builder app, whose item metadata
+    (via the ArcGIS Online sharing API) reveals a "City of Auburn Parks" web
+    map, whose operational-layer URL is the city's own GIS server, not
+    ArcGIS Online. That "Parks" layer stores polygons, not points (so each
+    park's location is its polygon centroid, as with Kirkland/Shoreline), is
+    entirely owned by "COA" (no regional-dataset filtering needed), and has
+    both a short NAME and a fuller, more readable FULLNAME per park — FULLNAME
+    is used since it's always populated and never abbreviated. Name and
+    address are both in the same all-caps style as Kirkland/SeaTac/Kent, so
+    this reuses that same recasing helper.
 
 Writes everything to a CSV with a Visited (Y/N) column and a Visited Date
 (YYYY-MM-DD) column, then plots it on an interactive map, titled "Seattle
@@ -161,6 +172,7 @@ KENT_URL = "https://services3.arcgis.com/AME2ELqJ7UG0JjrU/ArcGIS/rest/services/K
 DES_MOINES_PARKS_URL = "https://maps.desmoineswa.gov/dmgis/rest/services/ParksAndRec/ParksMap/MapServer/1/query"
 DES_MOINES_ADDRESS_URL = "https://maps.desmoineswa.gov/dmgis/rest/services/ParksAndRec/ParksMap/MapServer/2/query"
 FEDERAL_WAY_URL = "https://www.federalwaywa.gov/page/our-parks"
+AUBURN_URL = "https://gis.auburnwa.gov/hosting/rest/services/Administration/BoundariesB/MapServer/0/query"
 USER_AGENT = "seattle-parks-map-script/1.0 (personal park-tracking project)"
 CSV_PATH = "seattle_parks.csv"
 MAP_PATH = "seattle_parks_map.html"
@@ -1132,6 +1144,56 @@ def fetch_new_federal_way_parks(existing_keys: set[tuple[str, str]]) -> list[dic
     return new_parks
 
 
+def fetch_new_auburn_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+    """Pull named park polygons from Auburn's public ArcGIS Server (found via its
+    Experience Builder parks app's underlying web map, not a direct GIS search).
+    All owned by "COA" (no regional-dataset filtering needed). Name and address
+    are recased from the same all-caps style as Kirkland/SeaTac/Kent's layers.
+    Each park's location is its polygon centroid, as with Kirkland/Shoreline."""
+    resp = requests.get(
+        AUBURN_URL,
+        params={
+            "where": "1=1",
+            "outFields": "FULLNAME,ADDRESS",
+            "returnGeometry": "true",
+            "outSR": "4326",
+            "f": "json",
+        },
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+
+    new_parks = []
+    skipped = 0
+    for feature in data.get("features", []):
+        attrs = feature["attributes"]
+        name = _normalize_allcaps_text((attrs.get("FULLNAME") or "").strip())
+        address = _normalize_allcaps_text((attrs.get("ADDRESS") or "").strip())
+        rings = feature.get("geometry", {}).get("rings")
+        if not name or not rings:
+            skipped += 1
+            continue
+        if (name, address) in existing_keys:
+            continue
+        lat, lon = _polygon_centroid(rings)
+        new_parks.append(
+            {
+                "name": name,
+                "address": address,
+                "city": "Auburn",
+                "zip_code": "",
+                "latitude": lat,
+                "longitude": lon,
+                "visited": "N",
+                "visited_date": "",
+            },
+        )
+    if skipped:
+        print(f"Skipped {skipped} Auburn row(s) missing a name or geometry.", file=sys.stderr)
+    return new_parks
+
+
 def sync_parks() -> list[dict]:
     """Fetch from all sources. Existing CSV rows are kept exactly as-is (order and
     edits untouched); only parks not already present are appended."""
@@ -1164,6 +1226,8 @@ def sync_parks() -> list[dict]:
     new_des_moines = fetch_new_des_moines_parks(existing_keys)
     existing_keys |= {(p["name"], p["address"]) for p in new_des_moines}
     new_federal_way = fetch_new_federal_way_parks(existing_keys)
+    existing_keys |= {(p["name"], p["address"]) for p in new_federal_way}
+    new_auburn = fetch_new_auburn_parks(existing_keys)
     new_parks = (
         new_seattle
         + new_shoreline
@@ -1179,6 +1243,7 @@ def sync_parks() -> list[dict]:
         + new_kent
         + new_des_moines
         + new_federal_way
+        + new_auburn
     )
     if existing:
         print(f"Found {len(new_parks)} new park(s) to add to the existing {len(existing)}.")
