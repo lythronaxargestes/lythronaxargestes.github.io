@@ -150,6 +150,21 @@ Extract park names/addresses from these sources:
     list whose first item is the street address, geocoded via the free US
     Census geocoder (no coordinates anywhere on either the directory or
     individual pages).
+  - Woodinville: its "Facilities" booking page (a CivicPlus widget) only
+    renders 5 of the city's facilities by default (the rest are paginated
+    behind a JS-driven AJAX search with no working plain-GET or query-string
+    override found), and 2 of those 5 aren't parks at all (a community center
+    and a plaza) — so rather than fight that pagination, this hits each
+    facility's own detail page directly by ID (/Facilities/Facility/Details/
+    {id}, which resolves fine without the name slug in the URL). The city
+    states it has exactly "three community and five neighborhood parks," and
+    those 8 IDs were found by direct enumeration and cross-checked against
+    that count, so they're hardcoded rather than re-discovered by crawling a
+    paginated listing every run. Each detail page has a clean name (the
+    page's first <h2>) and a schema.org/hCard address (street-address/
+    locality/postal-code spans); two parks' addresses are only a street name
+    with no house number (Tanglin Ridge Park, Stonehill Meadows Park), so
+    those are expected to fail Census geocoding and be skipped.
 
 Dog parks and cemeteries are excluded from every source (by a name-keyword
 check applied after fetching, not per-source) — this project tracks parks
@@ -219,6 +234,8 @@ LAKE_FOREST_PARK_URL = "https://services7.arcgis.com/LD3i16TenysvoOyS/arcgis/res
 KENMORE_URL = "https://gwa.kenmorewa.gov/arcgis/rest/services/Parks/FeatureServer/20/query"
 BOTHELL_BASE_URL = "https://www.bothellwa.gov"
 BOTHELL_LIST_URL = "https://www.bothellwa.gov/250/Parks"
+WOODINVILLE_DETAIL_URL = "https://www.woodinville.gov/Facilities/Facility/Details/{}"
+WOODINVILLE_PARK_IDS = (4, 5, 6, 7, 14, 15, 16, 17)
 EXCLUDED_NAME_KEYWORDS = ("dog park", "cemetery", "cemetary")
 EXCLUDED_NAME_EXCEPTIONS = {("Grand Army of the Republic Cemetery", "Seattle")}
 USER_AGENT = "seattle-parks-map-script/1.0 (personal park-tracking project)"
@@ -1368,10 +1385,19 @@ def _bothell_park_links(page_html: str) -> list[tuple[str, str]]:
     return links
 
 
+BOTHELL_ADDRESS_RE = re.compile(r"^(.*?),\s*Bothell,\s*WA\s*(\d{5})$")
+
+
 def _parse_bothell_park_page(page_html: str) -> str:
     """Extract the street address from an individual park page: an "Address"
-    heading is always followed by a bullet list whose first item is the address."""
-    match = re.search(r">Address\s*</h2>\s*<ul>\s*<li[^>]*>(.*?)</li>", page_html, re.DOTALL)
+    heading (sometimes followed by a literal "&nbsp;" before the closing tag) is
+    always followed by a bullet list whose first item is the address, including a
+    ", Bothell, WA <zip>" suffix that the caller splits off separately."""
+    match = re.search(
+        r"<h2[^>]*>\s*Address(?:&nbsp;)?\s*</h2>\s*<ul[^>]*>\s*<li[^>]*>(.*?)</li>",
+        page_html,
+        re.DOTALL,
+    )
     if not match:
         return ""
     return html.unescape(re.sub(r"<[^>]+>", "", match.group(1))).strip()
@@ -1392,7 +1418,9 @@ def fetch_new_bothell_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         page = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=30)
         page.raise_for_status()
         time.sleep(0.2)
-        address = _parse_bothell_park_page(page.text)
+        raw_address = _parse_bothell_park_page(page.text)
+        addr_match = BOTHELL_ADDRESS_RE.match(raw_address)
+        address = addr_match.group(1) if addr_match else raw_address
         if (name, address) in existing_keys:
             continue
         geocoded = _geocode_census(address, "Bothell") if address else None
@@ -1414,6 +1442,67 @@ def fetch_new_bothell_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         )
     if skipped:
         print(f"Skipped {skipped} Bothell park(s) with no address or that couldn't be geocoded.", file=sys.stderr)
+    return new_parks
+
+
+def _parse_woodinville_park_page(page_html: str) -> tuple[str, str, str]:
+    """Extract (name, address, zip_code) from a facility detail page: the name is
+    the page's first <h2>; the address is the schema.org/hCard street-address and
+    postal-code spans."""
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(page_html, "html.parser")
+    name_tag = soup.find("h2")
+    name = name_tag.get_text(strip=True) if name_tag else ""
+    street = soup.select_one(".street-address")
+    postal = soup.select_one(".postal-code")
+    address = street.get_text(strip=True) if street else ""
+    zip_code = postal.get_text(strip=True) if postal else ""
+    return name, address, zip_code
+
+
+def fetch_new_woodinville_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+    """Fetch each of Woodinville's 8 parks directly by facility ID (its
+    "Facilities" booking page only renders 5 facilities by default via a
+    JS-paginated widget, 2 of which aren't parks, so the paginated listing isn't
+    used at all). Geocodes each address via the free Census geocoder (no
+    coordinates on any of these pages); 2 parks with no house number in their
+    address are expected to fail geocoding and get skipped."""
+    new_parks = []
+    skipped = 0
+    for facility_id in WOODINVILLE_PARK_IDS:
+        page = requests.get(
+            WOODINVILLE_DETAIL_URL.format(facility_id),
+            headers={"User-Agent": USER_AGENT},
+            timeout=30,
+        )
+        page.raise_for_status()
+        time.sleep(0.2)
+        name, address, _ = _parse_woodinville_park_page(page.text)
+        if not name:
+            skipped += 1
+            continue
+        if (name, address) in existing_keys:
+            continue
+        geocoded = _geocode_census(address, "Woodinville") if address else None
+        if geocoded is None:
+            skipped += 1
+            continue
+        lat, lon, zip_code = geocoded
+        new_parks.append(
+            {
+                "name": name,
+                "address": address,
+                "city": "Woodinville",
+                "zip_code": zip_code,
+                "latitude": lat,
+                "longitude": lon,
+                "visited": "N",
+                "visited_date": "",
+            },
+        )
+    if skipped:
+        print(f"Skipped {skipped} Woodinville park(s) with no address or that couldn't be geocoded.", file=sys.stderr)
     return new_parks
 
 
@@ -1457,6 +1546,8 @@ def sync_parks() -> list[dict]:
     new_kenmore = fetch_new_kenmore_parks(existing_keys)
     existing_keys |= {(p["name"], p["address"]) for p in new_kenmore}
     new_bothell = fetch_new_bothell_parks(existing_keys)
+    existing_keys |= {(p["name"], p["address"]) for p in new_bothell}
+    new_woodinville = fetch_new_woodinville_parks(existing_keys)
     new_parks = (
         new_seattle
         + new_shoreline
@@ -1476,6 +1567,7 @@ def sync_parks() -> list[dict]:
         + new_lake_forest_park
         + new_kenmore
         + new_bothell
+        + new_woodinville
     )
     new_parks = [
         p
