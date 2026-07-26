@@ -709,6 +709,8 @@ def plot_map(parks: list[dict]) -> None:
         )
     except FileNotFoundError:
         pass
+    latest_park = _latest_visited_park(parks)
+    latest_marker = None
     for p in parks:
         color = VISITED_COLOR if _is_visited(p.get("visited", "N")) else UNVISITED_COLOR
         city_zip = " ".join(part for part in (p["city"], p["zip_code"]) if part)
@@ -718,7 +720,7 @@ def plot_map(parks: list[dict]) -> None:
         if visited_date:
             popup_html += f"<br><b>Visited:</b> {visited_date}"
         popup = folium.Popup(popup_html, max_width=250)
-        folium.CircleMarker(
+        marker = folium.CircleMarker(
             location=[p["latitude"], p["longitude"]],
             radius=MARKER_RADIUS,
             color="#ffffff",
@@ -727,15 +729,22 @@ def plot_map(parks: list[dict]) -> None:
             fill_color=color,
             fill_opacity=0.9,
             popup=popup,
-        ).add_to(m)
+        )
+        marker.add_to(m)
+        if p is latest_park:
+            latest_marker = marker
 
-    latest_park = _latest_visited_park(parks)
-    latest_html = (
-        f'<div style="font-size: 14px; font-weight: 400; margin-top: 4px;">'
-        f"<b>Latest park visited:</b> {latest_park['name']}</div>"
-        if latest_park
-        else ""
-    )
+    if latest_park and latest_marker:
+        goto_marker_js = (
+            f"{m.get_name()}.setView([{latest_park['latitude']}, {latest_park['longitude']}], 16); "
+            f"{latest_marker.get_name()}.openPopup(); return false;"
+        )
+        latest_html = (
+            f'<div style="font-size: 14px; font-weight: 400; margin-top: 4px;">'
+            f'<b>Latest park visited:</b> <a href="#" onclick="{goto_marker_js}">{latest_park["name"]}</a></div>'
+        )
+    else:
+        latest_html = ""
     visited_count = sum(1 for p in parks if _is_visited(p.get("visited", "N")))
     progress_html = (
         f'<div style="font-size: 14px; font-weight: 400; margin-top: 4px;">'
