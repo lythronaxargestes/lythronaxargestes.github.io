@@ -52,6 +52,15 @@ Extract park names/addresses from three sources:
     for the name, the next plain <h2> for the address, and an embedded
     Google Maps iframe URL for coordinates (!2d<lon>!3d<lat>) — no geocoding
     needed.
+  - Tukwila: its own ArcGIS Server (maps.tukwilawa.gov) is unreachable (TLS
+    cert expired, and the Web Adaptor itself reports "Could not access any
+    GIS Server machines" even bypassing that), likely a decommissioned
+    "legacy" system, so scraped live from the city's own parks directory page
+    instead. The park name is each page's plain <h1>; the address is plain
+    text after a "Location:" label (no consistent class/tag — sometimes bare
+    text, sometimes wrapped in a Google Maps link), bounded by the enclosing
+    </p> and any trailing \xa0. No coordinates anywhere on the page, so each
+    address is geocoded via the same free Census geocoder as Edmonds.
 
 Writes everything to a CSV with a Visited (Y/N) column and a Visited Date
 (YYYY-MM-DD) column, then plots it on an interactive map, titled "Seattle
@@ -105,6 +114,7 @@ BELLEVUE_BASE_URL = "https://bellevuewa.gov"
 BELLEVUE_LIST_URL = "https://bellevuewa.gov/city-government/departments/parks/parks-and-trails/parks"
 BURIEN_BASE_URL = "https://www.burienwa.gov"
 BURIEN_LIST_URL = "https://www.burienwa.gov/residents/parks_recreation_cultural_services/city_parks_trails_facilities"
+TUKWILA_LIST_URL = "https://www.tukwilawa.gov/departments/parks-and-recreation/parks-and-trails/"
 USER_AGENT = "seattle-parks-map-script/1.0 (personal park-tracking project)"
 CSV_PATH = "seattle_parks.csv"
 MAP_PATH = "seattle_parks_map.html"
@@ -733,6 +743,86 @@ def fetch_new_burien_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     return new_parks
 
 
+def _tukwila_park_links(page_html: str) -> list[str]:
+    """Extract unique individual park page URLs from the directory listing page."""
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(page_html, "html.parser")
+    pattern = re.compile(
+        r"^https://www\.tukwilawa\.gov/departments/parks-and-recreation/parks-and-trails/[a-z0-9-]+/$",
+    )
+    hrefs = {a["href"] for a in soup.find_all("a", href=pattern)}
+    return sorted(hrefs)
+
+
+def _parse_tukwila_park_page(page_html: str) -> tuple[str, str] | None:
+    """Extract (name, address) from an individual park page. The name is the plain
+    <h1>; the address follows a "Location:" label in the body with no consistent
+    markup (sometimes bare text, sometimes wrapped in a Google Maps link), so this
+    scans raw HTML after the label, bounded by the enclosing </p> (a new paragraph
+    always starts the park description) and any trailing \xa0 within it."""
+    title_match = re.search(r"<h1>([^<]+)</h1>", page_html)
+    if not title_match:
+        return None
+    name = html.unescape(title_match.group(1)).strip()
+    if not name:
+        return None
+
+    body = page_html[title_match.end() :]
+    location_idx = body.find("Location:")
+    if location_idx < 0:
+        return name, ""
+    window = body[location_idx + len("Location:") : location_idx + len("Location:") + 600]
+    p_end = window.find("</p>")
+    if p_end >= 0:
+        window = window[:p_end]
+    window = re.sub(r"<[^>]+>", "", window)
+    address = html.unescape(window).split("\xa0")[0].strip()
+    return name, address
+
+
+def fetch_new_tukwila_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+    """Scrape Tukwila's parks directory page plus each individual park page it links
+    to (~18 of them), geocoding each address via the free Census geocoder (the page
+    has no coordinates), returning only ones not already in existing_keys."""
+    resp = requests.get(TUKWILA_LIST_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
+    resp.raise_for_status()
+
+    new_parks = []
+    skipped = 0
+    for url in _tukwila_park_links(resp.text):
+        page = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=30)
+        page.raise_for_status()
+        time.sleep(0.2)
+        parsed = _parse_tukwila_park_page(page.text)
+        if parsed is None:
+            skipped += 1
+            continue
+        name, address = parsed
+        if (name, address) in existing_keys:
+            continue
+        geocoded = _geocode_census(address, "Tukwila") if address else None
+        if geocoded is None:
+            skipped += 1
+            continue
+        lat, lon, zip_code = geocoded
+        new_parks.append(
+            {
+                "name": name,
+                "address": address,
+                "city": "Tukwila",
+                "zip_code": zip_code,
+                "latitude": lat,
+                "longitude": lon,
+                "visited": "N",
+                "visited_date": "",
+            },
+        )
+    if skipped:
+        print(f"Skipped {skipped} Tukwila park(s) with no address or that couldn't be geocoded.", file=sys.stderr)
+    return new_parks
+
+
 def sync_parks() -> list[dict]:
     """Fetch from all sources. Existing CSV rows are kept exactly as-is (order and
     edits untouched); only parks not already present are appended."""
@@ -755,6 +845,8 @@ def sync_parks() -> list[dict]:
     new_medina = fetch_new_medina_parks(existing_keys)
     existing_keys |= {(p["name"], p["address"]) for p in new_medina}
     new_burien = fetch_new_burien_parks(existing_keys)
+    existing_keys |= {(p["name"], p["address"]) for p in new_burien}
+    new_tukwila = fetch_new_tukwila_parks(existing_keys)
     new_parks = (
         new_seattle
         + new_shoreline
@@ -765,6 +857,7 @@ def sync_parks() -> list[dict]:
         + new_redmond
         + new_medina
         + new_burien
+        + new_tukwila
     )
     if existing:
         print(f"Found {len(new_parks)} new park(s) to add to the existing {len(existing)}.")
