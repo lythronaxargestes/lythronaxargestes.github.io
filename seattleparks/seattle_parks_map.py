@@ -1644,11 +1644,13 @@ def plot_map(parks: list[dict]) -> None:
     visited_count = sum(1 for p in parks if _is_visited(p.get("visited", "N")))
     seattle_parks = [p for p in parks if p["city"] == "Seattle"]
     seattle_visited_count = sum(1 for p in seattle_parks if _is_visited(p.get("visited", "N")))
+    seattle_pct = (seattle_visited_count / len(seattle_parks) * 100) if seattle_parks else 0.0
+    metro_pct = (visited_count / len(parks) * 100) if parks else 0.0
     progress_html = (
         f'<div style="font-size: 14px; font-weight: 400; margin-top: 4px;">'
-        f"<b>Seattle progress:</b> {seattle_visited_count} / {len(seattle_parks)}</div>"
+        f"<b>Seattle progress:</b> {seattle_visited_count} / {len(seattle_parks)} ({seattle_pct:.1f}%)</div>"
         f'<div style="font-size: 14px; font-weight: 400;">'
-        f"<b>Seattle Metro Area progress:</b> {visited_count} / {len(parks)}</div>"
+        f"<b>Seattle Metro Area progress:</b> {visited_count} / {len(parks)} ({metro_pct:.1f}%)</div>"
     )
     title_html = f"""
     <div style="position: fixed; top: 16px; left: 60px; z-index: 1000;
