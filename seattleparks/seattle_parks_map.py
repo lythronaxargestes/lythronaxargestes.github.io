@@ -1679,6 +1679,7 @@ def plot_map(parks: list[dict]) -> None:
         pass
     latest_park = _latest_visited_park(parks)
     latest_marker = None
+    search_index = []
     for p in parks:
         color = VISITED_COLOR if _is_visited(p.get("visited", "N")) else UNVISITED_COLOR
         city_zip = " ".join(part for part in (p["city"], p["zip_code"]) if part)
@@ -1699,6 +1700,9 @@ def plot_map(parks: list[dict]) -> None:
             popup=popup,
         )
         marker.add_to(m)
+        search_index.append(
+            {"name": p["name"], "lat": p["latitude"], "lon": p["longitude"], "marker": marker.get_name()},
+        )
         if p is latest_park:
             latest_marker = marker
 
@@ -1724,6 +1728,19 @@ def plot_map(parks: list[dict]) -> None:
         f'<div style="font-size: 14px; font-weight: 400;">'
         f"<b>Seattle Metro Area progress:</b> {visited_count} / {len(parks)} ({metro_pct:.1f}%)</div>"
     )
+    search_html = """
+    <div style="position: relative; margin-top: 8px;">
+      <input id="parkSearchInput" type="text" placeholder="Search parks..." autocomplete="off"
+             style="width: 100%; box-sizing: border-box; font-size: 14px; font-weight: 400;
+                    padding: 6px 8px; border: 1px solid #c3c2b7; border-radius: 4px;
+                    font-family: system-ui, -apple-system, sans-serif;">
+      <div id="parkSearchResults"
+           style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: -1px;
+                  background: #fcfcfb; border: 1px solid #c3c2b7; border-radius: 0 0 4px 4px;
+                  max-height: 220px; overflow-y: auto; z-index: 1001;">
+      </div>
+    </div>
+    """
     title_html = f"""
     <div style="position: fixed; top: 16px; left: 60px; z-index: 1000;
                 background: #fcfcfb; padding: 8px 22px; border: 1px solid #c3c2b7;
@@ -1732,9 +1749,62 @@ def plot_map(parks: list[dict]) -> None:
       {MAP_TITLE}
       {latest_html}
       {progress_html}
+      {search_html}
     </div>
     """
     m.get_root().html.add_child(folium.Element(title_html))
+
+    search_index_json = json.dumps(search_index)
+    search_script = f"""
+    <script>
+    (function() {{
+        var parksSearchIndex = {search_index_json};
+        var input = document.getElementById("parkSearchInput");
+        var results = document.getElementById("parkSearchResults");
+        input.addEventListener("input", function() {{
+            var query = input.value.trim().toLowerCase();
+            results.innerHTML = "";
+            if (!query) {{
+                results.style.display = "none";
+                return;
+            }}
+            var matches = parksSearchIndex.filter(function(p) {{
+                return p.name.toLowerCase().indexOf(query) !== -1;
+            }}).slice(0, 8);
+            if (matches.length === 0) {{
+                results.style.display = "none";
+                return;
+            }}
+            matches.forEach(function(p) {{
+                var item = document.createElement("div");
+                item.textContent = p.name;
+                item.style.padding = "6px 8px";
+                item.style.cursor = "pointer";
+                item.style.fontSize = "14px";
+                item.style.fontWeight = "400";
+                item.style.fontFamily = "system-ui, -apple-system, sans-serif";
+                item.addEventListener("mouseenter", function() {{ item.style.background = "#eeeeea"; }});
+                item.addEventListener("mouseleave", function() {{ item.style.background = "transparent"; }});
+                item.addEventListener("click", function() {{
+                    {m.get_name()}.setView([p.lat, p.lon], 16);
+                    window[p.marker].openPopup();
+                    input.value = "";
+                    results.innerHTML = "";
+                    results.style.display = "none";
+                }});
+                results.appendChild(item);
+            }});
+            results.style.display = "block";
+        }});
+        document.addEventListener("click", function(e) {{
+            if (e.target !== input) {{
+                results.style.display = "none";
+            }}
+        }});
+    }})();
+    </script>
+    """
+    m.get_root().html.add_child(folium.Element(search_script))
 
     legend_html = f"""
     <div style="position: fixed; bottom: 30px; left: 30px; z-index: 1000;
