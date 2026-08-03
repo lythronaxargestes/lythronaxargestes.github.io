@@ -269,12 +269,13 @@ def _is_visited(value: str) -> bool:
     return str(value).strip().upper() == "Y"
 
 
-def _latest_visited_park(parks: list[dict]) -> dict | None:
-    """Return the park with the most recent visited_date, or None if no park has one."""
+def _latest_visited_parks(parks: list[dict]) -> list[dict]:
+    """Return all parks sharing the most recent visited_date, or [] if no park has one."""
     dated = [p for p in parks if str(p.get("visited_date", "")).strip()]
     if not dated:
-        return None
-    return max(dated, key=lambda p: p["visited_date"])
+        return []
+    latest_date = max(p["visited_date"] for p in dated)
+    return [p for p in dated if p["visited_date"] == latest_date]
 
 
 def _format_visited_date(value: str) -> str | None:
@@ -1677,8 +1678,9 @@ def plot_map(parks: list[dict]) -> None:
         )
     except FileNotFoundError:
         pass
-    latest_park = _latest_visited_park(parks)
-    latest_marker = None
+    latest_parks = _latest_visited_parks(parks)
+    latest_ids = {id(p) for p in latest_parks}
+    latest_markers = {}
     search_index = []
     for p in parks:
         color = VISITED_COLOR if _is_visited(p.get("visited", "N")) else UNVISITED_COLOR
@@ -1703,17 +1705,25 @@ def plot_map(parks: list[dict]) -> None:
         search_index.append(
             {"name": p["name"], "lat": p["latitude"], "lon": p["longitude"], "marker": marker.get_name()},
         )
-        if p is latest_park:
-            latest_marker = marker
+        if id(p) in latest_ids:
+            latest_markers[id(p)] = marker
 
-    if latest_park and latest_marker:
-        goto_marker_js = (
-            f"{m.get_name()}.setView([{latest_park['latitude']}, {latest_park['longitude']}], 16); "
-            f"{latest_marker.get_name()}.openPopup(); return false;"
-        )
+    if latest_parks and latest_markers:
+        links = []
+        for lp in latest_parks:
+            marker = latest_markers.get(id(lp))
+            if not marker:
+                continue
+            goto_marker_js = (
+                f"{m.get_name()}.setView([{lp['latitude']}, {lp['longitude']}], 16); "
+                f"{marker.get_name()}.openPopup(); return false;"
+            )
+            links.append(f'<div><a href="#" onclick="{goto_marker_js}">{lp["name"]}</a></div>')
+        label = "Latest parks visited:" if len(links) > 1 else "Latest park visited:"
         latest_html = (
-            f'<div style="font-size: 14px; font-weight: 400; margin-top: 4px;">'
-            f'<b>Latest park visited:</b> <a href="#" onclick="{goto_marker_js}">{latest_park["name"]}</a></div>'
+            f'<div style="font-size: 14px; font-weight: 400; margin-top: 4px; display: flex;">'
+            f'<b style="flex-shrink: 0;">{label}</b>'
+            f'<div style="margin-left: 4px;">{"".join(links)}</div></div>'
         )
     else:
         latest_html = ""
