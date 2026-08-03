@@ -193,7 +193,7 @@ Seattle city logo (seattle_favicon.png, embedded as a base64 data URI so the
 map stays a single self-contained HTML file) as the tab's favicon.
 
 Usage:
-    pip install requests folium beautifulsoup4 lxml
+    pip install requests folium beautifulsoup4 lxml tqdm
 
     # First run: fetch parks from the API, write the CSV, plot the map.
     python3 seattle_parks_map.py
@@ -221,7 +221,10 @@ import sys
 import time
 from datetime import datetime
 
+import folium
 import requests
+from bs4 import BeautifulSoup
+from tqdm import tqdm
 
 API_URL = "https://data.seattle.gov/resource/ajyh-m2d3.json"
 SHORELINE_URL = "https://gis.shorelinewa.gov/server/rest/services/PublicFacing/Parks/MapServer/5/query"
@@ -251,6 +254,10 @@ BOTHELL_BASE_URL = "https://www.bothellwa.gov"
 BOTHELL_LIST_URL = "https://www.bothellwa.gov/250/Parks"
 WOODINVILLE_DETAIL_URL = "https://www.woodinville.gov/Facilities/Facility/Details/{}"
 WOODINVILLE_PARK_IDS = (4, 5, 6, 7, 14, 15, 16, 17)
+FEDERAL_WAY_ADDRESS_RE = re.compile(r"^(.*?),\s*Federal Way,\s*WA\s*(\d{5})$")
+FEDERAL_WAY_COORD_RE = re.compile(r"cp=([\-0-9.]+)~([\-0-9.]+)")
+LAKE_FOREST_PARK_ADDRESS_RE = re.compile(r"^(.*?),\s*Lake Forest Park,\s*WA\s*(\d{5})$")
+BOTHELL_ADDRESS_RE = re.compile(r"^(.*?),\s*Bothell,\s*WA\s*(\d{5})$")
 EXCLUDED_NAME_KEYWORDS = ("dog park", "cemetery", "cemetary", "gym")
 
 
@@ -267,7 +274,11 @@ def _is_excluded_name(name: str, city: str) -> bool:
     if any(kw in lower for kw in EXCLUDED_NAME_KEYWORDS):
         return True
     return "center" in lower and "park" not in lower
+
+
 USER_AGENT = "seattle-parks-map-script/1.0 (personal park-tracking project)"
+MAX_FETCH_ATTEMPTS = 3
+RETRY_BACKOFF_SECONDS = 5
 CSV_PATH = "seattle_parks.csv"
 BACKUP_CSV_PATH = "seattle_parks_missing_data_backup.csv"
 MAP_PATH = "seattle_parks_map.html"
@@ -381,10 +392,32 @@ def _apply_backup_data(parks: list[dict]) -> list[dict]:
     return [p for p in enriched if not _is_excluded_name(p["name"], p["city"])]
 
 
+def _get_with_retries(url: str, **kwargs) -> requests.Response:
+    """GET url, retrying up to MAX_FETCH_ATTEMPTS times (with a growing backoff)
+    on timeouts/connection errors or 5xx server errors -- transient failures
+    seen in practice (e.g. bellevuewa.gov intermittently stalling partway
+    through its ~80 individual park pages). Raises immediately on a non-5xx
+    HTTP error (e.g. 404), since retrying won't help, or on the final
+    attempt's failure otherwise."""
+    for attempt in range(1, MAX_FETCH_ATTEMPTS + 1):
+        try:
+            resp = requests.get(url, **kwargs)
+            resp.raise_for_status()
+            return resp
+        except requests.exceptions.HTTPError:
+            if resp.status_code < 500 or attempt == MAX_FETCH_ATTEMPTS:
+                raise
+        except requests.exceptions.RequestException:
+            if attempt == MAX_FETCH_ATTEMPTS:
+                raise
+        print(f"Retrying {url} (attempt {attempt} failed)...", file=sys.stderr)
+        time.sleep(RETRY_BACKOFF_SECONDS * attempt)
+    raise AssertionError("unreachable: last attempt always returns or raises")
+
+
 def fetch_new_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     """Pull parks from the Socrata API, returning only ones not already in existing_keys."""
-    resp = requests.get(API_URL, params={"$limit": 1000}, timeout=30)
-    resp.raise_for_status()
+    resp = _get_with_retries(API_URL, params={"$limit": 1000}, timeout=30)
     rows = resp.json()
 
     new_parks = []
@@ -412,6 +445,7 @@ def fetch_new_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         )
     if skipped:
         print(f"Skipped {skipped} row(s) missing a name or coordinates.", file=sys.stderr)
+    print("Finished fetching Seattle.")
     return new_parks
 
 
@@ -436,7 +470,7 @@ def fetch_new_shoreline_parks(existing_keys: set[tuple[str, str]]) -> list[dict]
     """Pull named park polygons from Shoreline's public ArcGIS Server, returning only
     ones not already in existing_keys. Each park's location is its polygon centroid,
     since this layer stores boundaries, not points."""
-    resp = requests.get(
+    resp = _get_with_retries(
         SHORELINE_URL,
         params={
             "where": "NAME IS NOT NULL",
@@ -447,7 +481,6 @@ def fetch_new_shoreline_parks(existing_keys: set[tuple[str, str]]) -> list[dict]
         },
         timeout=30,
     )
-    resp.raise_for_status()
     data = resp.json()
 
     new_parks = []
@@ -477,30 +510,35 @@ def fetch_new_shoreline_parks(existing_keys: set[tuple[str, str]]) -> list[dict]
         )
     if skipped:
         print(f"Skipped {skipped} Shoreline row(s) missing a name or geometry.", file=sys.stderr)
+    print("Finished fetching Shoreline.")
     return new_parks
 
 
 def _geocode_census(address: str, city: str, state: str = "WA") -> tuple[float, float, str] | None:
     """Look up (latitude, longitude, zip) for a one-line address via the free US
     Census geocoder. Returns None if it can't find a match (e.g. an address with
-    no house number or an unrecognized cross-street)."""
-    resp = requests.get(
+    no house number or an unrecognized cross-street), or if its best match lands
+    in a different city than expected -- the geocoder doesn't always reject a bad
+    address outright; it can instead return a confident-looking match in some
+    other, same-named-street city (e.g. it once matched a Tukwila intersection
+    address to a street in Bellingham, ~90 miles north)."""
+    resp = _get_with_retries(
         CENSUS_GEOCODE_URL,
         params={"address": f"{address}, {city}, {state}", "benchmark": "Public_AR_Current", "format": "json"},
         timeout=15,
     )
-    resp.raise_for_status()
     matches = resp.json()["result"]["addressMatches"]
     if not matches:
         return None
     match = matches[0]
+    matched_city = match["addressComponents"].get("city", "")
+    if matched_city.strip().casefold() != city.strip().casefold():
+        return None
     return match["coordinates"]["y"], match["coordinates"]["x"], match["addressComponents"].get("zip", "")
 
 
 def _bellevue_park_links(html: str) -> list[str]:
     """Extract unique individual park page URLs from the directory listing page."""
-    from bs4 import BeautifulSoup
-
     soup = BeautifulSoup(html, "html.parser")
     pattern = re.compile(r"^/city-government/departments/parks/parks-and-trails/parks/[a-z0-9-]+$")
     hrefs = {a["href"] for a in soup.find_all("a", href=pattern)}
@@ -511,8 +549,6 @@ def _parse_bellevue_park_page(html: str) -> dict | None:
     """Extract name/address/coordinates from an individual park page. Returns None
     for non-park informational pages (e.g. "Beach Parks with Lifeguards"), which
     have no latitude/longitude meta tags."""
-    from bs4 import BeautifulSoup
-
     soup = BeautifulSoup(html, "html.parser")
     lat_tag = soup.find("meta", attrs={"property": "latitude"})
     lon_tag = soup.find("meta", attrs={"property": "longitude"})
@@ -541,15 +577,13 @@ def _parse_bellevue_park_page(html: str) -> dict | None:
 def fetch_new_bellevue_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     """Scrape Bellevue's parks directory page plus each individual park page it
     links to (~80 of them), returning only ones not already in existing_keys."""
-    resp = requests.get(BELLEVUE_LIST_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
-    resp.raise_for_status()
+    resp = _get_with_retries(BELLEVUE_LIST_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
     links = _bellevue_park_links(resp.text)
 
     new_parks = []
     skipped = 0
-    for url in links:
-        page = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=30)
-        page.raise_for_status()
+    for url in tqdm(links, desc="Bellevue pages"):
+        page = _get_with_retries(url, headers={"User-Agent": USER_AGENT}, timeout=30)
         time.sleep(0.2)
         park = _parse_bellevue_park_page(page.text)
         if park is None:
@@ -571,6 +605,7 @@ def fetch_new_bellevue_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         )
     if skipped:
         print(f"Skipped {skipped} Bellevue page(s) with no park coordinates.", file=sys.stderr)
+    print("Finished fetching Bellevue.")
     return new_parks
 
 
@@ -631,8 +666,6 @@ def _parse_civicplus_map_listing(page_html: str, base_url: str) -> list[dict]:
 def _parse_civicplus_park_page(page_html: str, default_city: str) -> dict:
     """Extract the schema.org PostalAddress microdata from an individual park page
     (same markup convention on both Mercer Island's and Medina's sites)."""
-    from bs4 import BeautifulSoup
-
     soup = BeautifulSoup(page_html, "html.parser")
 
     def _field(itemprop: str) -> str:
@@ -652,13 +685,12 @@ def _fetch_new_civicplus_parks(
     """Shared fetch logic for CivicPlus-family sites (Mercer Island, Medina): pull
     names/coordinates from the listing page's embedded map JSON, then each park's
     own page for its address, returning only ones not already in existing_keys."""
-    resp = requests.get(list_url, headers={"User-Agent": USER_AGENT}, timeout=30)
-    resp.raise_for_status()
+    resp = _get_with_retries(list_url, headers={"User-Agent": USER_AGENT}, timeout=30)
 
     new_parks = []
-    for park in _parse_civicplus_map_listing(resp.text, base_url):
-        page = requests.get(park["url"], headers={"User-Agent": USER_AGENT}, timeout=30)
-        page.raise_for_status()
+    parks = _parse_civicplus_map_listing(resp.text, base_url)
+    for park in tqdm(parks, desc=f"{default_city} pages"):
+        page = _get_with_retries(park["url"], headers={"User-Agent": USER_AGENT}, timeout=30)
         time.sleep(0.2)
         details = _parse_civicplus_park_page(page.text, default_city)
         if (park["name"], details["address"]) in existing_keys:
@@ -680,12 +712,16 @@ def _fetch_new_civicplus_parks(
 
 def fetch_new_mercer_island_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     """Fetch Mercer Island's parks listing page and each linked park page."""
-    return _fetch_new_civicplus_parks(existing_keys, MERCER_ISLAND_LIST_URL, MERCER_ISLAND_BASE_URL, "Mercer Island")
+    new_parks = _fetch_new_civicplus_parks(existing_keys, MERCER_ISLAND_LIST_URL, MERCER_ISLAND_BASE_URL, "Mercer Island")
+    print("Finished fetching Mercer Island.")
+    return new_parks
 
 
 def fetch_new_medina_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     """Fetch Medina's parks listing page and each linked park page."""
-    return _fetch_new_civicplus_parks(existing_keys, MEDINA_LIST_URL, MEDINA_BASE_URL, "Medina")
+    new_parks = _fetch_new_civicplus_parks(existing_keys, MEDINA_LIST_URL, MEDINA_BASE_URL, "Medina")
+    print("Finished fetching Medina.")
+    return new_parks
 
 
 def _normalize_allcaps_text(text: str) -> str:
@@ -710,7 +746,7 @@ def fetch_new_kirkland_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     itself is WAF-blocked, same as shorelinewa.gov), filtered to CATEGORY='PARKS'
     to exclude raw open-space parcels, a cemetery, and a pool. Returns only ones
     not already in existing_keys. Each park's location is its polygon centroid."""
-    resp = requests.get(
+    resp = _get_with_retries(
         KIRKLAND_URL,
         params={
             "where": "CATEGORY='PARKS'",
@@ -721,7 +757,6 @@ def fetch_new_kirkland_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         },
         timeout=30,
     )
-    resp.raise_for_status()
     data = resp.json()
 
     new_parks = []
@@ -751,6 +786,7 @@ def fetch_new_kirkland_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         )
     if skipped:
         print(f"Skipped {skipped} Kirkland row(s) missing a name or geometry.", file=sys.stderr)
+    print("Finished fetching Kirkland.")
     return new_parks
 
 
@@ -760,7 +796,7 @@ def fetch_new_redmond_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     across multiple blank-address segments, so this also dedups within its own
     batch, not just against existing_keys. Each park's location is its polygon
     centroid."""
-    resp = requests.get(
+    resp = _get_with_retries(
         REDMOND_URL,
         params={
             "where": "1=1",
@@ -771,7 +807,6 @@ def fetch_new_redmond_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         },
         timeout=30,
     )
-    resp.raise_for_status()
     data = resp.json()
 
     new_parks = []
@@ -804,14 +839,13 @@ def fetch_new_redmond_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         )
     if skipped:
         print(f"Skipped {skipped} Redmond row(s) missing a name or geometry.", file=sys.stderr)
+    print("Finished fetching Redmond.")
     return new_parks
 
 
 def _burien_park_links(page_html: str) -> list[str]:
     """Extract unique individual park page URLs from the directory listing page's
     sidebar navigation."""
-    from bs4 import BeautifulSoup
-
     soup = BeautifulSoup(page_html, "html.parser")
     pattern = re.compile(
         r"^/residents/parks_recreation_cultural_services/city_parks_trails_facilities/[a-z0-9_]+/$",
@@ -851,14 +885,12 @@ def _parse_burien_park_page(page_html: str) -> dict | None:
 def fetch_new_burien_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     """Scrape Burien's parks directory page plus each individual park page it links
     to (~30 of them), returning only ones not already in existing_keys."""
-    resp = requests.get(BURIEN_LIST_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
-    resp.raise_for_status()
+    resp = _get_with_retries(BURIEN_LIST_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
 
     new_parks = []
     skipped = 0
-    for url in _burien_park_links(resp.text):
-        page = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=30)
-        page.raise_for_status()
+    for url in tqdm(_burien_park_links(resp.text), desc="Burien pages"):
+        page = _get_with_retries(url, headers={"User-Agent": USER_AGENT}, timeout=30)
         time.sleep(0.2)
         park = _parse_burien_park_page(page.text)
         if park is None:
@@ -880,13 +912,12 @@ def fetch_new_burien_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         )
     if skipped:
         print(f"Skipped {skipped} Burien page(s) with no park coordinates.", file=sys.stderr)
+    print("Finished fetching Burien.")
     return new_parks
 
 
 def _tukwila_park_links(page_html: str) -> list[str]:
     """Extract unique individual park page URLs from the directory listing page."""
-    from bs4 import BeautifulSoup
-
     soup = BeautifulSoup(page_html, "html.parser")
     pattern = re.compile(
         r"^https://www\.tukwilawa\.gov/departments/parks-and-recreation/parks-and-trails/[a-z0-9-]+/$",
@@ -925,14 +956,12 @@ def fetch_new_tukwila_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     """Scrape Tukwila's parks directory page plus each individual park page it links
     to (~18 of them), geocoding each address via the free Census geocoder (the page
     has no coordinates), returning only ones not already in existing_keys."""
-    resp = requests.get(TUKWILA_LIST_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
-    resp.raise_for_status()
+    resp = _get_with_retries(TUKWILA_LIST_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
 
     new_parks = []
     skipped = 0
-    for url in _tukwila_park_links(resp.text):
-        page = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=30)
-        page.raise_for_status()
+    for url in tqdm(_tukwila_park_links(resp.text), desc="Tukwila pages"):
+        page = _get_with_retries(url, headers={"User-Agent": USER_AGENT}, timeout=30)
         time.sleep(0.2)
         parsed = _parse_tukwila_park_page(page.text)
         if parsed is None:
@@ -960,6 +989,7 @@ def fetch_new_tukwila_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         )
     if skipped:
         print(f"Skipped {skipped} Tukwila park(s) with no address or that couldn't be geocoded.", file=sys.stderr)
+    print("Finished fetching Tukwila.")
     return new_parks
 
 
@@ -985,7 +1015,7 @@ def fetch_new_renton_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     centroid (as with Kirkland/Shoreline/Auburn) rather than being skipped. A
     couple of exact-duplicate records exist in the source data, so this also
     dedups within its own batch, not just against existing_keys."""
-    resp = requests.get(
+    resp = _get_with_retries(
         RENTON_URL,
         params={
             "where": "OWNER='Renton'",
@@ -996,7 +1026,6 @@ def fetch_new_renton_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         },
         timeout=30,
     )
-    resp.raise_for_status()
     data = resp.json()
 
     new_parks = []
@@ -1032,6 +1061,7 @@ def fetch_new_renton_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         )
     if skipped:
         print(f"Skipped {skipped} Renton row(s) missing a name or coordinates.", file=sys.stderr)
+    print("Finished fetching Renton.")
     return new_parks
 
 
@@ -1041,7 +1071,7 @@ def fetch_new_seatac_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     separate Name/Address/City/Zipcode fields, all owned by "City of SeaTac"
     (no regional-dataset filtering needed). Addresses are recased from the
     same all-caps style as Kirkland's layer."""
-    resp = requests.get(
+    resp = _get_with_retries(
         SEATAC_URL,
         params={
             "where": "1=1",
@@ -1052,7 +1082,6 @@ def fetch_new_seatac_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         },
         timeout=30,
     )
-    resp.raise_for_status()
     data = resp.json()
 
     new_parks = []
@@ -1081,6 +1110,7 @@ def fetch_new_seatac_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         )
     if skipped:
         print(f"Skipped {skipped} SeaTac row(s) missing a name or geometry.", file=sys.stderr)
+    print("Finished fetching SeaTac.")
     return new_parks
 
 
@@ -1089,7 +1119,7 @@ def fetch_new_kent_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     a clean parkname/address field pair; addresses are recased from the same
     all-caps style as Kirkland/SeaTac's layers. Both developed and undeveloped
     status parks are included — both are real, currently-existing properties."""
-    resp = requests.get(
+    resp = _get_with_retries(
         KENT_URL,
         params={
             "where": "1=1",
@@ -1100,7 +1130,6 @@ def fetch_new_kent_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         },
         timeout=30,
     )
-    resp.raise_for_status()
     data = resp.json()
 
     new_parks = []
@@ -1129,6 +1158,7 @@ def fetch_new_kent_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         )
     if skipped:
         print(f"Skipped {skipped} Kent row(s) missing a name or geometry.", file=sys.stderr)
+    print("Finished fetching Kent.")
     return new_parks
 
 
@@ -1145,12 +1175,11 @@ def fetch_new_des_moines_parks(existing_keys: set[tuple[str, str]]) -> list[dict
     park's name identically, e.g. "Cecil Powell Park" vs. the polygon layer's
     misspelled "Cecil Powel Park" — mismatches like that are simply left with a
     blank address rather than force-matched)."""
-    address_resp = requests.get(
+    address_resp = _get_with_retries(
         DES_MOINES_ADDRESS_URL,
         params={"where": "1=1", "outFields": "ParkName,SiteAddress", "returnGeometry": "false", "f": "json"},
         timeout=30,
     )
-    address_resp.raise_for_status()
     address_by_key = {}
     for feature in address_resp.json().get("features", []):
         attrs = feature["attributes"]
@@ -1160,7 +1189,7 @@ def fetch_new_des_moines_parks(existing_keys: set[tuple[str, str]]) -> list[dict
             continue
         address_by_key[_des_moines_name_key(raw_name)] = _normalize_allcaps_text(re.sub(r"\s+", " ", raw_address))
 
-    resp = requests.get(
+    resp = _get_with_retries(
         DES_MOINES_PARKS_URL,
         params={
             "where": "ParkType='CITY' AND ActiveFlag=1",
@@ -1171,7 +1200,6 @@ def fetch_new_des_moines_parks(existing_keys: set[tuple[str, str]]) -> list[dict
         },
         timeout=30,
     )
-    resp.raise_for_status()
     data = resp.json()
 
     new_parks = []
@@ -1203,11 +1231,8 @@ def fetch_new_des_moines_parks(existing_keys: set[tuple[str, str]]) -> list[dict
         )
     if skipped:
         print(f"Skipped {skipped} Des Moines row(s) missing a name or geometry.", file=sys.stderr)
+    print("Finished fetching Des Moines.")
     return new_parks
-
-
-FEDERAL_WAY_ADDRESS_RE = re.compile(r"^(.*?),\s*Federal Way,\s*WA\s*(\d{5})$")
-FEDERAL_WAY_COORD_RE = re.compile(r"cp=([\-0-9.]+)~([\-0-9.]+)")
 
 
 def _parse_federal_way_accordion(page_html: str) -> list[dict]:
@@ -1216,8 +1241,6 @@ def _parse_federal_way_accordion(page_html: str) -> list[dict]:
     link encodes direct point coordinates (cp=<lat>~<lon>); for the rest, only the
     plain "Location:" address text is returned (latitude/longitude left as None),
     for the caller to geocode."""
-    from bs4 import BeautifulSoup
-
     soup = BeautifulSoup(page_html, "html.parser")
     parks = []
     for item in soup.select("div.accordion-item"):
@@ -1260,8 +1283,7 @@ def fetch_new_federal_way_parks(existing_keys: set[tuple[str, str]]) -> list[dic
     via the free Census geocoder from their Location address instead. A park
     with neither (BPA Trail, whose "location" is just descriptive text with no
     street address) is skipped."""
-    resp = requests.get(FEDERAL_WAY_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
-    resp.raise_for_status()
+    resp = _get_with_retries(FEDERAL_WAY_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
 
     new_parks = []
     skipped = 0
@@ -1293,6 +1315,7 @@ def fetch_new_federal_way_parks(existing_keys: set[tuple[str, str]]) -> list[dic
         )
     if skipped:
         print(f"Skipped {skipped} Federal Way park(s) with no address or that couldn't be geocoded.", file=sys.stderr)
+    print("Finished fetching Federal Way.")
     return new_parks
 
 
@@ -1302,7 +1325,7 @@ def fetch_new_auburn_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     All owned by "COA" (no regional-dataset filtering needed). Name and address
     are recased from the same all-caps style as Kirkland/SeaTac/Kent's layers.
     Each park's location is its polygon centroid, as with Kirkland/Shoreline."""
-    resp = requests.get(
+    resp = _get_with_retries(
         AUBURN_URL,
         params={
             "where": "1=1",
@@ -1313,7 +1336,6 @@ def fetch_new_auburn_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         },
         timeout=30,
     )
-    resp.raise_for_status()
     data = resp.json()
 
     new_parks = []
@@ -1343,10 +1365,8 @@ def fetch_new_auburn_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         )
     if skipped:
         print(f"Skipped {skipped} Auburn row(s) missing a name or geometry.", file=sys.stderr)
+    print("Finished fetching Auburn.")
     return new_parks
-
-
-LAKE_FOREST_PARK_ADDRESS_RE = re.compile(r"^(.*?),\s*Lake Forest Park,\s*WA\s*(\d{5})$")
 
 
 def fetch_new_lake_forest_park_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
@@ -1355,7 +1375,7 @@ def fetch_new_lake_forest_park_parks(existing_keys: set[tuple[str, str]]) -> lis
     path as Kent/SeaTac). Only 7 named parks, all clean. Each address already
     includes a ", Lake Forest Park, WA <zip>" suffix that's split off; each park's
     location is its polygon centroid, as with Kirkland/Shoreline/Auburn."""
-    resp = requests.get(
+    resp = _get_with_retries(
         LAKE_FOREST_PARK_URL,
         params={
             "where": "1=1",
@@ -1366,7 +1386,6 @@ def fetch_new_lake_forest_park_parks(existing_keys: set[tuple[str, str]]) -> lis
         },
         timeout=30,
     )
-    resp.raise_for_status()
     data = resp.json()
 
     new_parks = []
@@ -1398,6 +1417,7 @@ def fetch_new_lake_forest_park_parks(existing_keys: set[tuple[str, str]]) -> lis
         )
     if skipped:
         print(f"Skipped {skipped} Lake Forest Park row(s) missing a name or geometry.", file=sys.stderr)
+    print("Finished fetching Lake Forest Park.")
     return new_parks
 
 
@@ -1410,7 +1430,7 @@ def fetch_new_kenmore_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     address field exists on this layer, so address is always blank. Each park's
     location is its polygon centroid, as with Kirkland/Shoreline/Auburn/Lake
     Forest Park."""
-    resp = requests.get(
+    resp = _get_with_retries(
         KENMORE_URL,
         params={
             "where": "OWNER='City of Kenmore'",
@@ -1421,7 +1441,6 @@ def fetch_new_kenmore_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         },
         timeout=30,
     )
-    resp.raise_for_status()
     data = resp.json()
 
     new_parks = []
@@ -1450,6 +1469,7 @@ def fetch_new_kenmore_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         )
     if skipped:
         print(f"Skipped {skipped} Kenmore row(s) missing a name or geometry.", file=sys.stderr)
+    print("Finished fetching Kenmore.")
     return new_parks
 
 
@@ -1457,8 +1477,6 @@ def _bothell_park_links(page_html: str) -> list[tuple[str, str]]:
     """Extract (name, url) for each park listed in the Parks page's own left-nav
     accordion, scoped to that page's child pages specifically (data-parent="250")
     so it can't pick up unrelated site links."""
-    from bs4 import BeautifulSoup
-
     soup = BeautifulSoup(page_html, "html.parser")
     nav = soup.find("ol", attrs={"data-parent": "250"})
     if nav is None:
@@ -1470,9 +1488,6 @@ def _bothell_park_links(page_html: str) -> list[tuple[str, str]]:
         if name and href:
             links.append((name, BOTHELL_BASE_URL + href))
     return links
-
-
-BOTHELL_ADDRESS_RE = re.compile(r"^(.*?),\s*Bothell,\s*WA\s*(\d{5})$")
 
 
 def _parse_bothell_park_page(page_html: str) -> str:
@@ -1496,14 +1511,12 @@ def fetch_new_bothell_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     (neither page has coordinates). Used instead of the city's ArcGIS Server,
     whose "BothellParks" layer is stale (last edited 2017), missing several
     current parks, and has garbage/duplicate rows."""
-    resp = requests.get(BOTHELL_LIST_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
-    resp.raise_for_status()
+    resp = _get_with_retries(BOTHELL_LIST_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
 
     new_parks = []
     skipped = 0
-    for name, url in _bothell_park_links(resp.text):
-        page = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=30)
-        page.raise_for_status()
+    for name, url in tqdm(_bothell_park_links(resp.text), desc="Bothell pages"):
+        page = _get_with_retries(url, headers={"User-Agent": USER_AGENT}, timeout=30)
         time.sleep(0.2)
         raw_address = _parse_bothell_park_page(page.text)
         addr_match = BOTHELL_ADDRESS_RE.match(raw_address)
@@ -1529,6 +1542,7 @@ def fetch_new_bothell_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         )
     if skipped:
         print(f"Skipped {skipped} Bothell park(s) with no address or that couldn't be geocoded.", file=sys.stderr)
+    print("Finished fetching Bothell.")
     return new_parks
 
 
@@ -1536,8 +1550,6 @@ def _parse_woodinville_park_page(page_html: str) -> tuple[str, str, str]:
     """Extract (name, address, zip_code) from a facility detail page: the name is
     the page's first <h2>; the address is the schema.org/hCard street-address and
     postal-code spans."""
-    from bs4 import BeautifulSoup
-
     soup = BeautifulSoup(page_html, "html.parser")
     name_tag = soup.find("h2")
     name = name_tag.get_text(strip=True) if name_tag else ""
@@ -1557,13 +1569,12 @@ def fetch_new_woodinville_parks(existing_keys: set[tuple[str, str]]) -> list[dic
     address are expected to fail geocoding and get skipped."""
     new_parks = []
     skipped = 0
-    for facility_id in WOODINVILLE_PARK_IDS:
-        page = requests.get(
+    for facility_id in tqdm(WOODINVILLE_PARK_IDS, desc="Woodinville pages"):
+        page = _get_with_retries(
             WOODINVILLE_DETAIL_URL.format(facility_id),
             headers={"User-Agent": USER_AGENT},
             timeout=30,
         )
-        page.raise_for_status()
         time.sleep(0.2)
         name, address, _ = _parse_woodinville_park_page(page.text)
         if not name:
@@ -1590,7 +1601,31 @@ def fetch_new_woodinville_parks(existing_keys: set[tuple[str, str]]) -> list[dic
         )
     if skipped:
         print(f"Skipped {skipped} Woodinville park(s) with no address or that couldn't be geocoded.", file=sys.stderr)
+    print("Finished fetching Woodinville.")
     return new_parks
+
+
+FETCH_FUNCTIONS = (
+    fetch_new_parks,
+    fetch_new_shoreline_parks,
+    fetch_new_bellevue_parks,
+    fetch_new_mercer_island_parks,
+    fetch_new_kirkland_parks,
+    fetch_new_redmond_parks,
+    fetch_new_medina_parks,
+    fetch_new_burien_parks,
+    fetch_new_tukwila_parks,
+    fetch_new_renton_parks,
+    fetch_new_seatac_parks,
+    fetch_new_kent_parks,
+    fetch_new_des_moines_parks,
+    fetch_new_federal_way_parks,
+    fetch_new_auburn_parks,
+    fetch_new_lake_forest_park_parks,
+    fetch_new_kenmore_parks,
+    fetch_new_bothell_parks,
+    fetch_new_woodinville_parks,
+)
 
 
 def sync_parks() -> list[dict]:
@@ -1598,64 +1633,11 @@ def sync_parks() -> list[dict]:
     edits untouched); only parks not already present are appended."""
     existing = _load_existing_parks()
     existing_keys = {(p["name"], p["address"]) for p in existing}
-    new_seattle = fetch_new_parks(existing_keys)
-    existing_keys |= {(p["name"], p["address"]) for p in new_seattle}
-    new_shoreline = fetch_new_shoreline_parks(existing_keys)
-    existing_keys |= {(p["name"], p["address"]) for p in new_shoreline}
-    new_bellevue = fetch_new_bellevue_parks(existing_keys)
-    existing_keys |= {(p["name"], p["address"]) for p in new_bellevue}
-    new_mercer_island = fetch_new_mercer_island_parks(existing_keys)
-    existing_keys |= {(p["name"], p["address"]) for p in new_mercer_island}
-    new_kirkland = fetch_new_kirkland_parks(existing_keys)
-    existing_keys |= {(p["name"], p["address"]) for p in new_kirkland}
-    new_redmond = fetch_new_redmond_parks(existing_keys)
-    existing_keys |= {(p["name"], p["address"]) for p in new_redmond}
-    new_medina = fetch_new_medina_parks(existing_keys)
-    existing_keys |= {(p["name"], p["address"]) for p in new_medina}
-    new_burien = fetch_new_burien_parks(existing_keys)
-    existing_keys |= {(p["name"], p["address"]) for p in new_burien}
-    new_tukwila = fetch_new_tukwila_parks(existing_keys)
-    existing_keys |= {(p["name"], p["address"]) for p in new_tukwila}
-    new_renton = fetch_new_renton_parks(existing_keys)
-    existing_keys |= {(p["name"], p["address"]) for p in new_renton}
-    new_seatac = fetch_new_seatac_parks(existing_keys)
-    existing_keys |= {(p["name"], p["address"]) for p in new_seatac}
-    new_kent = fetch_new_kent_parks(existing_keys)
-    existing_keys |= {(p["name"], p["address"]) for p in new_kent}
-    new_des_moines = fetch_new_des_moines_parks(existing_keys)
-    existing_keys |= {(p["name"], p["address"]) for p in new_des_moines}
-    new_federal_way = fetch_new_federal_way_parks(existing_keys)
-    existing_keys |= {(p["name"], p["address"]) for p in new_federal_way}
-    new_auburn = fetch_new_auburn_parks(existing_keys)
-    existing_keys |= {(p["name"], p["address"]) for p in new_auburn}
-    new_lake_forest_park = fetch_new_lake_forest_park_parks(existing_keys)
-    existing_keys |= {(p["name"], p["address"]) for p in new_lake_forest_park}
-    new_kenmore = fetch_new_kenmore_parks(existing_keys)
-    existing_keys |= {(p["name"], p["address"]) for p in new_kenmore}
-    new_bothell = fetch_new_bothell_parks(existing_keys)
-    existing_keys |= {(p["name"], p["address"]) for p in new_bothell}
-    new_woodinville = fetch_new_woodinville_parks(existing_keys)
-    new_parks = (
-        new_seattle
-        + new_shoreline
-        + new_bellevue
-        + new_mercer_island
-        + new_kirkland
-        + new_redmond
-        + new_medina
-        + new_burien
-        + new_tukwila
-        + new_renton
-        + new_seatac
-        + new_kent
-        + new_des_moines
-        + new_federal_way
-        + new_auburn
-        + new_lake_forest_park
-        + new_kenmore
-        + new_bothell
-        + new_woodinville
-    )
+    new_parks = []
+    for fetch in FETCH_FUNCTIONS:
+        found = fetch(existing_keys)
+        existing_keys |= {(p["name"], p["address"]) for p in found}
+        new_parks += found
     new_parks = [p for p in new_parks if not _is_excluded_name(p["name"], p["city"])]
     if existing:
         print(f"Found {len(new_parks)} new park(s) to add to the existing {len(existing)}.")
@@ -1672,8 +1654,6 @@ def write_csv(parks: list[dict]) -> None:
 
 
 def plot_map(parks: list[dict]) -> None:
-    import folium
-
     avg_lat = sum(p["latitude"] for p in parks) / len(parks)
     avg_lon = sum(p["longitude"] for p in parks) / len(parks)
 
