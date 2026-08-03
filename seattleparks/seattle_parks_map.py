@@ -165,6 +165,20 @@ Extract park names/addresses from these sources:
     locality/postal-code spans); two parks' addresses are only a street name
     with no house number (Tanglin Ridge Park, Stonehill Meadows Park), so
     those are expected to fail Census geocoding and be skipped.
+  - King County: county-owned/managed parks, rather than a per-city source, so
+    it spans every city in the county (plus unincorporated areas) instead of
+    just one. Found via the "Backyard Fun Finder" ArcGIS Experience Builder
+    app (experience.arcgis.com/experience/26b4c16e5df04456a588454b2b5bc0ee)'s
+    underlying web map, whose operational layer is a joined park-label-point /
+    facilities-table layer on the county's own ArcGIS Server (not ArcGIS
+    Online) -- the join makes every field name fully-qualified (e.g.
+    "plibrary.recreatn.park_label_point.SiteName"). Only kept for cities
+    already covered by one of the other sources above (TRACKED_CITIES) --
+    e.g. a Renton or Auburn county park is kept, a Vashon or Sammamish one is
+    dropped, since this project doesn't otherwise track those cities. Direct
+    point geometry; address comes from the joined facilities table's
+    A_Street/A_City/A_Zip fields (A_Zip has trailing whitespace in the source
+    data, stripped like every other source's zip).
 
 Dog parks, cemeteries, and gyms are excluded from every source (by a
 name-keyword check applied after fetching, not per-source) — this project
@@ -254,11 +268,33 @@ BOTHELL_BASE_URL = "https://www.bothellwa.gov"
 BOTHELL_LIST_URL = "https://www.bothellwa.gov/250/Parks"
 WOODINVILLE_DETAIL_URL = "https://www.woodinville.gov/Facilities/Facility/Details/{}"
 WOODINVILLE_PARK_IDS = (4, 5, 6, 7, 14, 15, 16, 17)
+KING_COUNTY_URL = "https://gismaps.kingcounty.gov/arcgis/rest/services/Parks/KingCo_ParksAndTrails/MapServer/0/query"
 FEDERAL_WAY_ADDRESS_RE = re.compile(r"^(.*?),\s*Federal Way,\s*WA\s*(\d{5})$")
 FEDERAL_WAY_COORD_RE = re.compile(r"cp=([\-0-9.]+)~([\-0-9.]+)")
 LAKE_FOREST_PARK_ADDRESS_RE = re.compile(r"^(.*?),\s*Lake Forest Park,\s*WA\s*(\d{5})$")
 BOTHELL_ADDRESS_RE = re.compile(r"^(.*?),\s*Bothell,\s*WA\s*(\d{5})$")
 EXCLUDED_NAME_KEYWORDS = ("dog park", "cemetery", "cemetary", "gym")
+TRACKED_CITIES = (
+    "Seattle",
+    "Shoreline",
+    "Bellevue",
+    "Mercer Island",
+    "Kirkland",
+    "Redmond",
+    "Medina",
+    "Burien",
+    "Tukwila",
+    "Renton",
+    "SeaTac",
+    "Kent",
+    "Des Moines",
+    "Federal Way",
+    "Auburn",
+    "Lake Forest Park",
+    "Kenmore",
+    "Bothell",
+    "Woodinville",
+)
 
 
 def _is_excluded_name(name: str, city: str) -> bool:
@@ -1605,6 +1641,70 @@ def fetch_new_woodinville_parks(existing_keys: set[tuple[str, str]]) -> list[dic
     return new_parks
 
 
+def fetch_new_king_county_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+    """Pull point parks from King County's public ArcGIS Server (surfaced by the
+    "Backyard Fun Finder" ArcGIS Experience Builder app's underlying web map, not
+    a direct GIS search). This layer is county-wide, spanning cities this project
+    doesn't otherwise track (Vashon, Sammamish, Black Diamond, ...), so it's
+    filtered to TRACKED_CITIES to keep only parks in cities already covered by
+    another source. The joined park-label-point / facilities-table layer returns
+    fully-qualified field names; address comes from the facilities table's
+    A_Street/A_City/A_Zip, whose A_Zip has trailing whitespace in the source
+    data, stripped like every other source's zip."""
+    name_field = "plibrary.recreatn.park_label_point.SiteName"
+    street_field = "plibrary.recreatn.park_and_trail_facilities_table.A_Street"
+    city_field = "plibrary.recreatn.park_and_trail_facilities_table.A_City"
+    zip_field = "plibrary.recreatn.park_and_trail_facilities_table.A_Zip"
+    resp = _get_with_retries(
+        KING_COUNTY_URL,
+        params={
+            "where": "1=1",
+            "outFields": f"{name_field},{street_field},{city_field},{zip_field}",
+            "returnGeometry": "true",
+            "outSR": "4326",
+            "f": "json",
+        },
+        timeout=30,
+    )
+    data = resp.json()
+
+    new_parks = []
+    skipped = 0
+    out_of_scope = 0
+    for feature in data.get("features", []):
+        attrs = feature["attributes"]
+        name = (attrs.get(name_field) or "").strip()
+        geometry = feature.get("geometry")
+        if not name or not geometry:
+            skipped += 1
+            continue
+        city = (attrs.get(city_field) or "").strip()
+        if city not in TRACKED_CITIES:
+            out_of_scope += 1
+            continue
+        address = (attrs.get(street_field) or "").strip()
+        if (name, address) in existing_keys:
+            continue
+        new_parks.append(
+            {
+                "name": name,
+                "address": address,
+                "city": city,
+                "zip_code": (attrs.get(zip_field) or "").strip(),
+                "latitude": geometry["y"],
+                "longitude": geometry["x"],
+                "visited": "N",
+                "visited_date": "",
+            },
+        )
+    if skipped:
+        print(f"Skipped {skipped} King County row(s) missing a name or geometry.", file=sys.stderr)
+    if out_of_scope:
+        print(f"Filtered out {out_of_scope} King County park(s) outside existing cities.", file=sys.stderr)
+    print("Finished fetching King County.")
+    return new_parks
+
+
 FETCH_FUNCTIONS = (
     fetch_new_parks,
     fetch_new_shoreline_parks,
@@ -1625,6 +1725,7 @@ FETCH_FUNCTIONS = (
     fetch_new_kenmore_parks,
     fetch_new_bothell_parks,
     fetch_new_woodinville_parks,
+    fetch_new_king_county_parks,
 )
 
 
