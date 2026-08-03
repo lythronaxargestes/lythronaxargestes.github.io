@@ -169,13 +169,12 @@ Extract park names/addresses from these sources:
 Dog parks, cemeteries, and gyms are excluded from every source (by a
 name-keyword check applied after fetching, not per-source) — this project
 tracks parks in the traditional sense, not off-leash areas, burial grounds,
-or standalone fitness facilities. One exception: Seattle's Grand Army of the
-Republic Cemetery is kept. Any "center" (community center, rec center, senior
-center, etc.) is excluded the same way, since those are recreation facilities
-rather than parkland, unless "Park" also appears in the name (e.g. a park
-that happens to house a community center building) or the city is Seattle
-(Seattle Parks & Recreation's own facilities, like Amy Yee Tennis Center, are
-kept regardless).
+or standalone fitness facilities. Any "center" (community center, rec center,
+senior center, etc.) is excluded the same way, since those are recreation
+facilities rather than parkland, unless "Park" also appears in the name (e.g.
+a park that happens to house a community center building). None of these
+rules apply to the city of Seattle (e.g. its Grand Army of the Republic
+Cemetery and Amy Yee Tennis Center are kept regardless).
 
 seattle_parks_missing_data_backup.csv is a hand-researched (web search)
 supplementary source for parks whose primary source had no address, or no
@@ -253,22 +252,21 @@ BOTHELL_LIST_URL = "https://www.bothellwa.gov/250/Parks"
 WOODINVILLE_DETAIL_URL = "https://www.woodinville.gov/Facilities/Facility/Details/{}"
 WOODINVILLE_PARK_IDS = (4, 5, 6, 7, 14, 15, 16, 17)
 EXCLUDED_NAME_KEYWORDS = ("dog park", "cemetery", "cemetary", "gym")
-EXCLUDED_NAME_EXCEPTIONS = {("Grand Army of the Republic Cemetery", "Seattle")}
 
 
 def _is_excluded_name(name: str, city: str) -> bool:
     """True if this park should be dropped: a blanket-excluded keyword (dog
-    parks, cemeteries), unless it's an explicit (name, city) exception, or a
-    standalone center -- e.g. a community/rec/senior center, a recreation
-    facility rather than parkland -- unless "park" also appears in the name
-    or the city is Seattle (Seattle Parks & Recreation's own facilities, like
-    Amy Yee Tennis Center, are kept regardless)."""
-    if (name, city) in EXCLUDED_NAME_EXCEPTIONS:
+    parks, cemeteries, gyms), or a standalone center -- e.g. a community/rec/
+    senior center, a recreation facility rather than parkland -- unless "park"
+    also appears in the name. None of these rules apply to Seattle (e.g. its
+    Grand Army of the Republic Cemetery and Amy Yee Tennis Center are kept
+    regardless)."""
+    if city == "Seattle":
         return False
     lower = name.lower()
     if any(kw in lower for kw in EXCLUDED_NAME_KEYWORDS):
         return True
-    return "center" in lower and "park" not in lower and city != "Seattle"
+    return "center" in lower and "park" not in lower
 USER_AGENT = "seattle-parks-map-script/1.0 (personal park-tracking project)"
 CSV_PATH = "seattle_parks.csv"
 BACKUP_CSV_PATH = "seattle_parks_missing_data_backup.csv"
