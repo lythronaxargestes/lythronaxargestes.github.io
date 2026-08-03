@@ -252,6 +252,7 @@ from seattle_parks_helpers import (
     _is_visited,
     _latest_visited_parks,
     _load_existing_parks,
+    _normalize_name,
     load_parks_from_csv,
 )
 
@@ -264,6 +265,8 @@ def sync_parks() -> list[dict]:
     new_parks = []
     for fetch in FETCH_FUNCTIONS:
         found = fetch(existing_keys)
+        for p in found:
+            p["name"] = _normalize_name(p["name"])
         existing_keys |= {(p["name"], p["address"]) for p in found}
         new_parks += found
     new_parks = [p for p in new_parks if not _is_excluded_name(p["name"], p["city"])]

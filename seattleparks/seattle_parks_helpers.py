@@ -9,6 +9,7 @@ import csv
 import re
 import sys
 import time
+import unicodedata
 from datetime import datetime
 
 import requests
@@ -23,6 +24,15 @@ from seattle_parks_constants import (
     MAX_FETCH_ATTEMPTS,
     RETRY_BACKOFF_SECONDS,
 )
+
+
+def _normalize_name(name: str) -> str:
+    """Normalize to Unicode NFC so cosmetically-identical park names compare
+    equal even if their combining-character sequences differ byte-for-byte
+    (e.g. an accented/Indigenous name copied from two different sources) --
+    a raw string mismatch here silently breaks dedup and backup-CSV lookups
+    without raising any error, since both spellings render the same on screen."""
+    return unicodedata.normalize("NFC", name)
 
 
 def _is_excluded_name(name: str, city: str) -> bool:
@@ -67,7 +77,7 @@ def load_parks_from_csv() -> list[dict]:
     with open(CSV_PATH, newline="", encoding="utf-8") as f:
         return [
             {
-                "name": row["name"],
+                "name": _normalize_name(row["name"]),
                 "address": row["address"],
                 "city": row.get("city") or DEFAULT_CITY,
                 "zip_code": row["zip_code"],
@@ -108,7 +118,7 @@ def _apply_backup_data(parks: list[dict]) -> list[dict]:
     by_key = {(p["name"], p["city"]): p for p in enriched}
 
     for row in backup_rows:
-        key = (row["name"], row["city"])
+        key = (_normalize_name(row["name"]), row["city"])
         found_address = (row.get("found_address") or "").strip()
         found_zip = (row.get("found_zip") or "").strip()
         found_lat = (row.get("found_latitude") or "").strip()
@@ -122,7 +132,7 @@ def _apply_backup_data(parks: list[dict]) -> list[dict]:
                     park["zip_code"] = found_zip
         elif row.get("in_main_csv") == "N" and key not in by_key and found_lat and found_lon:
             new_park = {
-                "name": row["name"],
+                "name": _normalize_name(row["name"]),
                 "address": found_address,
                 "city": row["city"],
                 "zip_code": found_zip,
