@@ -100,14 +100,16 @@ def _load_existing_parks() -> list[dict]:
 
 def _apply_backup_data(parks: list[dict]) -> list[dict]:
     """Enrich `parks` for display using seattle_parks_missing_data_backup.csv (hand
-    researched via web search for parks whose primary source had no address, or
-    no coordinates at all): fills in blank addresses for parks already present
-    (matched by name+city) when the backup found one, and adds parks that are
-    entirely missing from the main CSV (in_main_csv='N') when the backup found
-    usable coordinates. This never writes back to seattle_parks.csv -- it's
-    applied fresh at render time only, so the primary CSV's (name, address)
-    dedup keys, which each city's live fetch depends on to avoid re-adding
-    parks on the next sync, are never disturbed by backup-sourced values."""
+    researched via web search) -- backup data wins whenever it's present, falling
+    back to the main CSV's own value for any field the backup left blank. This
+    covers both parks already present (matched by name+city) whose primary-source
+    address/coordinates were missing or wrong (e.g. a city's own directory page
+    listing the same address for several different parks), and parks missing
+    entirely from the main CSV (in_main_csv='N') when the backup found usable
+    coordinates. This never writes back to seattle_parks.csv -- it's applied fresh
+    at render time only, so the primary CSV's (name, address) dedup keys, which
+    each city's live fetch depends on to avoid re-adding parks on the next sync,
+    are never disturbed by backup-sourced values."""
     try:
         with open(BACKUP_CSV_PATH, newline="", encoding="utf-8") as f:
             backup_rows = list(csv.DictReader(f))
@@ -126,10 +128,14 @@ def _apply_backup_data(parks: list[dict]) -> list[dict]:
 
         if row.get("in_main_csv") == "Y":
             park = by_key.get(key)
-            if park is not None and not park["address"] and found_address:
-                park["address"] = found_address
+            if park is not None:
+                if found_address:
+                    park["address"] = found_address
                 if found_zip:
                     park["zip_code"] = found_zip
+                if found_lat and found_lon:
+                    park["latitude"] = float(found_lat)
+                    park["longitude"] = float(found_lon)
         elif row.get("in_main_csv") == "N" and key not in by_key and found_lat and found_lon:
             new_park = {
                 "name": _normalize_name(row["name"]),
