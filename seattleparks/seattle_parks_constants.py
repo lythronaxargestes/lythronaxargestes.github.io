@@ -84,8 +84,10 @@ DEFAULT_CITY = "Seattle"
 # Map display
 MAP_TITLE = "Seattle Parks Project"
 # Visited is a state, not an identity, so it uses the dataviz status palette
-# ("good") rather than a categorical hue; not-visited keeps the default
-# single-hue blue (palette slot 1) from the original single-category map.
+# ("good") rather than a categorical hue. Not-visited was originally the
+# default single-hue blue (palette slot 1) from the original single-category
+# map, but that's the same blue Leaflet's LocateControl uses for the user's
+# own "you are here" marker, so it's red instead to avoid the visual clash.
 VISITED_COLOR = "#0ca30c"
-UNVISITED_COLOR = "#2a78d6"
+UNVISITED_COLOR = "#d62a2a"
 MARKER_RADIUS = 6  # px
