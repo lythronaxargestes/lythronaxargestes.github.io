@@ -233,6 +233,7 @@ import json
 import sys
 
 import folium
+from folium.plugins import LocateControl
 
 from seattle_parks_constants import (
     CSV_FIELDS,
@@ -290,6 +291,7 @@ def plot_map(parks: list[dict]) -> None:
 
     m = folium.Map(location=[avg_lat, avg_lon], zoom_start=11, tiles="cartodbpositron")
     m.get_root().title = MAP_TITLE
+    LocateControl(position="topleft", strings={"title": "Find my location"}).add_to(m)
     try:
         with open(FAVICON_PATH, "rb") as f:
             favicon_b64 = base64.b64encode(f.read()).decode()
