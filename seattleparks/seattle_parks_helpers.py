@@ -21,6 +21,8 @@ from seattle_parks_constants import (
     CSV_PATH,
     DEFAULT_CITY,
     EXCLUDED_NAME_KEYWORDS,
+    LAST_UPDATED_RE,
+    MAP_PATH,
     MAX_FETCH_ATTEMPTS,
     RETRY_BACKOFF_SECONDS,
 )
@@ -54,13 +56,36 @@ def _is_visited(value: str) -> bool:
     return str(value).strip().upper() == "Y"
 
 
-def _latest_visited_parks(parks: list[dict]) -> list[dict]:
-    """Return all parks sharing the most recent visited_date, or [] if no park has one."""
+def _parks_visited_since(parks: list[dict], since_date: str | None) -> list[dict]:
+    """Return every park visited on or after `since_date` (the "Last updated" date
+    stamped into the previous run's map -- see _read_last_updated_date), earliest-
+    visited first. This surfaces every visit logged since that map was last
+    regenerated, not just the single latest day, since parks are often marked
+    visited by hand across several different days between runs. Falls back to
+    parks sharing the single latest visited_date if since_date is unknown (e.g.
+    the very first run, before any map has ever been generated)."""
     dated = [p for p in parks if str(p.get("visited_date", "")).strip()]
     if not dated:
         return []
-    latest_date = max(p["visited_date"] for p in dated)
-    return [p for p in dated if p["visited_date"] == latest_date]
+    if since_date is None:
+        since_date = max(p["visited_date"] for p in dated)
+    matches = [p for p in dated if p["visited_date"] >= since_date]
+    matches.sort(key=lambda p: p["name"].lower())
+    matches.sort(key=lambda p: p["visited_date"])
+    return matches
+
+
+def _read_last_updated_date() -> str | None:
+    """Read the "Last updated" date stamped into the existing map HTML (the one
+    this run is about to overwrite), or None if there's no existing map yet (the
+    very first run) or it predates this feature."""
+    try:
+        with open(MAP_PATH, encoding="utf-8") as f:
+            html = f.read()
+    except FileNotFoundError:
+        return None
+    match = LAST_UPDATED_RE.search(html)
+    return match.group(1) if match else None
 
 
 def _format_visited_date(value: str) -> str | None:

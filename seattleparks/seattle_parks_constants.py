@@ -77,6 +77,11 @@ BACKUP_CSV_PATH = "seattle_parks_missing_data_backup.csv"
 MAP_PATH = "seattle_parks_map.html"
 FAVICON_PATH = "seattle_favicon.png"
 
+# Matches the data-date attribute plot_map() stamps into its own "Last updated"
+# element, so the next run can read the previous run's date straight out of the
+# map HTML it's about to overwrite -- no separate state file needed.
+LAST_UPDATED_RE = re.compile(r'id="lastUpdated" data-date="(\d{4}-\d{2}-\d{2})"')
+
 # CSV schema
 CSV_FIELDS = ["name", "address", "city", "zip_code", "latitude", "longitude", "visited", "visited_date"]
 DEFAULT_CITY = "Seattle"

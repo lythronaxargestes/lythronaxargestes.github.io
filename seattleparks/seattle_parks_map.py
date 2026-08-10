@@ -231,6 +231,7 @@ import base64
 import csv
 import json
 import sys
+from datetime import date
 
 import folium
 from folium.plugins import LocateControl
@@ -251,9 +252,10 @@ from seattle_parks_helpers import (
     _format_visited_date,
     _is_excluded_name,
     _is_visited,
-    _latest_visited_parks,
     _load_existing_parks,
     _normalize_name,
+    _parks_visited_since,
+    _read_last_updated_date,
     load_parks_from_csv,
 )
 
@@ -285,7 +287,7 @@ def write_csv(parks: list[dict]) -> None:
     print(f"Wrote {len(parks)} parks to {CSV_PATH}")
 
 
-def plot_map(parks: list[dict]) -> None:
+def plot_map(parks: list[dict], last_updated: str, since_date: str | None) -> None:
     avg_lat = sum(p["latitude"] for p in parks) / len(parks)
     avg_lon = sum(p["longitude"] for p in parks) / len(parks)
 
@@ -300,7 +302,7 @@ def plot_map(parks: list[dict]) -> None:
         )
     except FileNotFoundError:
         pass
-    latest_parks = _latest_visited_parks(parks)
+    latest_parks = _parks_visited_since(parks, since_date)
     latest_ids = {id(p) for p in latest_parks}
     latest_markers = {}
     search_index = []
@@ -360,6 +362,11 @@ def plot_map(parks: list[dict]) -> None:
         f'<div style="font-size: 14px; font-weight: 400;">'
         f"<b>Seattle Metro Area progress:</b> {visited_count} / {len(parks)} ({metro_pct:.1f}%)</div>"
     )
+    last_updated_html = (
+        f'<div id="lastUpdated" data-date="{last_updated}" '
+        f'style="font-size: 12px; font-weight: 400; margin-top: 8px; color: #5a5a52;">'
+        f"Last updated: {_format_visited_date(last_updated)}</div>"
+    )
     search_html = """
     <div style="position: relative; margin-top: 8px;">
       <input id="parkSearchInput" type="text" placeholder="Search parks..." autocomplete="off"
@@ -381,6 +388,7 @@ def plot_map(parks: list[dict]) -> None:
       {MAP_TITLE}
       {latest_html}
       {progress_html}
+      {last_updated_html}
       {search_html}
     </div>
     """
@@ -468,20 +476,23 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    since_date = _read_last_updated_date()
+    last_updated = date.today().isoformat()
+
     if args.from_csv:
         try:
             parks = load_parks_from_csv()
         except FileNotFoundError:
             print(f"{CSV_PATH} not found — run without --from-csv first.", file=sys.stderr)
             sys.exit(1)
-        plot_map(_apply_backup_data(parks))
+        plot_map(_apply_backup_data(parks), last_updated, since_date)
     else:
         parks = sync_parks()
         if not parks:
             print("No park data retrieved — aborting.", file=sys.stderr)
             sys.exit(1)
         write_csv(parks)
-        plot_map(_apply_backup_data(parks))
+        plot_map(_apply_backup_data(parks), last_updated, since_date)
 
 
 if __name__ == "__main__":
