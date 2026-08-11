@@ -15,11 +15,20 @@ Extract park names/addresses from these sources:
     postal-code markup) directly — no geocoding needed. A few linked pages
     (e.g. "Beach Parks with Lifeguards") are informational, not actual parks,
     and are skipped since they have no coordinates.
-  - Mercer Island: names and coordinates come from a Drupal.settings JSON
-    blob embedded in the listing page's <script> tag (feeding an OpenLayers
-    map widget) — no geocoding needed there either. That blob has no address
-    field, so each park's own page is fetched too, for its schema.org
-    PostalAddress microdata (streetAddress/addressLocality/postalCode).
+  - Mercer Island: names and coordinates for most parks come from a
+    Drupal.settings JSON blob embedded in the listing page's <script> tag
+    (feeding an OpenLayers map widget) — no geocoding needed there either.
+    That blob has no address field, so each park's own page is fetched too,
+    for its schema.org PostalAddress microdata (streetAddress/
+    addressLocality/postalCode). That map widget only covers a curated
+    subset of parks though, so the city's full parks directory page is also
+    scraped for its /parksrec/page/<slug> links to catch the rest (e.g.
+    Aubrey Davis Park); a linked page only counts as a real park page if it
+    has that same address microdata (filtering out the directory's
+    informational pages — Trails, Off-Leash Dog Areas, event announcements —
+    without a hardcoded exclude list), and since those extra pages have no
+    coordinates of their own, each is geocoded via the free US Census
+    geocoder from its address instead.
   - Kirkland: kirklandwa.gov itself is blocked by the same kind of WAF as
     shorelinewa.gov (domain-wide, not just this page), so — same fallback as
     Shoreline — its public ArcGIS Server is used instead. That Parks

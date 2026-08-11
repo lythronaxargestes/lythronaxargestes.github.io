@@ -18,6 +18,10 @@ BELLEVUE_BASE_URL = "https://bellevuewa.gov"
 BELLEVUE_LIST_URL = "https://bellevuewa.gov/city-government/departments/parks/parks-and-trails/parks"
 MERCER_ISLAND_BASE_URL = "https://www.mercerisland.gov"
 MERCER_ISLAND_LIST_URL = "https://www.mercerisland.gov/parksites"
+# The /parksites map widget only covers a curated subset of parks; this full
+# directory page lists several more (e.g. Aubrey Davis Park) that never appear
+# in that widget at all.
+MERCER_ISLAND_DIRECTORY_URL = "https://www.mercerisland.gov/parksrec/page/parks"
 KIRKLAND_URL = "https://maps.kirklandwa.gov/host/rest/services/Parks/FeatureServer/0/query"
 REDMOND_URL = "https://gis.redmond.gov/arcgis/rest/services/PV/Cadastral/MapServer/2/query"
 MEDINA_BASE_URL = "https://www.medina-wa.gov"

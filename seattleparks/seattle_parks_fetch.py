@@ -12,6 +12,7 @@ import re
 import sys
 import time
 
+import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
@@ -40,6 +41,7 @@ from seattle_parks_constants import (
     MEDINA_BASE_URL,
     MEDINA_LIST_URL,
     MERCER_ISLAND_BASE_URL,
+    MERCER_ISLAND_DIRECTORY_URL,
     MERCER_ISLAND_LIST_URL,
     REDMOND_URL,
     RENTON_URL,
@@ -310,8 +312,56 @@ def _fetch_new_civicplus_parks(
 
 
 def fetch_new_mercer_island_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
-    """Fetch Mercer Island's parks listing page and each linked park page."""
+    """Fetch Mercer Island's parks. Most come from the /parksites listing page's
+    embedded map widget (precise point coordinates, no geocoding needed, via
+    _fetch_new_civicplus_parks), but that widget only covers a curated subset --
+    its full parks directory page lists several more (e.g. Aubrey Davis Park)
+    that never appear in the widget at all. Those extras are found from the
+    directory page's own /parksrec/page/<slug> links and geocoded from their
+    address instead; a linked page only counts as a real park page if it
+    actually has park-page address microdata, which cleanly filters out the
+    directory's informational pages (Trails, Off-Leash Dog Areas, event
+    announcements, etc.) without a hardcoded exclude list."""
+    widget_resp = _get_with_retries(MERCER_ISLAND_LIST_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
+    widget_urls = {park["url"] for park in _parse_civicplus_map_listing(widget_resp.text, MERCER_ISLAND_BASE_URL)}
+
     new_parks = _fetch_new_civicplus_parks(existing_keys, MERCER_ISLAND_LIST_URL, MERCER_ISLAND_BASE_URL, "Mercer Island")
+
+    dir_resp = _get_with_retries(MERCER_ISLAND_DIRECTORY_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
+    slugs = dict.fromkeys(re.findall(r'href="(/parksrec/page/[a-z0-9-]+)"', dir_resp.text))
+    extra_urls = [MERCER_ISLAND_BASE_URL + slug for slug in slugs if MERCER_ISLAND_BASE_URL + slug not in widget_urls]
+
+    for url in tqdm(extra_urls, desc="Mercer Island directory-only pages"):
+        try:
+            page = _get_with_retries(url, headers={"User-Agent": USER_AGENT}, timeout=30)
+        except requests.exceptions.HTTPError:
+            # A few directory links (e.g. "provide-feedback") redirect off-site to
+            # a CivicPlus form host that 403s a plain GET -- not a park page anyway.
+            continue
+        time.sleep(0.2)
+        soup = BeautifulSoup(page.text, "html.parser")
+        title_tag = soup.find(id="page-title")
+        name = html.unescape(title_tag.get_text(strip=True)) if title_tag else ""
+        details = _parse_civicplus_park_page(page.text, "Mercer Island")
+        if not name or not details["address"] or (name, details["address"]) in existing_keys:
+            continue
+        geocoded = _geocode_census(details["address"], "Mercer Island")
+        if geocoded is None:
+            continue
+        lat, lon, census_zip = geocoded
+        new_parks.append(
+            {
+                "name": name,
+                "address": details["address"],
+                "city": details["city"],
+                "zip_code": details["zip_code"] or census_zip,
+                "latitude": lat,
+                "longitude": lon,
+                "visited": "N",
+                "visited_date": "",
+            },
+        )
+
     print("Finished fetching Mercer Island.")
     return new_parks
 
