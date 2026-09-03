@@ -300,7 +300,7 @@ def plot_map(parks: list[dict], last_updated: str, since_date: str | None) -> No
     avg_lat = sum(p["latitude"] for p in parks) / len(parks)
     avg_lon = sum(p["longitude"] for p in parks) / len(parks)
 
-    m = folium.Map(location=[avg_lat, avg_lon], zoom_start=11, tiles="cartodbpositron")
+    m = folium.Map(location=[avg_lat, avg_lon], zoom_start=11, tiles="OpenStreetMap")
     m.get_root().title = MAP_TITLE
     LocateControl(position="topleft", strings={"title": "Find my location"}).add_to(m)
     try:
