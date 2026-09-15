@@ -79,7 +79,7 @@ TRACKED_CITIES = (
 CSV_PATH = "seattle_parks.csv"
 BACKUP_CSV_PATH = "seattle_parks_missing_data_backup.csv"
 MAP_PATH = "seattle_parks_map.html"
-FAVICON_PATH = "seattle_favicon.png"
+FAVICON_PATH = "seattle_parks_favicon.png"
 
 # Matches the data-date attribute plot_map() stamps into its own "Last updated"
 # element, so the next run can read the previous run's date straight out of the
