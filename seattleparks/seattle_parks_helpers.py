@@ -22,6 +22,7 @@ from seattle_parks_constants import (
     CSV_PATH,
     DEFAULT_CITY,
     DUPLICATE_DISTANCE_M,
+    EARTH_RADIUS_M,
     EXCLUDED_NAME_RE,
     LAST_UPDATED_RE,
     MAP_PATH,
@@ -76,7 +77,7 @@ def _distance_m(a: dict, b: dict) -> float:
     the tens-of-meters scale this is used for)."""
     x = math.radians(b["longitude"] - a["longitude"]) * math.cos(math.radians(a["latitude"]))
     y = math.radians(b["latitude"] - a["latitude"])
-    return 6_371_000 * math.hypot(x, y)
+    return EARTH_RADIUS_M * math.hypot(x, y)
 
 
 def _is_duplicate_park(park: dict, others: list[dict]) -> bool:
