@@ -6,6 +6,7 @@ next to the fetch function that uses them."""
 from __future__ import annotations
 
 import csv
+import math
 import re
 import sys
 import time
@@ -20,11 +21,13 @@ from seattle_parks_constants import (
     CENSUS_GEOCODE_URL,
     CSV_PATH,
     DEFAULT_CITY,
+    DUPLICATE_DISTANCE_M,
     EXCLUDED_NAME_KEYWORDS,
     LAST_UPDATED_RE,
     MAP_PATH,
     MAX_FETCH_ATTEMPTS,
     RETRY_BACKOFF_SECONDS,
+    SAME_SPOT_DISTANCE_M,
 )
 
 
@@ -50,6 +53,60 @@ def _is_excluded_name(name: str, city: str) -> bool:
     if any(kw in lower for kw in EXCLUDED_NAME_KEYWORDS):
         return True
     return "center" in lower and "park" not in lower
+
+
+_ADDRESS_ABBREVIATIONS = {
+    "&": "and", "st": "street", "dr": "drive", "ave": "avenue", "blvd": "boulevard",
+    "rd": "road", "pl": "place", "ln": "lane", "ct": "court", "pkwy": "parkway",
+    "n": "north", "s": "south", "e": "east", "w": "west",
+    "ne": "northeast", "nw": "northwest", "se": "southeast", "sw": "southwest",
+}
+
+
+def _normalize_address(address: str) -> str:
+    """Lowercase and expand common abbreviations so the same street address
+    spelled two ways ("NE 138th St & Juanita Dr NE" vs "NE 138th St and Juanita
+    Drive NE") compares equal."""
+    tokens = re.findall(r"[a-z0-9]+|&", address.lower())
+    return " ".join(_ADDRESS_ABBREVIATIONS.get(t, "") for t in tokens)
+
+
+def _distance_m(a: dict, b: dict) -> float:
+    """Approximate distance in meters between two parks (equirectangular; fine at
+    the tens-of-meters scale this is used for)."""
+    x = math.radians(b["longitude"] - a["longitude"]) * math.cos(math.radians(a["latitude"]))
+    y = math.radians(b["latitude"] - a["latitude"])
+    return 6_371_000 * math.hypot(x, y)
+
+
+def _is_duplicate_park(park: dict, others: list[dict]) -> bool:
+    """True if `park` is the same park as one in `others` but reported by a
+    different source with a slightly different name/address spelling, which the
+    exact (name, address) check in each fetch function can't catch. Same city
+    required, plus either:
+      - the same name (case-insensitive) and either the same normalized address
+        or a location within DUPLICATE_DISTANCE_M ("Big Finn Hill Park" listed
+        by two sources); or
+      - the same normalized address and a location within SAME_SPOT_DISTANCE_M
+        regardless of name ("Magnuson Park" vs "Warren G. Magnuson Park").
+    Name alone isn't enough (many cities have their own "Rotary Park"), and
+    neither is a shared address (city directory pages often list one address
+    for several different parks). Fuzzy name matching (one name contained in
+    the other) was tried and rejected: it merges many distinct neighbors, e.g.
+    "Woodland Park Zoo" / "Woodland Park" or "Rotary Park" / "Rotary D"."""
+    address = _normalize_address(park["address"])
+    for other in others:
+        if other["city"] != park["city"]:
+            continue
+        same_address = bool(address) and address == _normalize_address(other["address"])
+        distance = _distance_m(park, other)
+        if same_address and distance <= SAME_SPOT_DISTANCE_M:
+            return True
+        if park["name"].casefold() == other["name"].casefold() and (
+            same_address or distance <= DUPLICATE_DISTANCE_M
+        ):
+            return True
+    return False
 
 
 def _is_visited(value: str) -> bool:

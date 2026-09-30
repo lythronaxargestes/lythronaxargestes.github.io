@@ -52,7 +52,11 @@ LAKE_FOREST_PARK_ADDRESS_RE = re.compile(r"^(.*?),\s*Lake Forest Park,\s*WA\s*(\
 BOTHELL_ADDRESS_RE = re.compile(r"^(.*?),\s*Bothell,\s*WA\s*(\d{5})$")
 
 # Name-exclusion and geographic-scope rules
-EXCLUDED_NAME_KEYWORDS = ("dog park", "dog corral", "cemetery", "cemetary", "gym", "complex")
+EXCLUDED_NAME_KEYWORDS = ("dog park", "dog corral", "off-leash", "cemetery", "cemetary", "gym", "complex")
+# Same-city, same-name parks this close together are treated as one park
+DUPLICATE_DISTANCE_M = 100
+# Parks at the same address this close together are one park, whatever their names
+SAME_SPOT_DISTANCE_M = 5
 TRACKED_CITIES = (
     "Seattle",
     "Shoreline",

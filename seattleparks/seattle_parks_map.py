@@ -189,7 +189,7 @@ Extract park names/addresses from these sources:
     A_Street/A_City/A_Zip fields (A_Zip has trailing whitespace in the source
     data, stripped like every other source's zip).
 
-Dog parks (incl. dog corrals), cemeteries, gyms, and "complex"-named facilities (e.g. sports
+Dog parks (incl. dog corrals and off-leash areas), cemeteries, gyms, and "complex"-named facilities (e.g. sports
 complexes) are excluded from every source (by a name-keyword check applied
 after fetching, not per-source) — this project tracks parks in the
 traditional sense, not off-leash areas, burial grounds, standalone fitness
@@ -259,6 +259,7 @@ from seattle_parks_fetch import FETCH_FUNCTIONS
 from seattle_parks_helpers import (
     _apply_backup_data,
     _format_visited_date,
+    _is_duplicate_park,
     _is_excluded_name,
     _is_visited,
     _load_existing_parks,
@@ -282,6 +283,11 @@ def sync_parks() -> list[dict]:
         existing_keys |= {(p["name"], p["address"]) for p in found}
         new_parks += found
     new_parks = [p for p in new_parks if not _is_excluded_name(p["name"], p["city"])]
+    kept: list[dict] = []
+    for p in new_parks:
+        if not _is_duplicate_park(p, existing + kept):
+            kept.append(p)
+    new_parks = kept
     if existing:
         print(f"Found {len(new_parks)} new park(s) to add to the existing {len(existing)}.")
     return existing + new_parks
