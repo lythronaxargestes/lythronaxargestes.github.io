@@ -170,6 +170,18 @@ Extract park names/addresses from these sources:
     parks on the city's City Parks page that the layer lacks (Hillside Park,
     Park at 95th, and Newcastle Historical Park) are listed by hand, and the
     page's street addresses are in the backup CSV.
+  - Algona: its seven parks (per the comprehensive plan's inventory) are listed
+    by hand in seattle_parks_constants.py, since its parks page is only a PDF
+    map. Addresses or cross streets come from King County's South King County
+    Parks Guide, and coordinates from OpenStreetMap park polygons or the Census
+    geocoder. The 3rd Avenue Pocket Park's location is approximate.
+  - Normandy Park: its own ArcGIS Online "NP_Parks" layer (found by searching
+    ArcGIS Online for the city's GIS account). It's a parcel layer, so a park
+    can be several polygons; those are combined and located at their
+    area-weighted centroid, and parcels owned by another city are skipped. It
+    has no usable address field and lacks Walker Preserve and Brittany Park, so
+    the addresses (from the city's 2024 parks plan) and those two parks are in
+    the backup CSV.
   - Bothell: Scraped live from the city's own parks directory page and each
     linked individual park page (~23 of them), rather than its ArcGIS Server
     (found, but its "BothellParks" layer is stale — last edited 2017 — and is

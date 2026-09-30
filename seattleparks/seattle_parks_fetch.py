@@ -17,6 +17,7 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 from seattle_parks_constants import (
+    ALGONA_PARKS,
     API_URL,
     AUBURN_URL,
     BELLEVUE_BASE_URL,
@@ -24,11 +25,11 @@ from seattle_parks_constants import (
     BOTHELL_ADDRESS_RE,
     BOTHELL_BASE_URL,
     BOTHELL_LIST_URL,
+    BOULEVARD_PARK_PARKS,
     BURIEN_BASE_URL,
     BURIEN_LIST_URL,
     CLYDE_HILL_PARKS,
     HUNTS_POINT_PARKS,
-    BOULEVARD_PARK_PARKS,
     DEFAULT_CITY,
     DES_MOINES_ADDRESS_URL,
     DES_MOINES_PARKS_URL,
@@ -47,6 +48,7 @@ from seattle_parks_constants import (
     MERCER_ISLAND_DIRECTORY_URL,
     MERCER_ISLAND_LIST_URL,
     NEWCASTLE_EXTRA_PARKS,
+    NORMANDY_PARK_URL,
     NEWCASTLE_URL,
     REDMOND_URL,
     RENTON_URL,
@@ -413,6 +415,65 @@ def fetch_new_boulevard_park_parks(existing_keys: set[tuple[str, str]]) -> list[
     )
     print("Finished fetching Boulevard Park")
     return new_parks
+
+
+def fetch_new_algona_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+    """Algona's seven parks, from the hand-listed ALGONA_PARKS (its parks page is
+    only a PDF map)."""
+    new_parks = fetch_new_listed_parks(
+        existing_keys,
+        [ListedPark(name, address, lat, lon, "Algona") for name, address, lat, lon in ALGONA_PARKS],
+    )
+    print("Finished fetching Algona")
+    return new_parks
+
+
+def fetch_new_normandy_park_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+    """Pull parks from Normandy Park's own ArcGIS Online "NP_Parks" layer (found by
+    searching ArcGIS Online for the city's GIS account). It's a parcel layer, so a
+    park can be several polygons (Nature Trails Park is five); those are combined
+    into one park located at their area-weighted centroid. Parcels owned by
+    another city (a Des Moines beach park straddles the border) are skipped. It
+    has no usable address field, so address is always blank, and it lacks a couple
+    of parks (Walker Preserve, Brittany Park); addresses and those parks come from
+    the backup CSV."""
+    resp = get_with_retries(
+        NORMANDY_PARK_URL,
+        params={
+            "where": "SITENAME IS NOT NULL",
+            "outFields": "SITENAME,OWNER",
+            "returnGeometry": "true",
+            "outSR": "4326",
+            "f": "json",
+        },
+        timeout=30,
+    )
+    data = resp.json()
+
+    rings_by_name: dict[str, list] = {}
+    skipped = 0
+    for feature in data.get("features", []):
+        attrs = feature["attributes"]
+        name = (attrs.get("SITENAME") or "").strip()
+        owner = (attrs.get("OWNER") or "").strip()
+        rings = feature.get("geometry", {}).get("rings")
+        if not name or not rings:
+            skipped += 1
+            continue
+        if owner and owner != "City of Normandy Park":
+            continue
+        rings_by_name.setdefault(name, []).extend(rings)
+
+    listed_parks = []
+    for name, rings in rings_by_name.items():
+        if (name, "") in existing_keys:
+            continue
+        lat, lon = polygon_centroid(rings)
+        listed_parks.append(ListedPark(name=name, address="", city="Normandy Park", latitude=lat, longitude=lon))
+    if skipped:
+        print(f"Skipped {skipped} Normandy Park row(s) missing a name or geometry", file=sys.stderr)
+    print("Finished fetching Normandy Park")
+    return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
 def fetch_new_kirkland_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
@@ -1336,6 +1397,8 @@ FETCH_FUNCTIONS = (
     fetch_new_lake_forest_park_parks,
     fetch_new_kenmore_parks,
     fetch_new_newcastle_parks,
+    fetch_new_algona_parks,
+    fetch_new_normandy_park_parks,
     fetch_new_bothell_parks,
     fetch_new_woodinville_parks,
     fetch_new_king_county_parks,

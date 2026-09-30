@@ -40,6 +40,21 @@ CLYDE_HILL_PARKS = (
     ("NE 97th & NE 14th St Park", "97th Ave NE & NE 14th St", 47.622924, -122.211586),
     ("Rogerson Corner Park", "NE 24th St & 98th Ave NE", 47.631982, -122.209724),
 )
+# Algona: the city's seven parks (comprehensive plan inventory), with addresses or
+# cross streets from King County's South King County Parks Guide. Coordinates are
+# OSM park polygon centres, except Waffle Park (Census geocoder at its address)
+# and 3rd Avenue Pocket Park (approximate: where 3rd Ave N meets the Interurban
+# Trail; no address or map data is published for it).
+ALGONA_PARKS_URL = "https://www.algonawa.gov/services/public_works/parks.php"
+ALGONA_PARKS = (
+    ("John Matchett Memorial Park", "400 Warde St", 47.2776597, -122.2483127),
+    ("David E. Hill Wetland Preserve", "Pacific Ave N & Ellingson Rd", 47.2700421, -122.2415588),
+    ("7th Avenue Park", "7th Ave N & Main St", 47.2875415, -122.2570722),
+    ("Stanley Avenue Park", "Stanley Ave & Pullman Ave", 47.2808699, -122.2479254),
+    ("Stanley Tot Lot", "Stanley Ave & Iron Ave", 47.2813432, -122.2475381),
+    ("Waffle Park", "290 1st Ave N", 47.279042, -122.252306),
+    ("3rd Avenue Pocket Park", "3rd Ave N", 47.2815, -122.2492),
+)
 HUNTS_POINT_PARKS_URL = "https://huntspoint-wa.gov/wetherillnaturepreserve"
 HUNTS_POINT_PARKS = (
     # Next to Town Hall (3000 Hunts Point Rd); OSM way 422278032. Wetherill Nature
@@ -52,7 +67,7 @@ HUNTS_POINT_PARKS = (
 # have no city source. Glendale Forest: King County Parks page; OSM park way centre.
 # Hamm Creek Natural Area: OSM nature reserve centre (King County strategic
 # acquisitions map). Labelled Burien, the mailing city King County itself gives.
-NORTH_HIGHLINE_PARKS_URL = "https://kingcounty.gov/en/dept/dnrp/nature-recreation/parks-recreation/king-county-parks/natural-working-lands/glendale-forest"
+BOULEVARD_PARK_PARKS_URL = "https://kingcounty.gov/en/dept/dnrp/nature-recreation/parks-recreation/king-county-parks/natural-working-lands/glendale-forest"
 BOULEVARD_PARK_PARKS = (
     ("Glendale Forest", "8th Ave S & S 104th St", 47.5109909, -122.3225427),
     ("Hamm Creek Natural Area", "", 47.511591, -122.3104671),
@@ -88,6 +103,7 @@ NEWCASTLE_EXTRA_PARKS = (
     ("Park at 95th", "12700 SE 95th Way", 47.51778, -122.170814),
     ("Newcastle Historical Park", "13600 SE 71st St", 47.539629, -122.157204),
 )
+NORMANDY_PARK_URL = "https://services7.arcgis.com/5d703jjhemO6FlIW/arcgis/rest/services/NP_Parks/FeatureServer/0/query"
 KENMORE_URL = "https://gwa.kenmorewa.gov/arcgis/rest/services/Parks/FeatureServer/20/query"
 BOTHELL_BASE_URL = "https://www.bothellwa.gov"
 BOTHELL_LIST_URL = "https://www.bothellwa.gov/250/Parks"
@@ -133,6 +149,8 @@ TRACKED_CITIES = (
     "Lake Forest Park",
     "Kenmore",
     "Newcastle",
+    "Algona",
+    "Normandy Park",
     "Bothell",
     "Woodinville",
 )
