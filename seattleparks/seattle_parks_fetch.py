@@ -27,6 +27,8 @@ from seattle_parks_constants import (
     BURIEN_BASE_URL,
     BURIEN_LIST_URL,
     CLYDE_HILL_PARKS,
+    HUNTS_POINT_PARKS,
+    BOULEVARD_PARK_PARKS,
     DEFAULT_CITY,
     DES_MOINES_ADDRESS_URL,
     DES_MOINES_PARKS_URL,
@@ -387,6 +389,27 @@ def fetch_new_yarrow_point_parks(existing_keys: set[tuple[str, str]]) -> list[di
         [ListedPark(name, address, lat, lon, "Yarrow Point") for name, address, lat, lon in YARROW_POINT_PARKS],
     )
     print("Finished fetching Yarrow Point.")
+    return new_parks
+
+
+def fetch_new_hunts_point_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+    """Hunts Point's parks, from the hand-listed HUNTS_POINT_PARKS."""
+    new_parks = fetch_new_listed_parks(
+        existing_keys,
+        [ListedPark(name, address, lat, lon, "Hunts Point") for name, address, lat, lon in HUNTS_POINT_PARKS],
+    )
+    print("Finished fetching Hunts Point.")
+    return new_parks
+
+
+def fetch_new_boulevard_park_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+    """King County natural areas in unincorporated Boulevard Park, 
+    from the hand-listed BOULEVARD_PARK_PARKS, labelled Burien."""
+    new_parks = fetch_new_listed_parks(
+        existing_keys,
+        [ListedPark(name, address, lat, lon, "Burien") for name, address, lat, lon in BOULEVARD_PARK_PARKS],
+    )
+    print("Finished fetching Boulevard Park.")
     return new_parks
 
 
@@ -1255,6 +1278,8 @@ FETCH_FUNCTIONS = (
     fetch_new_mercer_island_parks,
     fetch_new_clyde_hill_parks,
     fetch_new_yarrow_point_parks,
+    fetch_new_hunts_point_parks,
+    fetch_new_boulevard_park_parks,
     fetch_new_kirkland_parks,
     fetch_new_redmond_parks,
     fetch_new_medina_parks,

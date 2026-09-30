@@ -40,6 +40,23 @@ CLYDE_HILL_PARKS = (
     ("NE 97th & NE 14th St Park", "97th Ave NE & NE 14th St", 47.622924, -122.211586),
     ("Rogerson Corner Park", "NE 24th St & 98th Ave NE", 47.631982, -122.209724),
 )
+HUNTS_POINT_PARKS_URL = "https://huntspoint-wa.gov/wetherillnaturepreserve"
+HUNTS_POINT_PARKS = (
+    # Next to Town Hall (3000 Hunts Point Rd); OSM way 422278032. Wetherill Nature
+    # Preserve, which Hunts Point shares with Yarrow Point, is listed once, under
+    # Yarrow Point, below.
+    ("D. K. McDonald Park", "3000 Hunts Point Rd", 47.63708, -122.2271792),
+)
+# King County Parks natural areas in unincorporated North Highline (the Census's
+# "Boulevard Park" area, the remains of the old Riverton-Boulevard Park CDP), which
+# have no city source. Glendale Forest: King County Parks page; OSM park way centre.
+# Hamm Creek Natural Area: OSM nature reserve centre (King County strategic
+# acquisitions map). Labelled Burien, the mailing city King County itself gives.
+NORTH_HIGHLINE_PARKS_URL = "https://kingcounty.gov/en/dept/dnrp/nature-recreation/parks-recreation/king-county-parks/natural-working-lands/glendale-forest"
+BOULEVARD_PARK_PARKS = (
+    ("Glendale Forest", "8th Ave S & S 104th St", 47.5109909, -122.3225427),
+    ("Hamm Creek Natural Area", "", 47.511591, -122.3104671),
+)
 YARROW_POINT_PARKS_URL = "https://yarrowpointwa.gov/public-spaces/"
 YARROW_POINT_PARKS = (
     # Morningside Park keeps the Town Hall address, so Kirkland's layer (which also
@@ -94,6 +111,7 @@ TRACKED_CITIES = (
     "Medina",
     "Clyde Hill",
     "Yarrow Point",
+    "Hunts Point",
     "Burien",
     "Tukwila",
     "Renton",

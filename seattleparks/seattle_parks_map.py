@@ -51,12 +51,18 @@ Extract park names/addresses from these sources:
     Drupal.settings map JSON for names/coordinates, same schema.org
     PostalAddress microdata per park page for addresses), so it reuses those
     same parsing helpers rather than duplicating them.
-  - Clyde Hill and Yarrow Point: each town's parks page is prose only (no map
+  - Clyde Hill, Yarrow Point and Hunts Point: each town's parks page is prose only (no map
     data or coordinates, and only a handful of parks), so their parks are
     listed by hand in seattle_parks_constants.py. Coordinates come from
     OpenStreetMap's exact-name park polygons where they exist, else from the
     Census geocoder at the cross streets the town gives. Zips are filled in
     afterward from the coordinates like every other blank zip.
+  - Boulevard Park: two King County natural areas, Glendale
+    Forest and Hamm Creek Natural Area, in the unincorporated area between
+    Seattle, Burien and Tukwila (the old Riverton-Boulevard Park census area),
+    which has no city source; listed by hand and labelled Burien, the mailing
+    city King County gives. The other census-only areas checked (Lakeland North
+    and South, Riverton) have no parks that aren't already tracked.
   - Burien: scraped live from the city's own parks directory page (CivicLive,
     same CMS family as Bellevue, but a different markup convention: no
     per-field classes at all — just the page's own <h2 class="pageTitle">
