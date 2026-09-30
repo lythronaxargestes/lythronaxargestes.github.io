@@ -490,10 +490,17 @@ def main() -> None:
         action="store_true",
         help="Skip the API fetch; read the existing CSV (with your Visited edits) and regenerate the map only.",
     )
+    parser.add_argument(
+        "--date",
+        type=date.fromisoformat,
+        default=None,
+        metavar="YYYY-MM-DD",
+        help='Stamp the map\'s "Last updated" date with this instead of today\'s.',
+    )
     args = parser.parse_args()
 
     since_date = _read_last_updated_date()
-    last_updated = date.today().isoformat()
+    last_updated = (args.date or date.today()).isoformat()
 
     if args.from_csv:
         try:
