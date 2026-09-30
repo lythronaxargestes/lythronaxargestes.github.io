@@ -7,7 +7,8 @@ Extract park names/addresses from these sources:
     shorelinewa.gov itself blocks automated fetches, but its GIS server on a
     different host does not). Park addresses come straight from that layer's
     ADDRESS field; since it stores polygons, not points, each park's map
-    location is the polygon's area-weighted centroid.
+    location is the polygon's area-weighted centroid. "Landbank" parcels (land held
+    for future park use, e.g. Rotary A-D) are skipped.
   - Bellevue: scraped live from the city's own parks directory page and each
     linked individual park page (~80 of them). Each park page embeds clean
     <meta property="latitude/longitude"> tags and a structured address (the

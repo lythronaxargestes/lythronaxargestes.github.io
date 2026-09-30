@@ -92,13 +92,13 @@ def fetch_new_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
 
 def fetch_new_shoreline_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     """Pull named park polygons from Shoreline's public ArcGIS Server, returning only
-    ones not already in existing_keys. Each park's location is its polygon centroid,
-    since this layer stores boundaries, not points."""
+    ones not already in existing_keys, skipping "Landbank" parcels. Each park's
+    location is its polygon centroid, since this layer stores boundaries, not points."""
     resp = _get_with_retries(
         SHORELINE_URL,
         params={
             "where": "NAME IS NOT NULL",
-            "outFields": "NAME,ADDRESS",
+            "outFields": "NAME,ADDRESS,PARKTYPE",
             "returnGeometry": "true",
             "outSR": "4326",
             "f": "json",
@@ -116,6 +116,10 @@ def fetch_new_shoreline_parks(existing_keys: set[tuple[str, str]]) -> list[dict]
         rings = feature.get("geometry", {}).get("rings")
         if not name or not rings:
             skipped += 1
+            continue
+        # Land held for future park use, not actual parks (the layer spells it
+        # both "Landbank" and "Land Bank")
+        if (attrs.get("PARKTYPE") or "").replace(" ", "").lower() == "landbank":
             continue
         if (name, address) in existing_keys:
             continue
