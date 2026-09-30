@@ -46,6 +46,10 @@ sources. Always run through `uv run --with <deps>`, never a bare `python3` or
 bs4/requests/tqdm aren't installed system-wide, and this project has no
 committed venv.
 
+The map's "Last updated" stamp defaults to today. To stamp a different date,
+run `seattle_parks_map.py` directly (via `uv run --with ...` as above) with
+`--date YYYY-MM-DD`; `seattle_parks_update.sh` always uses today's date.
+
 ## Correcting data
 
 `seattle_parks.csv` is generated-only — never fix a park's coordinates or
