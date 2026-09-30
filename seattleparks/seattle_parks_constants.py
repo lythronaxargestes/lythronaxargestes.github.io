@@ -52,7 +52,7 @@ LAKE_FOREST_PARK_ADDRESS_RE = re.compile(r"^(.*?),\s*Lake Forest Park,\s*WA\s*(\
 BOTHELL_ADDRESS_RE = re.compile(r"^(.*?),\s*Bothell,\s*WA\s*(\d{5})$")
 
 # Name-exclusion and geographic-scope rules
-EXCLUDED_NAME_KEYWORDS = ("dog park", "cemetery", "cemetary", "gym", "complex")
+EXCLUDED_NAME_KEYWORDS = ("dog park", "dog corral", "cemetery", "cemetary", "gym", "complex")
 TRACKED_CITIES = (
     "Seattle",
     "Shoreline",
