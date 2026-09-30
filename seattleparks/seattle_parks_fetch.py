@@ -1253,8 +1253,6 @@ FETCH_FUNCTIONS = (
     fetch_new_shoreline_parks,
     fetch_new_bellevue_parks,
     fetch_new_mercer_island_parks,
-    # Before Kirkland, whose layer also lists Yarrow Point's Morningside Park; its
-    # (name, address) key then dedups Kirkland's copy
     fetch_new_clyde_hill_parks,
     fetch_new_yarrow_point_parks,
     fetch_new_kirkland_parks,
