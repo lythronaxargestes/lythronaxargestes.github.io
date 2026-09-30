@@ -65,7 +65,7 @@ from seattle_parks_helpers import (
 )
 
 
-def fetch_new_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_seattle_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     """Pull parks from the Socrata API, returning only ones not already in existing_keys."""
     resp = get_with_retries(API_URL, params={"$limit": 1000}, timeout=30)
     rows = resp.json()
@@ -1249,7 +1249,7 @@ def fetch_new_king_county_parks(existing_keys: set[tuple[str, str]]) -> list[dic
 
 
 FETCH_FUNCTIONS = (
-    fetch_new_parks,
+    fetch_new_seattle_parks,
     fetch_new_shoreline_parks,
     fetch_new_bellevue_parks,
     fetch_new_mercer_island_parks,
