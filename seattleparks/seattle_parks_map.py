@@ -258,15 +258,15 @@ from seattle_parks_constants import (
 )
 from seattle_parks_fetch import FETCH_FUNCTIONS
 from seattle_parks_helpers import (
-    _apply_backup_data,
-    _format_visited_date,
-    _is_duplicate_park,
-    _is_excluded_name,
-    _is_visited,
-    _load_existing_parks,
-    _normalize_name,
-    _parks_visited_since,
-    _read_last_updated_date,
+    apply_backup_data,
+    format_visited_date,
+    is_duplicate_park,
+    is_excluded_name,
+    is_visited,
+    load_existing_parks,
+    normalize_name,
+    parks_visited_since,
+    read_last_updated_date,
     load_parks_from_csv,
 )
 
@@ -274,19 +274,19 @@ from seattle_parks_helpers import (
 def sync_parks() -> list[dict]:
     """Fetch from all sources. Existing CSV rows are kept exactly as-is (order and
     edits untouched); only parks not already present are appended."""
-    existing = _load_existing_parks()
+    existing = load_existing_parks()
     existing_keys = {(p["name"], p["address"]) for p in existing}
     new_parks = []
     for fetch in FETCH_FUNCTIONS:
         found = fetch(existing_keys)
         for p in found:
-            p["name"] = _normalize_name(p["name"])
+            p["name"] = normalize_name(p["name"])
         existing_keys |= {(p["name"], p["address"]) for p in found}
         new_parks += found
-    new_parks = [p for p in new_parks if not _is_excluded_name(p["name"], p["city"])]
+    new_parks = [p for p in new_parks if not is_excluded_name(p["name"], p["city"])]
     kept: list[dict] = []
     for p in new_parks:
-        if not _is_duplicate_park(p, existing + kept):
+        if not is_duplicate_park(p, existing + kept):
             kept.append(p)
     new_parks = kept
     if existing:
@@ -319,16 +319,16 @@ def plot_map(parks: list[dict], last_updated: str, since_date: str | None) -> No
         )
     except FileNotFoundError:
         pass
-    latest_parks = _parks_visited_since(parks, since_date)
+    latest_parks = parks_visited_since(parks, since_date)
     latest_ids = {id(p) for p in latest_parks}
     latest_markers = {}
     search_index = []
     for p in parks:
-        color = VISITED_COLOR if _is_visited(p.get("visited", "N")) else UNVISITED_COLOR
+        color = VISITED_COLOR if is_visited(p.get("visited", "N")) else UNVISITED_COLOR
         city_zip = " ".join(part for part in (p["city"], p["zip_code"]) if part)
         address_line = ", ".join(part for part in (p["address"], city_zip) if part)
         popup_html = f"<b>{p['name']}</b><br>{address_line}"
-        visited_date = _format_visited_date(p.get("visited_date", ""))
+        visited_date = format_visited_date(p.get("visited_date", ""))
         if visited_date:
             popup_html += f"<br><b>Visited:</b> {visited_date}"
         popup = folium.Popup(popup_html, max_width=250)
@@ -368,9 +368,9 @@ def plot_map(parks: list[dict], last_updated: str, since_date: str | None) -> No
         )
     else:
         latest_html = ""
-    visited_count = sum(1 for p in parks if _is_visited(p.get("visited", "N")))
+    visited_count = sum(1 for p in parks if is_visited(p.get("visited", "N")))
     seattle_parks = [p for p in parks if p["city"] == "Seattle"]
-    seattle_visited_count = sum(1 for p in seattle_parks if _is_visited(p.get("visited", "N")))
+    seattle_visited_count = sum(1 for p in seattle_parks if is_visited(p.get("visited", "N")))
     seattle_pct = (seattle_visited_count / len(seattle_parks) * 100) if seattle_parks else 0.0
     metro_pct = (visited_count / len(parks) * 100) if parks else 0.0
     progress_html = (
@@ -382,7 +382,7 @@ def plot_map(parks: list[dict], last_updated: str, since_date: str | None) -> No
     last_updated_html = (
         f'<div id="lastUpdated" data-date="{last_updated}" '
         f'style="font-size: 12px; font-weight: 400; margin-top: 8px; color: #5a5a52;">'
-        f"Last updated: {_format_visited_date(last_updated)}</div>"
+        f"Last updated: {format_visited_date(last_updated)}</div>"
     )
     search_html = """
     <div style="position: relative; margin-top: 8px;">
@@ -500,7 +500,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    since_date = _read_last_updated_date()
+    since_date = read_last_updated_date()
     last_updated = (args.date or date.today()).isoformat()
 
     if args.from_csv:
@@ -509,14 +509,14 @@ def main() -> None:
         except FileNotFoundError:
             print(f"{CSV_PATH} not found — run without --from-csv first.", file=sys.stderr)
             sys.exit(1)
-        plot_map(_apply_backup_data(parks), last_updated, since_date)
+        plot_map(apply_backup_data(parks), last_updated, since_date)
     else:
         parks = sync_parks()
         if not parks:
             print("No park data retrieved — aborting.", file=sys.stderr)
             sys.exit(1)
         write_csv(parks)
-        plot_map(_apply_backup_data(parks), last_updated, since_date)
+        plot_map(apply_backup_data(parks), last_updated, since_date)
 
 
 if __name__ == "__main__":

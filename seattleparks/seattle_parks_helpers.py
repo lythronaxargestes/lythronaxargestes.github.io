@@ -32,7 +32,7 @@ from seattle_parks_constants import (
 )
 
 
-def _normalize_name(name: str) -> str:
+def normalize_name(name: str) -> str:
     """Normalize to Unicode NFC so cosmetically-identical park names compare
     equal even if their combining-character sequences differ byte-for-byte
     (e.g. an accented/Indigenous name copied from two different sources) --
@@ -41,7 +41,7 @@ def _normalize_name(name: str) -> str:
     return unicodedata.normalize("NFC", name)
 
 
-def _is_excluded_name(name: str, city: str) -> bool:
+def is_excluded_name(name: str, city: str) -> bool:
     """True if this park should be dropped: a blanket-excluded keyword (dog
     parks, cemeteries, gyms), or a standalone center -- e.g. a community/rec/
     senior center, a recreation facility rather than parkland -- unless "park"
@@ -56,7 +56,7 @@ def _is_excluded_name(name: str, city: str) -> bool:
     return "center" in lower and "park" not in lower
 
 
-_ADDRESS_ABBREVIATIONS = {
+ADDRESS_ABBREVIATIONS = {
     "&": "and", "st": "street", "dr": "drive", "ave": "avenue", "blvd": "boulevard",
     "rd": "road", "pl": "place", "ln": "lane", "ct": "court", "pkwy": "parkway",
     "n": "north", "s": "south", "e": "east", "w": "west",
@@ -64,15 +64,15 @@ _ADDRESS_ABBREVIATIONS = {
 }
 
 
-def _normalize_address(address: str) -> str:
+def normalize_address(address: str) -> str:
     """Lowercase and expand common abbreviations so the same street address
     spelled two ways ("NE 138th St & Juanita Dr NE" vs "NE 138th St and Juanita
     Drive NE") compares equal."""
     tokens = re.findall(r"[a-z0-9]+|&", address.lower())
-    return " ".join(_ADDRESS_ABBREVIATIONS.get(t, "") for t in tokens)
+    return " ".join(ADDRESS_ABBREVIATIONS.get(t, t) for t in tokens)
 
 
-def _distance_m(a: dict, b: dict) -> float:
+def distance_m(a: dict, b: dict) -> float:
     """Approximate distance in meters between two parks (equirectangular; fine at
     the tens-of-meters scale this is used for)."""
     x = math.radians(b["longitude"] - a["longitude"]) * math.cos(math.radians(a["latitude"]))
@@ -80,7 +80,7 @@ def _distance_m(a: dict, b: dict) -> float:
     return EARTH_RADIUS_M * math.hypot(x, y)
 
 
-def _is_duplicate_park(park: dict, others: list[dict]) -> bool:
+def is_duplicate_park(park: dict, others: list[dict]) -> bool:
     """True if `park` is the same park as one in `others` but reported by a
     different source with a slightly different name/address spelling, which the
     exact (name, address) check in each fetch function can't catch. Same city
@@ -95,12 +95,12 @@ def _is_duplicate_park(park: dict, others: list[dict]) -> bool:
     for several different parks). Fuzzy name matching (one name contained in
     the other) was tried and rejected: it merges many distinct neighbors, e.g.
     "Woodland Park Zoo" / "Woodland Park" or "Rotary Park" / "Rotary D"."""
-    address = _normalize_address(park["address"])
+    address = normalize_address(park["address"])
     for other in others:
         if other["city"] != park["city"]:
             continue
-        same_address = bool(address) and address == _normalize_address(other["address"])
-        distance = _distance_m(park, other)
+        same_address = bool(address) and address == normalize_address(other["address"])
+        distance = distance_m(park, other)
         if same_address and distance <= SAME_SPOT_DISTANCE_M:
             return True
         if park["name"].casefold() == other["name"].casefold() and (
@@ -110,13 +110,13 @@ def _is_duplicate_park(park: dict, others: list[dict]) -> bool:
     return False
 
 
-def _is_visited(value: str) -> bool:
+def is_visited(value: str) -> bool:
     return str(value).strip().upper() == "Y"
 
 
-def _parks_visited_since(parks: list[dict], since_date: str | None) -> list[dict]:
+def parks_visited_since(parks: list[dict], since_date: str | None) -> list[dict]:
     """Return every park visited on or after `since_date` (the "Last updated" date
-    stamped into the previous run's map -- see _read_last_updated_date), earliest-
+    stamped into the previous run's map -- see read_last_updated_date), earliest-
     visited first. This surfaces every visit logged since that map was last
     regenerated, not just the single latest day, since parks are often marked
     visited by hand across several different days between runs. Falls back to
@@ -133,7 +133,7 @@ def _parks_visited_since(parks: list[dict], since_date: str | None) -> list[dict
     return matches
 
 
-def _read_last_updated_date() -> str | None:
+def read_last_updated_date() -> str | None:
     """Read the "Last updated" date stamped into the existing map HTML (the one
     this run is about to overwrite), or None if there's no existing map yet (the
     very first run) or it predates this feature."""
@@ -146,7 +146,7 @@ def _read_last_updated_date() -> str | None:
     return match.group(1) if match else None
 
 
-def _format_visited_date(value: str) -> str | None:
+def format_visited_date(value: str) -> str | None:
     """Parse a CSV visited_date value (YYYY-MM-DD) into "Month D, YYYY" for the
     popup. Returns None if the value is blank."""
     value = str(value).strip()
@@ -160,7 +160,7 @@ def load_parks_from_csv() -> list[dict]:
     with open(CSV_PATH, newline="", encoding="utf-8") as f:
         return [
             {
-                "name": _normalize_name(row["name"]),
+                "name": normalize_name(row["name"]),
                 "address": row["address"],
                 "city": row.get("city") or DEFAULT_CITY,
                 "zip_code": row["zip_code"],
@@ -173,7 +173,7 @@ def load_parks_from_csv() -> list[dict]:
         ]
 
 
-def _load_existing_parks() -> list[dict]:
+def load_existing_parks() -> list[dict]:
     """Same as load_parks_from_csv(), but an absent file just means "no existing rows"."""
     try:
         return load_parks_from_csv()
@@ -181,7 +181,7 @@ def _load_existing_parks() -> list[dict]:
         return []
 
 
-def _apply_backup_data(parks: list[dict]) -> list[dict]:
+def apply_backup_data(parks: list[dict]) -> list[dict]:
     """Enrich `parks` for display using seattle_parks_missing_data_backup.csv (hand
     researched via web search) -- backup data wins whenever it's present, falling
     back to the main CSV's own value for any field the backup left blank. This
@@ -203,7 +203,7 @@ def _apply_backup_data(parks: list[dict]) -> list[dict]:
     by_key = {(p["name"], p["city"]): p for p in enriched}
 
     for row in backup_rows:
-        key = (_normalize_name(row["name"]), row["city"])
+        key = (normalize_name(row["name"]), row["city"])
         found_address = (row.get("found_address") or "").strip()
         found_zip = (row.get("found_zip") or "").strip()
         found_lat = (row.get("found_latitude") or "").strip()
@@ -221,7 +221,7 @@ def _apply_backup_data(parks: list[dict]) -> list[dict]:
                     park["longitude"] = float(found_lon)
         elif row.get("in_main_csv") == "N" and key not in by_key and found_lat and found_lon:
             new_park = {
-                "name": _normalize_name(row["name"]),
+                "name": normalize_name(row["name"]),
                 "address": found_address,
                 "city": row["city"],
                 "zip_code": found_zip,
@@ -233,10 +233,10 @@ def _apply_backup_data(parks: list[dict]) -> list[dict]:
             enriched.append(new_park)
             by_key[key] = new_park
 
-    return [p for p in enriched if not _is_excluded_name(p["name"], p["city"])]
+    return [p for p in enriched if not is_excluded_name(p["name"], p["city"])]
 
 
-def _get_with_retries(url: str, **kwargs) -> requests.Response:
+def get_with_retries(url: str, **kwargs) -> requests.Response:
     """GET url, retrying up to MAX_FETCH_ATTEMPTS times (with a growing backoff)
     on timeouts/connection errors or 5xx server errors -- transient failures
     seen in practice (e.g. bellevuewa.gov intermittently stalling partway
@@ -259,7 +259,7 @@ def _get_with_retries(url: str, **kwargs) -> requests.Response:
     raise AssertionError("unreachable: last attempt always returns or raises")
 
 
-def _polygon_centroid(rings: list[list[list[float]]]) -> tuple[float, float]:
+def polygon_centroid(rings: list[list[list[float]]]) -> tuple[float, float]:
     """Area-weighted centroid of a polygon's largest ring. Returns (latitude, longitude)."""
     ring = max(rings, key=len)
     area = cx = cy = 0.0
@@ -276,7 +276,7 @@ def _polygon_centroid(rings: list[list[list[float]]]) -> tuple[float, float]:
     return cy / (6 * area), cx / (6 * area)
 
 
-def _geocode_census(address: str, city: str, state: str = "WA") -> tuple[float, float, str] | None:
+def geocode_census(address: str, city: str, state: str = "WA") -> tuple[float, float, str] | None:
     """Look up (latitude, longitude, zip) for a one-line address via the free US
     Census geocoder. Returns None if it can't find a match (e.g. an address with
     no house number or an unrecognized cross-street), or if its best match lands
@@ -284,7 +284,7 @@ def _geocode_census(address: str, city: str, state: str = "WA") -> tuple[float, 
     address outright; it can instead return a confident-looking match in some
     other, same-named-street city (e.g. it once matched a Tukwila intersection
     address to a street in Bellingham, ~90 miles north)."""
-    resp = _get_with_retries(
+    resp = get_with_retries(
         CENSUS_GEOCODE_URL,
         params={"address": f"{address}, {city}, {state}", "benchmark": "Public_AR_Current", "format": "json"},
         timeout=15,
@@ -299,7 +299,7 @@ def _geocode_census(address: str, city: str, state: str = "WA") -> tuple[float, 
     return match["coordinates"]["y"], match["coordinates"]["x"], match["addressComponents"].get("zip", "")
 
 
-def _normalize_allcaps_text(text: str) -> str:
+def normalize_allcaps_text(text: str) -> str:
     """Recase an all-caps value (e.g. "15305 119TH AVE NE", "VAN DOREN'S LANDING")
     into normal title case: directional abbreviations (NE, SW, ...) stay uppercase,
     ordinal suffixes (119TH -> 119th) go lowercase, and (unlike str.title())
