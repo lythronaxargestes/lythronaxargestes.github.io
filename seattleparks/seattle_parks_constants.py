@@ -1,5 +1,5 @@
 """Constants shared by seattle_parks_fetch.py, seattle_parks_helpers.py, and
-seattle_parks_map.py: per-source URLs/regexes, exclusion rules, and file paths."""
+seattle_parks_map.py: Per-source URLs/regexes, exclusion rules, and file paths."""
 import re
 
 # HTTP fetch behavior

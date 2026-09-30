@@ -45,7 +45,7 @@ def normalize_name(name: str) -> str:
 
 
 def is_excluded_name(name: str, city: str) -> bool:
-    """True if this park should be dropped: a blanket-excluded keyword (dog
+    """True if this park should be dropped: A blanket-excluded keyword (dog
     parks, cemeteries, gyms), or a standalone center -- e.g. a community/rec/
     senior center, a recreation facility rather than parkland -- unless "park"
     also appears in the name. None of these rules apply to Seattle (e.g. its
@@ -96,7 +96,7 @@ def is_duplicate_park(park: dict, others: list[dict]) -> bool:
     Name alone isn't enough (many cities have their own "Rotary Park"), and
     neither is a shared address (city directory pages often list one address
     for several different parks). Fuzzy name matching (one name contained in
-    the other) was tried and rejected: it merges many distinct neighbors, e.g.
+    the other) was tried and rejected: It merges many distinct neighbors, e.g.
     "Woodland Park Zoo" / "Woodland Park" or "Rotary Park" / "Rotary D"."""
     address = normalize_address(park["address"])
     for other in others:
@@ -379,7 +379,7 @@ def fill_missing_zip_codes(parks: list[dict]) -> int:
 
 def normalize_allcaps_text(text: str) -> str:
     """Recase an all-caps value (e.g. "15305 119TH AVE NE", "VAN DOREN'S LANDING")
-    into normal title case: directional abbreviations (NE, SW, ...) stay uppercase,
+    into normal title case: Directional abbreviations (NE, SW, ...) stay uppercase,
     ordinal suffixes (119TH -> 119th) go lowercase, and (unlike str.title())
     apostrophes don't cause a following letter to capitalize ("DOREN'S" ->
     "Doren's", not "Doren'S"). Shared by Kirkland/SeaTac (addresses) and Kent

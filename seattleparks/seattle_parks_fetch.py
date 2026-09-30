@@ -1,4 +1,4 @@
-"""Per-city (and King County) fetch functions: pull new parks from each source's
+"""Per-city (and King County) fetch functions: Pull new parks from each source's
 live API/page, returning only ones not already in existing_keys. Orchestrated by
 sync_parks() in seattle_parks_map.py via FETCH_FUNCTIONS below. Each city-specific
 parsing helper lives right next to the fetch function that uses it; only
@@ -94,8 +94,8 @@ def fetch_new_seattle_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
             ),
         )
     if skipped:
-        print(f"Skipped {skipped} row(s) missing a name or coordinates.", file=sys.stderr)
-    print("Finished fetching Seattle.")
+        print(f"Skipped {skipped} row(s) missing a name or coordinates", file=sys.stderr)
+    print("Finished fetching Seattle")
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
@@ -135,8 +135,8 @@ def fetch_new_shoreline_parks(existing_keys: set[tuple[str, str]]) -> list[dict]
         lat, lon = polygon_centroid(rings)
         listed_parks.append(ListedPark(name=name, address=address, city="Shoreline", latitude=lat, longitude=lon))
     if skipped:
-        print(f"Skipped {skipped} Shoreline row(s) missing a name or geometry.", file=sys.stderr)
-    print("Finished fetching Shoreline.")
+        print(f"Skipped {skipped} Shoreline row(s) missing a name or geometry", file=sys.stderr)
+    print("Finished fetching Shoreline")
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
@@ -205,8 +205,8 @@ def fetch_new_bellevue_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
             ),
         )
     if skipped:
-        print(f"Skipped {skipped} Bellevue page(s) with no park coordinates.", file=sys.stderr)
-    print("Finished fetching Bellevue.")
+        print(f"Skipped {skipped} Bellevue page(s) with no park coordinates", file=sys.stderr)
+    print("Finished fetching Bellevue")
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
@@ -283,7 +283,7 @@ def _parse_civicplus_park_page(page_html: str, default_city: str) -> dict:
 def _fetch_new_civicplus_parks(
     existing_keys: set[tuple[str, str]], list_url: str, base_url: str, default_city: str,
 ) -> list[dict]:
-    """Shared fetch logic for CivicPlus-family sites (Mercer Island, Medina): pull
+    """Shared fetch logic for CivicPlus-family sites (Mercer Island, Medina): Pull
     names/coordinates from the listing page's embedded map JSON, then each park's
     own page for its address, returning only ones not already in existing_keys."""
     resp = get_with_retries(list_url, headers={"User-Agent": USER_AGENT}, timeout=30)
@@ -359,14 +359,14 @@ def fetch_new_mercer_island_parks(existing_keys: set[tuple[str, str]]) -> list[d
             ),
         )
 
-    print("Finished fetching Mercer Island.")
+    print("Finished fetching Mercer Island")
     return new_parks + fetch_new_listed_parks(existing_keys, listed_parks)
 
 
 def fetch_new_medina_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     """Fetch Medina's parks listing page and each linked park page."""
     new_parks = _fetch_new_civicplus_parks(existing_keys, MEDINA_LIST_URL, MEDINA_BASE_URL, "Medina")
-    print("Finished fetching Medina.")
+    print("Finished fetching Medina")
     return new_parks
 
 
@@ -377,7 +377,7 @@ def fetch_new_clyde_hill_parks(existing_keys: set[tuple[str, str]]) -> list[dict
     new_parks = fetch_new_listed_parks(
         existing_keys, [ListedPark(name, address, lat, lon, "Clyde Hill") for name, address, lat, lon in CLYDE_HILL_PARKS],
     )
-    print("Finished fetching Clyde Hill.")
+    print("Finished fetching Clyde Hill")
     return new_parks
 
 
@@ -388,7 +388,7 @@ def fetch_new_yarrow_point_parks(existing_keys: set[tuple[str, str]]) -> list[di
         existing_keys,
         [ListedPark(name, address, lat, lon, "Yarrow Point") for name, address, lat, lon in YARROW_POINT_PARKS],
     )
-    print("Finished fetching Yarrow Point.")
+    print("Finished fetching Yarrow Point")
     return new_parks
 
 
@@ -398,7 +398,7 @@ def fetch_new_hunts_point_parks(existing_keys: set[tuple[str, str]]) -> list[dic
         existing_keys,
         [ListedPark(name, address, lat, lon, "Hunts Point") for name, address, lat, lon in HUNTS_POINT_PARKS],
     )
-    print("Finished fetching Hunts Point.")
+    print("Finished fetching Hunts Point")
     return new_parks
 
 
@@ -409,7 +409,7 @@ def fetch_new_boulevard_park_parks(existing_keys: set[tuple[str, str]]) -> list[
         existing_keys,
         [ListedPark(name, address, lat, lon, "Burien") for name, address, lat, lon in BOULEVARD_PARK_PARKS],
     )
-    print("Finished fetching Boulevard Park.")
+    print("Finished fetching Boulevard Park")
     return new_parks
 
 
@@ -446,8 +446,8 @@ def fetch_new_kirkland_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         lat, lon = polygon_centroid(rings)
         listed_parks.append(ListedPark(name=name, address=address, city="Kirkland", latitude=lat, longitude=lon))
     if skipped:
-        print(f"Skipped {skipped} Kirkland row(s) missing a name or geometry.", file=sys.stderr)
-    print("Finished fetching Kirkland.")
+        print(f"Skipped {skipped} Kirkland row(s) missing a name or geometry", file=sys.stderr)
+    print("Finished fetching Kirkland")
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
@@ -488,8 +488,8 @@ def fetch_new_redmond_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         lat, lon = polygon_centroid(rings)
         listed_parks.append(ListedPark(name=name, address=address, city="Redmond", latitude=lat, longitude=lon))
     if skipped:
-        print(f"Skipped {skipped} Redmond row(s) missing a name or geometry.", file=sys.stderr)
-    print("Finished fetching Redmond.")
+        print(f"Skipped {skipped} Redmond row(s) missing a name or geometry", file=sys.stderr)
+    print("Finished fetching Redmond")
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
@@ -506,7 +506,7 @@ def _burien_park_links(page_html: str) -> list[str]:
 
 def _parse_burien_park_page(page_html: str) -> dict | None:
     """Extract name/address/coordinates from an individual park page. The markup has
-    no per-field classes: the name is the page's <h2 class="pageTitle">, the address
+    no per-field classes: The name is the page's <h2 class="pageTitle">, the address
     is the next plain <h2>, and coordinates come from an embedded Google Maps iframe
     URL (query params !2d<lon>!3d<lat>). Returns None if title or coordinates are
     missing."""
@@ -558,8 +558,8 @@ def fetch_new_burien_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
             ),
         )
     if skipped:
-        print(f"Skipped {skipped} Burien page(s) with no park coordinates.", file=sys.stderr)
-    print("Finished fetching Burien.")
+        print(f"Skipped {skipped} Burien page(s) with no park coordinates", file=sys.stderr)
+    print("Finished fetching Burien")
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
@@ -633,14 +633,14 @@ def fetch_new_tukwila_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
             ),
         )
     if skipped:
-        print(f"Skipped {skipped} Tukwila park(s) with no address or that couldn't be geocoded.", file=sys.stderr)
-    print("Finished fetching Tukwila.")
+        print(f"Skipped {skipped} Tukwila park(s) with no address or that couldn't be geocoded", file=sys.stderr)
+    print("Finished fetching Tukwila")
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
 def _parse_renton_location(name: str, location: str) -> str:
     """Best-effort address from the LOCATION field, which is inconsistently
-    formatted: usually "<name> - <address>" (possibly a different alias for
+    formatted: Usually "<name> - <address>" (possibly a different alias for
     name), sometimes a bare description, sometimes just a repeat of NAME with
     no real address. Returns "" rather than a redundant/uninformative value."""
     location = (location or "").strip()
@@ -702,8 +702,8 @@ def fetch_new_renton_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
             ),
         )
     if skipped:
-        print(f"Skipped {skipped} Renton row(s) missing a name or coordinates.", file=sys.stderr)
-    print("Finished fetching Renton.")
+        print(f"Skipped {skipped} Renton row(s) missing a name or coordinates", file=sys.stderr)
+    print("Finished fetching Renton")
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
@@ -749,8 +749,8 @@ def fetch_new_seatac_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
             ),
         )
     if skipped:
-        print(f"Skipped {skipped} SeaTac row(s) missing a name or geometry.", file=sys.stderr)
-    print("Finished fetching SeaTac.")
+        print(f"Skipped {skipped} SeaTac row(s) missing a name or geometry", file=sys.stderr)
+    print("Finished fetching SeaTac")
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
@@ -794,8 +794,8 @@ def fetch_new_kent_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
             ),
         )
     if skipped:
-        print(f"Skipped {skipped} Kent row(s) missing a name or geometry.", file=sys.stderr)
-    print("Finished fetching Kent.")
+        print(f"Skipped {skipped} Kent row(s) missing a name or geometry", file=sys.stderr)
+    print("Finished fetching Kent")
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
@@ -864,8 +864,8 @@ def fetch_new_des_moines_parks(existing_keys: set[tuple[str, str]]) -> list[dict
             ),
         )
     if skipped:
-        print(f"Skipped {skipped} Des Moines row(s) missing a name or geometry.", file=sys.stderr)
-    print("Finished fetching Des Moines.")
+        print(f"Skipped {skipped} Des Moines row(s) missing a name or geometry", file=sys.stderr)
+    print("Finished fetching Des Moines")
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
@@ -946,8 +946,8 @@ def fetch_new_federal_way_parks(existing_keys: set[tuple[str, str]]) -> list[dic
             ),
         )
     if skipped:
-        print(f"Skipped {skipped} Federal Way park(s) with no address or that couldn't be geocoded.", file=sys.stderr)
-    print("Finished fetching Federal Way.")
+        print(f"Skipped {skipped} Federal Way park(s) with no address or that couldn't be geocoded", file=sys.stderr)
+    print("Finished fetching Federal Way")
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
@@ -985,8 +985,8 @@ def fetch_new_auburn_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         lat, lon = polygon_centroid(rings)
         listed_parks.append(ListedPark(name=name, address=address, city="Auburn", latitude=lat, longitude=lon))
     if skipped:
-        print(f"Skipped {skipped} Auburn row(s) missing a name or geometry.", file=sys.stderr)
-    print("Finished fetching Auburn.")
+        print(f"Skipped {skipped} Auburn row(s) missing a name or geometry", file=sys.stderr)
+    print("Finished fetching Auburn")
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
@@ -1035,8 +1035,8 @@ def fetch_new_lake_forest_park_parks(existing_keys: set[tuple[str, str]]) -> lis
             ),
         )
     if skipped:
-        print(f"Skipped {skipped} Lake Forest Park row(s) missing a name or geometry.", file=sys.stderr)
-    print("Finished fetching Lake Forest Park.")
+        print(f"Skipped {skipped} Lake Forest Park row(s) missing a name or geometry", file=sys.stderr)
+    print("Finished fetching Lake Forest Park")
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
@@ -1076,8 +1076,8 @@ def fetch_new_kenmore_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         lat, lon = polygon_centroid(rings)
         listed_parks.append(ListedPark(name=name, address="", city="Kenmore", latitude=lat, longitude=lon))
     if skipped:
-        print(f"Skipped {skipped} Kenmore row(s) missing a name or geometry.", file=sys.stderr)
-    print("Finished fetching Kenmore.")
+        print(f"Skipped {skipped} Kenmore row(s) missing a name or geometry", file=sys.stderr)
+    print("Finished fetching Kenmore")
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
@@ -1099,7 +1099,7 @@ def _bothell_park_links(page_html: str) -> list[tuple[str, str]]:
 
 
 def _parse_bothell_park_page(page_html: str) -> str:
-    """Extract the street address from an individual park page: an "Address"
+    """Extract the street address from an individual park page: An "Address"
     heading (sometimes followed by a literal "&nbsp;" before the closing tag) is
     always followed by a bullet list whose first item is the address, including a
     ", Bothell, WA <zip>" suffix that the caller splits off separately."""
@@ -1147,13 +1147,13 @@ def fetch_new_bothell_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
             ),
         )
     if skipped:
-        print(f"Skipped {skipped} Bothell park(s) with no address or that couldn't be geocoded.", file=sys.stderr)
-    print("Finished fetching Bothell.")
+        print(f"Skipped {skipped} Bothell park(s) with no address or that couldn't be geocoded", file=sys.stderr)
+    print("Finished fetching Bothell")
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
 def _parse_woodinville_park_page(page_html: str) -> tuple[str, str, str]:
-    """Extract (name, address, zip_code) from a facility detail page: the name is
+    """Extract (name, address, zip_code) from a facility detail page: The name is
     the page's first <h2>; the address is the schema.org/hCard street-address and
     postal-code spans."""
     soup = BeautifulSoup(page_html, "html.parser")
@@ -1204,8 +1204,8 @@ def fetch_new_woodinville_parks(existing_keys: set[tuple[str, str]]) -> list[dic
             ),
         )
     if skipped:
-        print(f"Skipped {skipped} Woodinville park(s) with no address or that couldn't be geocoded.", file=sys.stderr)
-    print("Finished fetching Woodinville.")
+        print(f"Skipped {skipped} Woodinville park(s) with no address or that couldn't be geocoded", file=sys.stderr)
+    print("Finished fetching Woodinville")
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
@@ -1264,10 +1264,10 @@ def fetch_new_king_county_parks(existing_keys: set[tuple[str, str]]) -> list[dic
             ),
         )
     if skipped:
-        print(f"Skipped {skipped} King County row(s) missing a name or geometry.", file=sys.stderr)
+        print(f"Skipped {skipped} King County row(s) missing a name or geometry", file=sys.stderr)
     if out_of_scope:
-        print(f"Filtered out {out_of_scope} King County park(s) outside existing cities.", file=sys.stderr)
-    print("Finished fetching King County.")
+        print(f"Filtered out {out_of_scope} King County park(s) outside existing cities", file=sys.stderr)
+    print("Finished fetching King County")
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 

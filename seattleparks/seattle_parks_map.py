@@ -1,22 +1,22 @@
 """
 Extract park names/addresses from these sources:
-  - Seattle: the city's open-data API (the same endpoint
+  - Seattle: The city's open-data API (the same endpoint
     https://www.seattle.gov/parks/parks#/1 loads its map data from).
-  - Shoreline: the city's public ArcGIS Server (the same Feature Service
+  - Shoreline: The city's public ArcGIS Server (the same Feature Service
     behind https://www.shorelinewa.gov 's "Shoreline Parks & Trails" map;
     shorelinewa.gov itself blocks automated fetches, but its GIS server on a
     different host does not). Park addresses come straight from that layer's
     ADDRESS field; since it stores polygons, not points, each park's map
     location is the polygon's area-weighted centroid. "Landbank" parcels (land held
     for future park use, e.g. Rotary A-D) are skipped.
-  - Bellevue: scraped live from the city's own parks directory page and each
+  - Bellevue: Scraped live from the city's own parks directory page and each
     linked individual park page (~80 of them). Each park page embeds clean
     <meta property="latitude/longitude"> tags and a structured address (the
     Drupal Address field's address-line1/locality/administrative-area/
     postal-code markup) directly — no geocoding needed. A few linked pages
     (e.g. "Beach Parks with Lifeguards") are informational, not actual parks,
     and are skipped since they have no coordinates.
-  - Mercer Island: names and coordinates for most parks come from a
+  - Mercer Island: Names and coordinates for most parks come from a
     Drupal.settings JSON blob embedded in the listing page's <script> tag
     (feeding an OpenLayers map widget) — no geocoding needed there either.
     That blob has no address field, so each park's own page is fetched too,
@@ -38,7 +38,7 @@ Extract park names/addresses from these sources:
     filtered to CATEGORY='PARKS'. Addresses come straight from the SITEADDR
     field (recased from its all-caps source casing); coordinates are each
     polygon's area-weighted centroid, as with Shoreline.
-  - Redmond: its public ArcGIS Server (found directly, without checking the
+  - Redmond: Its public ArcGIS Server (found directly, without checking the
     city's own webpage first, since a GIS source this clean rarely needs a
     webpage fallback). Its "Parks" layer's d_Status field distinguishes real
     parks (ExD/ExU = Existing Developed/Undeveloped) from ones that don't
@@ -47,29 +47,29 @@ Extract park names/addresses from these sources:
     trail) repeats across multiple blank-address segments, so — unlike the
     other sources — this one also dedups within its own fetch, not just
     against already-known parks.
-  - Medina: same CivicPlus-family CMS as Mercer Island (same embedded
+  - Medina: Same CivicPlus-family CMS as Mercer Island (same embedded
     Drupal.settings map JSON for names/coordinates, same schema.org
     PostalAddress microdata per park page for addresses), so it reuses those
     same parsing helpers rather than duplicating them.
-  - Clyde Hill, Yarrow Point and Hunts Point: each town's parks page is prose only (no map
+  - Clyde Hill, Yarrow Point, and Hunts Point: Each town's parks page is prose only (no map
     data or coordinates, and only a handful of parks), so their parks are
     listed by hand in seattle_parks_constants.py. Coordinates come from
     OpenStreetMap's exact-name park polygons where they exist, else from the
     Census geocoder at the cross streets the town gives. Zips are filled in
     afterward from the coordinates like every other blank zip.
-  - Boulevard Park: two King County natural areas, Glendale
+  - Boulevard Park: Two King County natural areas, Glendale
     Forest and Hamm Creek Natural Area, in the unincorporated area between
-    Seattle, Burien and Tukwila (the old Riverton-Boulevard Park census area),
+    Seattle, Burien, and Tukwila (the old Riverton-Boulevard Park census area),
     which has no city source; listed by hand and labelled Burien, the mailing
     city King County gives. The other census-only areas checked (Lakeland North
     and South, Riverton) have no parks that aren't already tracked.
-  - Burien: scraped live from the city's own parks directory page (CivicLive,
-    same CMS family as Bellevue, but a different markup convention: no
+  - Burien: Scraped live from the city's own parks directory page (CivicLive,
+    same CMS family as Bellevue, but a different markup convention: No
     per-field classes at all — just the page's own <h2 class="pageTitle">
     for the name, the next plain <h2> for the address, and an embedded
     Google Maps iframe URL for coordinates (!2d<lon>!3d<lat>) — no geocoding
     needed.
-  - Tukwila: its own ArcGIS Server (maps.tukwilawa.gov) is unreachable (TLS
+  - Tukwila: Its own ArcGIS Server (maps.tukwilawa.gov) is unreachable (TLS
     cert expired, and the Web Adaptor itself reports "Could not access any
     GIS Server machines" even bypassing that), likely a decommissioned
     "legacy" system, so scraped live from the city's own parks directory page
@@ -78,7 +78,7 @@ Extract park names/addresses from these sources:
     text, sometimes wrapped in a Google Maps link), bounded by the enclosing
     </p> and any trailing \xa0. No coordinates anywhere on the page, so each
     address is geocoded via the free US Census geocoder.
-  - Renton: its public ArcGIS Server, found directly. The "Parks" layer has
+  - Renton: Its public ArcGIS Server, found directly. The "Parks" layer has
     direct Latitude/Longitude fields (no centroid/geocoding needed), but it's
     a regional facilities dataset covering several neighboring jurisdictions
     too (Seattle, King County, Tukwila, Newcastle, Kent, SeaTac all appear in
@@ -96,7 +96,7 @@ Extract park names/addresses from these sources:
     needed, unlike Renton), with direct point geometry. Addresses are in the
     same all-caps SITEADDR style as Kirkland's layer, so it reuses that same
     recasing helper.
-  - Kent: its public ArcGIS Server, found via its Open Data Hub's dataset
+  - Kent: Its public ArcGIS Server, found via its Open Data Hub's dataset
     metadata (the Hub catalog itself doesn't list a parks dataset, but one
     dataset's ArcGIS GeoService distribution URL revealed the underlying
     org's REST services directory, which does have a dedicated parks point
@@ -115,7 +115,7 @@ Extract park names/addresses from these sources:
     always spell a park's name identically) — most parks end up with a blank
     address. One name ("Des Moines Creek Trail") repeats across two points,
     so this also dedups within its own batch.
-  - Federal Way: scraped live from the city's own "Our Parks" page, which is
+  - Federal Way: Scraped live from the city's own "Our Parks" page, which is
     fetchable (no WAF) and lists every park as an accordion item with a
     "Location:" line and Google/Bing map links. Most entries' Bing link
     encodes direct point coordinates (cp=<lat>~<lon>), used as-is with no
@@ -124,7 +124,7 @@ Extract park names/addresses from these sources:
     entirely, in which case the Location address is geocoded via the free US
     Census geocoder instead. One park (BPA Trail) has neither a street address
     nor coordinates and is skipped.
-  - Auburn: its own public ArcGIS Server, found indirectly — auburnwa.gov's
+  - Auburn: Its own public ArcGIS Server, found indirectly — auburnwa.gov's
     parks page embeds an ArcGIS Experience Builder app, whose item metadata
     (via the ArcGIS Online sharing API) reveals a "City of Auburn Parks" web
     map, whose operational-layer URL is the city's own GIS server, not
@@ -135,7 +135,7 @@ Extract park names/addresses from these sources:
     is used since it's always populated and never abbreviated. Name and
     address are both in the same all-caps style as Kirkland/SeaTac/Kent, so
     this reuses that same recasing helper.
-  - Lake Forest Park: its ArcGIS Online organization, found via its Hub open-
+  - Lake Forest Park: Its ArcGIS Online organization, found via its Hub open-
     data site's dataset metadata (the same discovery path as Kent/SeaTac);
     the org's full service catalog (browsed directly, since the Hub page
     itself doesn't list it) has a "Parks_Map_WFL1" service with a small,
@@ -161,7 +161,7 @@ Extract park names/addresses from these sources:
     address field at all, so address is left blank for every park here.
     Polygon geometry, so each park's location is its centroid, as with
     Kirkland/Shoreline/Auburn/Lake Forest Park.
-  - Bothell: scraped live from the city's own parks directory page and each
+  - Bothell: Scraped live from the city's own parks directory page and each
     linked individual park page (~23 of them), rather than its ArcGIS Server
     (found, but its "BothellParks" layer is stale — last edited 2017 — and is
     missing 4 parks that are on the live site today, plus it has 2 garbage
@@ -172,7 +172,7 @@ Extract park names/addresses from these sources:
     list whose first item is the street address, geocoded via the free US
     Census geocoder (no coordinates anywhere on either the directory or
     individual pages).
-  - Woodinville: its "Facilities" booking page (a CivicPlus widget) only
+  - Woodinville: Its "Facilities" booking page (a CivicPlus widget) only
     renders 5 of the city's facilities by default (the rest are paginated
     behind a JS-driven AJAX search with no working plain-GET or query-string
     override found), and 2 of those 5 aren't parks at all (a community center
@@ -187,7 +187,7 @@ Extract park names/addresses from these sources:
     locality/postal-code spans); two parks' addresses are only a street name
     with no house number (Tanglin Ridge Park, Stonehill Meadows Park), so
     those are expected to fail Census geocoding and be skipped.
-  - King County: county-owned/managed parks, rather than a per-city source, so
+  - King County: County-owned/managed parks, rather than a per-city source, so
     it spans every city in the county (plus unincorporated areas) instead of
     just one. Found via the "Backyard Fun Finder" ArcGIS Experience Builder
     app (experience.arcgis.com/experience/26b4c16e5df04456a588454b2b5bc0ee)'s
@@ -232,10 +232,10 @@ map stays a single self-contained HTML file) as the tab's favicon.
 Usage:
     pip install requests folium beautifulsoup4 lxml tqdm
 
-    # First run: fetch parks from the API, write the CSV, plot the map.
+    # First run: Fetch parks from the API, write the CSV, plot the map.
     python3 seattle_parks_map.py
 
-    # Re-running later: if the CSV already exists, its rows (and your Visited
+    # Re-running later: If the CSV already exists, its rows (and your Visited
     # edits) are left untouched in place — only parks not already in the file
     # get appended.
     python3 seattle_parks_map.py
@@ -303,9 +303,9 @@ def sync_parks() -> list[dict]:
             kept.append(p)
     new_parks = kept
     if existing:
-        print(f"Found {len(new_parks)} new park(s) to add to the existing {len(existing)}.")
+        print(f"Found {len(new_parks)} new park(s) to add to the existing {len(existing)}")
     parks = existing + new_parks
-    print(f"Filled in {fill_missing_zip_codes(parks)} missing zip code(s).")
+    print(f"Filled in {fill_missing_zip_codes(parks)} missing zip code(s)")
     return parks
 
 
@@ -504,7 +504,7 @@ def main() -> None:
     parser.add_argument(
         "--from-csv",
         action="store_true",
-        help="Skip the API fetch; read the existing CSV (with your Visited edits), fill any blank zip codes, and regenerate the map.",
+        help="Skip the API fetch; read the existing CSV (with your Visited edits), fill any blank zip codes, and regenerate the map",
     )
     parser.add_argument(
         "--date",
@@ -522,17 +522,17 @@ def main() -> None:
         try:
             parks = load_parks_from_csv()
         except FileNotFoundError:
-            print(f"{CSV_PATH} not found — run without --from-csv first.", file=sys.stderr)
+            print(f"{CSV_PATH} not found — run without --from-csv first", file=sys.stderr)
             sys.exit(1)
         filled = fill_missing_zip_codes(parks)
         if filled:
-            print(f"Filled in {filled} missing zip code(s).")
+            print(f"Filled in {filled} missing zip code(s)")
             write_csv(parks)
         plot_map(apply_backup_data(parks), last_updated, since_date)
     else:
         parks = sync_parks()
         if not parks:
-            print("No park data retrieved — aborting.", file=sys.stderr)
+            print("No park data retrieved — aborting", file=sys.stderr)
             sys.exit(1)
         write_csv(parks)
         plot_map(apply_backup_data(parks), last_updated, since_date)
