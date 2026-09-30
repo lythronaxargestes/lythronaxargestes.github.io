@@ -46,6 +46,8 @@ from seattle_parks_constants import (
     MERCER_ISLAND_BASE_URL,
     MERCER_ISLAND_DIRECTORY_URL,
     MERCER_ISLAND_LIST_URL,
+    NEWCASTLE_EXTRA_PARKS,
+    NEWCASTLE_URL,
     REDMOND_URL,
     RENTON_URL,
     SEATAC_URL,
@@ -1081,6 +1083,46 @@ def fetch_new_kenmore_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
+def fetch_new_newcastle_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+    """Pull parks from Newcastle's own ArcGIS Online "City Park Areas" layer
+    (found by searching ArcGIS Online for the city's admin account, since
+    newcastlewa.gov blocks automated fetches). It has only a park number and
+    name, so address is always blank. Each park's location is its polygon
+    centroid. One park ("Newcastle Commons Central Square") is split across two
+    polygons, so this also dedups within its own fetch. Three parks from the
+    city's City Parks page that the layer lacks come from NEWCASTLE_EXTRA_PARKS."""
+    resp = get_with_retries(
+        NEWCASTLE_URL,
+        params={"where": "Park IS NOT NULL", "outFields": "Park", "returnGeometry": "true", "outSR": "4326", "f": "json"},
+        timeout=30,
+    )
+    data = resp.json()
+
+    listed_parks = []
+    seen = set()
+    skipped = 0
+    for feature in data.get("features", []):
+        name = (feature["attributes"].get("Park") or "").strip()
+        rings = feature.get("geometry", {}).get("rings")
+        if not name or not rings:
+            skipped += 1
+            continue
+        if (name, "") in existing_keys or name in seen:
+            continue
+        seen.add(name)
+        lat, lon = polygon_centroid(rings)
+        listed_parks.append(ListedPark(name=name, address="", city="Newcastle", latitude=lat, longitude=lon))
+    listed_parks += [
+        ListedPark(name, address, lat, lon, "Newcastle")
+        for name, address, lat, lon in NEWCASTLE_EXTRA_PARKS
+        if name not in seen
+    ]
+    if skipped:
+        print(f"Skipped {skipped} Newcastle row(s) missing a name or geometry", file=sys.stderr)
+    print("Finished fetching Newcastle")
+    return fetch_new_listed_parks(existing_keys, listed_parks)
+
+
 def _bothell_park_links(page_html: str) -> list[tuple[str, str]]:
     """Extract (name, url) for each park listed in the Parks page's own left-nav
     accordion, scoped to that page's child pages specifically (data-parent="250")
@@ -1293,6 +1335,7 @@ FETCH_FUNCTIONS = (
     fetch_new_auburn_parks,
     fetch_new_lake_forest_park_parks,
     fetch_new_kenmore_parks,
+    fetch_new_newcastle_parks,
     fetch_new_bothell_parks,
     fetch_new_woodinville_parks,
     fetch_new_king_county_parks,

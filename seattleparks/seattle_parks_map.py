@@ -161,6 +161,15 @@ Extract park names/addresses from these sources:
     address field at all, so address is left blank for every park here.
     Polygon geometry, so each park's location is its centroid, as with
     Kirkland/Shoreline/Auburn/Lake Forest Park.
+  - Newcastle: its ArcGIS Online "City Park Areas" layer (newcastlewa.gov itself
+    blocks automated fetches; the layer was found by searching ArcGIS Online for
+    the city's admin account). It has only a park number and name, so addresses
+    are blank, and each park's location is its polygon centroid. One park is
+    split across two polygons, so this also dedups within its own fetch. The
+    layer's "Historic Cemetery" is excluded by the usual cemetery rule. Three
+    parks on the city's City Parks page that the layer lacks (Hillside Park,
+    Park at 95th, and Newcastle Historical Park) are listed by hand, and the
+    page's street addresses are in the backup CSV.
   - Bothell: Scraped live from the city's own parks directory page and each
     linked individual park page (~23 of them), rather than its ArcGIS Server
     (found, but its "BothellParks" layer is stale — last edited 2017 — and is

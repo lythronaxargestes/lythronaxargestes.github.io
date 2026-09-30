@@ -78,6 +78,16 @@ DES_MOINES_ADDRESS_URL = "https://maps.desmoineswa.gov/dmgis/rest/services/Parks
 FEDERAL_WAY_URL = "https://www.federalwaywa.gov/page/our-parks"
 AUBURN_URL = "https://gis.auburnwa.gov/hosting/rest/services/Administration/BoundariesB/MapServer/0/query"
 LAKE_FOREST_PARK_URL = "https://services7.arcgis.com/LD3i16TenysvoOyS/arcgis/rest/services/Parks_Map_WFL1/FeatureServer/14/query"
+NEWCASTLE_URL = "https://services6.arcgis.com/kvG4x0h4KLP0c8nr/arcgis/rest/services/City_Park_Areas/FeatureServer/0/query"
+# Parks on Newcastle's City Parks page (below) that its GIS layer lacks, listed by
+# hand: (name, address, latitude, longitude). Coordinates are from the Census
+# geocoder at each address. Newcastle Historical Park is marked "coming soon".
+NEWCASTLE_PARKS_URL = "https://newcastlewa.gov/parks_and_trails/parks-trails/city-parks/"
+NEWCASTLE_EXTRA_PARKS = (
+    ("Hillside Park", "14356 SE 92nd St", 47.518576, -122.148988),
+    ("Park at 95th", "12700 SE 95th Way", 47.51778, -122.170814),
+    ("Newcastle Historical Park", "13600 SE 71st St", 47.539629, -122.157204),
+)
 KENMORE_URL = "https://gwa.kenmorewa.gov/arcgis/rest/services/Parks/FeatureServer/20/query"
 BOTHELL_BASE_URL = "https://www.bothellwa.gov"
 BOTHELL_LIST_URL = "https://www.bothellwa.gov/250/Parks"
@@ -122,6 +132,7 @@ TRACKED_CITIES = (
     "Auburn",
     "Lake Forest Park",
     "Kenmore",
+    "Newcastle",
     "Bothell",
     "Woodinville",
 )
