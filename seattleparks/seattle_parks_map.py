@@ -259,6 +259,7 @@ from seattle_parks_constants import (
 from seattle_parks_fetch import FETCH_FUNCTIONS
 from seattle_parks_helpers import (
     apply_backup_data,
+    fill_missing_zip_codes,
     format_visited_date,
     is_duplicate_park,
     is_excluded_name,
@@ -291,7 +292,9 @@ def sync_parks() -> list[dict]:
     new_parks = kept
     if existing:
         print(f"Found {len(new_parks)} new park(s) to add to the existing {len(existing)}.")
-    return existing + new_parks
+    parks = existing + new_parks
+    print(f"Filled in {fill_missing_zip_codes(parks)} missing zip code(s).")
+    return parks
 
 
 def write_csv(parks: list[dict]) -> None:
@@ -489,7 +492,7 @@ def main() -> None:
     parser.add_argument(
         "--from-csv",
         action="store_true",
-        help="Skip the API fetch; read the existing CSV (with your Visited edits) and regenerate the map only.",
+        help="Skip the API fetch; read the existing CSV (with your Visited edits), fill any blank zip codes, and regenerate the map.",
     )
     parser.add_argument(
         "--date",
@@ -509,6 +512,10 @@ def main() -> None:
         except FileNotFoundError:
             print(f"{CSV_PATH} not found — run without --from-csv first.", file=sys.stderr)
             sys.exit(1)
+        filled = fill_missing_zip_codes(parks)
+        if filled:
+            print(f"Filled in {filled} missing zip code(s).")
+            write_csv(parks)
         plot_map(apply_backup_data(parks), last_updated, since_date)
     else:
         parks = sync_parks()

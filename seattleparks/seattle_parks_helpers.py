@@ -19,6 +19,7 @@ from seattle_parks_constants import (
     ALLCAPS_ADDRESS_DIRECTIONALS,
     BACKUP_CSV_PATH,
     CENSUS_GEOCODE_URL,
+    CENSUS_ZCTA_URL,
     CSV_PATH,
     DEFAULT_CITY,
     DUPLICATE_DISTANCE_M,
@@ -68,7 +69,7 @@ def normalize_address(address: str) -> str:
     """Lowercase and expand common abbreviations so the same street address
     spelled two ways ("NE 138th St & Juanita Dr NE" vs "NE 138th St and Juanita
     Drive NE") compares equal."""
-    tokens = re.findall(r"[a-z0-9]+|&", address.lower())
+    tokens: list[str] = re.findall(r"[a-z0-9]+|&", address.lower())
     return " ".join(ADDRESS_ABBREVIATIONS.get(t, t) for t in tokens)
 
 
@@ -297,6 +298,49 @@ def geocode_census(address: str, city: str, state: str = "WA") -> tuple[float, f
     if matched_city.strip().casefold() != city.strip().casefold():
         return None
     return match["coordinates"]["y"], match["coordinates"]["x"], match["addressComponents"].get("zip", "")
+
+
+def lookup_zip_code(latitude: float, longitude: float) -> str:
+    """Zip code for a point, via the Census TIGERweb ZIP Code Tabulation Area
+    layer (point-in-polygon). Returns "" if the point falls in no ZCTA (e.g. open
+    water). A ZCTA approximates the USPS zip, so it can differ from the mailing
+    zip for parks right at a zip boundary."""
+    resp = get_with_retries(
+        CENSUS_ZCTA_URL,
+        params={
+            "geometry": f"{longitude},{latitude}",
+            "geometryType": "esriGeometryPoint",
+            "inSR": "4326",
+            "spatialRel": "esriSpatialRelIntersects",
+            "outFields": "ZCTA5",
+            "returnGeometry": "false",
+            "f": "json",
+        },
+        timeout=15,
+    )
+    features = resp.json().get("features", [])
+    return features[0]["attributes"]["ZCTA5"] if features else ""
+
+
+def fill_missing_zip_codes(parks: list[dict]) -> int:
+    """Fill in any blank zip_code (in place) from the park's coordinates, since
+    several city sources publish no zip. Only blanks are touched, so existing
+    zips and hand-entered values are never overwritten, and a lookup failure just
+    leaves that park blank rather than aborting the run. Returns how many were
+    filled."""
+    filled = 0
+    for park in parks:
+        if park["zip_code"].strip():
+            continue
+        try:
+            zip_code = lookup_zip_code(park["latitude"], park["longitude"])
+        except requests.exceptions.RequestException as e:
+            print(f"Couldn't look up a zip for {park['name']} ({park['city']}): {e}", file=sys.stderr)
+            continue
+        if zip_code:
+            park["zip_code"] = zip_code
+            filled += 1
+    return filled
 
 
 def normalize_allcaps_text(text: str) -> str:

@@ -10,6 +10,8 @@ RETRY_BACKOFF_SECONDS = 5
 # Shared geocoding endpoint (Tukwila, Federal Way, Bothell, Woodinville addresses
 # with no coordinates of their own)
 CENSUS_GEOCODE_URL = "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress"
+# Census TIGERweb layer of current ZIP Code Tabulation Areas, for point-in-polygon zip lookups
+CENSUS_ZCTA_URL = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/PUMA_TAD_TAZ_UGA_ZCTA/MapServer/11/query"
 
 # Per-source URLs, in the same city order as the module docstring above
 API_URL = "https://data.seattle.gov/resource/ajyh-m2d3.json"
