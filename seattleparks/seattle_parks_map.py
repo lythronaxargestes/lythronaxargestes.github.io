@@ -189,7 +189,7 @@ Extract park names/addresses from these sources:
     A_Street/A_City/A_Zip fields (A_Zip has trailing whitespace in the source
     data, stripped like every other source's zip).
 
-Dog parks (incl. dog corrals and off-leash areas), cemeteries, gyms, and "complex"-named facilities (e.g. sports
+Anything with "dog" in the name or "off-leash" (dog parks, dog corrals, off-leash areas), cemeteries, gyms, and "complex"-named facilities (e.g. sports
 complexes) are excluded from every source (by a name-keyword check applied
 after fetching, not per-source) — this project tracks parks in the
 traditional sense, not off-leash areas, burial grounds, standalone fitness

@@ -22,7 +22,7 @@ from seattle_parks_constants import (
     CSV_PATH,
     DEFAULT_CITY,
     DUPLICATE_DISTANCE_M,
-    EXCLUDED_NAME_KEYWORDS,
+    EXCLUDED_NAME_RE,
     LAST_UPDATED_RE,
     MAP_PATH,
     MAX_FETCH_ATTEMPTS,
@@ -50,7 +50,7 @@ def _is_excluded_name(name: str, city: str) -> bool:
     if city == "Seattle":
         return False
     lower = name.lower()
-    if any(kw in lower for kw in EXCLUDED_NAME_KEYWORDS):
+    if EXCLUDED_NAME_RE.search(lower):
         return True
     return "center" in lower and "park" not in lower
 
