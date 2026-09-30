@@ -28,6 +28,28 @@ KIRKLAND_URL = "https://maps.kirklandwa.gov/host/rest/services/Parks/FeatureServ
 REDMOND_URL = "https://gis.redmond.gov/arcgis/rest/services/PV/Cadastral/MapServer/2/query"
 MEDINA_BASE_URL = "https://www.medina-wa.gov"
 MEDINA_LIST_URL = "https://www.medina-wa.gov/publicworks/page/city-parks"
+# Clyde Hill and Yarrow Point publish only a prose list of parks (no map data,
+# no coordinates), so their few parks are listed here by hand: (name, address,
+# latitude, longitude). Source pages: CLYDE_HILL_PARKS_URL, YARROW_POINT_PARKS_URL.
+CLYDE_HILL_PARKS_URL = "https://clydehill.org/government/departments/public_works/parks.php"
+CLYDE_HILL_PARKS = (
+    # OSM's "Clyde Hill City Park" polygon centre (way 422278031)
+    ("Clyde Hill Park", "Near 9605 NE 24th St", 47.6299295, -122.2133213),
+    # The next three: Census geocoder, at the cross streets the city gives
+    ("Muromoto Memorial Park", "92nd Ave NE & NE 26th St", 47.633766, -122.217803),
+    ("NE 97th & NE 14th St Park", "97th Ave NE & NE 14th St", 47.622924, -122.211586),
+    ("Rogerson Corner Park", "NE 24th St & 98th Ave NE", 47.631982, -122.209724),
+)
+YARROW_POINT_PARKS_URL = "https://yarrowpointwa.gov/public-spaces/"
+YARROW_POINT_PARKS = (
+    # Morningside Park keeps the Town Hall address, so Kirkland's layer (which also
+    # lists it) dedups against it by (name, address); OSM way 922988438
+    ("Morningside Park", "4030 95th Ave NE", 47.6470909, -122.2130823),
+    ("Road End Beach", "9000 NE 47th St", 47.6518672, -122.2180739),  # OSM way 449744782
+    ("42nd Street Launch Area", "NE 42nd St & 91st Ave NE", 47.647439, -122.218895),  # Census geocoder
+    ("Sally's Alley", "Between 94th & 95th Ave NE", 47.6446083, -122.214422),  # OSM way 925741916
+    ("Wetherill Nature Preserve", "", 47.6394891, -122.2229699),  # OSM relation 6278123
+)
 BURIEN_BASE_URL = "https://www.burienwa.gov"
 BURIEN_LIST_URL = "https://www.burienwa.gov/residents/parks_recreation_cultural_services/city_parks_trails_facilities"
 TUKWILA_LIST_URL = "https://www.tukwilawa.gov/departments/parks-and-recreation/parks-and-trails/"
@@ -70,6 +92,8 @@ TRACKED_CITIES = (
     "Kirkland",
     "Redmond",
     "Medina",
+    "Clyde Hill",
+    "Yarrow Point",
     "Burien",
     "Tukwila",
     "Renton",

@@ -11,7 +11,9 @@ import re
 import sys
 import time
 import unicodedata
+from collections.abc import Iterable
 from datetime import datetime
+from typing import NamedTuple
 
 import requests
 
@@ -298,6 +300,38 @@ def geocode_census(address: str, city: str, state: str = "WA") -> tuple[float, f
     if matched_city.strip().casefold() != city.strip().casefold():
         return None
     return match["coordinates"]["y"], match["coordinates"]["x"], match["addressComponents"].get("zip", "")
+
+
+class ListedPark(NamedTuple):
+    """One park as a fetcher found it, before it becomes a CSV row."""
+
+    name: str
+    address: str
+    latitude: float
+    longitude: float
+    city: str
+    zip_code: str = ""
+
+
+def fetch_new_listed_parks(
+    existing_keys: set[tuple[str, str]], listed_parks: Iterable[ListedPark],
+) -> list[dict]:
+    """Turn each fetcher's ListedPark records into park dicts (not yet visited),
+    returning only ones whose (name, address) isn't already in existing_keys."""
+    return [
+        {
+            "name": park.name,
+            "address": park.address,
+            "city": park.city,
+            "zip_code": park.zip_code,
+            "latitude": float(park.latitude),
+            "longitude": float(park.longitude),
+            "visited": "N",
+            "visited_date": "",
+        }
+        for park in listed_parks
+        if (park.name, park.address) not in existing_keys
+    ]
 
 
 def lookup_zip_code(latitude: float, longitude: float) -> str:
