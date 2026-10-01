@@ -15,6 +15,10 @@ the script below.
 - `seattle_parks_missing_data_backup.csv` — hand-researched corrections/
   additions, applied on top of the main CSV at render time only (see
   "Correcting data" below).
+- `seattle_parks_extra.py` — `EXTRA_PARKS`, hand-written `ListedPark` records
+  for parks no live source lists (small towns without map data, plus parks a
+  source misses), each with a comment on its source and confidence. Added to
+  the CSV by `fetch_new_extra_parks`, so they can be marked visited there.
 - `seattle_parks_fetch.py` — one `fetch_new_*` function per city/source
   (Socrata API, ArcGIS FeatureServers, scraped directory pages, CivicPlus map
   widgets, ...). City-specific HTML/JSON parsing helpers live next to the fetch
@@ -93,7 +97,7 @@ When verifying a coordinate:
   Census geocoder mismatches its address to a street in Ephrata, WA (~150mi
   away), which the fetch script's own city-mismatch check correctly rejects —
   so it's silently skipped on every live fetch and must be carried entirely
-  via the backup CSV (`in_main_csv=N`), not fixed in the fetch logic.
+  via `seattle_parks_extra.py`, not fixed in the fetch logic.
 
 ## Notes
 

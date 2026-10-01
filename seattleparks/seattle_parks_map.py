@@ -51,18 +51,6 @@ Extract park names/addresses from these sources:
     Drupal.settings map JSON for names/coordinates, same schema.org
     PostalAddress microdata per park page for addresses), so it reuses those
     same parsing helpers rather than duplicating them.
-  - Clyde Hill, Yarrow Point, and Hunts Point: Each town's parks page is prose only (no map
-    data or coordinates, and only a handful of parks), so their parks are
-    listed by hand in seattle_parks_constants.py. Coordinates come from
-    OpenStreetMap's exact-name park polygons where they exist, else from the
-    Census geocoder at the cross streets the town gives. Zips are filled in
-    afterward from the coordinates like every other blank zip.
-  - Boulevard Park: Two King County natural areas, Glendale
-    Forest and Hamm Creek Natural Area, in the unincorporated area between
-    Seattle, Burien, and Tukwila (the old Riverton-Boulevard Park census area),
-    which has no city source; listed by hand and labelled Burien, the mailing
-    city King County gives. The other census-only areas checked (Lakeland North
-    and South, Riverton) have no parks that aren't already tracked.
   - Burien: Scraped live from the city's own parks directory page (CivicLive,
     same CMS family as Bellevue, but a different markup convention: No
     per-field classes at all — just the page's own <h2 class="pageTitle">
@@ -168,20 +156,15 @@ Extract park names/addresses from these sources:
     split across two polygons, so this also dedups within its own fetch. The
     layer's "Historic Cemetery" is excluded by the usual cemetery rule. Three
     parks on the city's City Parks page that the layer lacks (Hillside Park,
-    Park at 95th, and Newcastle Historical Park) are in the backup CSV, along
-    with the page's street addresses.
-  - Algona: its seven parks (per the comprehensive plan's inventory) are listed
-    by hand in seattle_parks_constants.py, since its parks page is only a PDF
-    map. Addresses or cross streets come from King County's South King County
-    Parks Guide, and coordinates from OpenStreetMap park polygons or the Census
-    geocoder. The 3rd Avenue Pocket Park's location is approximate.
+    Park at 95th, and Newcastle Historical Park) are among the extra parks, and
+    the page's street addresses for the rest are in the backup CSV.
   - Normandy Park: its own ArcGIS Online "NP_Parks" layer (found by searching
     ArcGIS Online for the city's GIS account). It's a parcel layer, so a park
     can be several polygons; those are combined and located at their
     area-weighted centroid, and parcels owned by another city are skipped. It
     has no usable address field and lacks Walker Preserve and Brittany Park, so
-    the addresses (from the city's 2024 parks plan) and those two parks are in
-    the backup CSV.
+    the addresses (from the city's 2024 parks plan) are in the backup CSV and
+    those two parks are among the extra parks.
   - Bothell: Scraped live from the city's own parks directory page and each
     linked individual park page (~23 of them), rather than its ArcGIS Server
     (found, but its "BothellParks" layer is stale — last edited 2017 — and is
@@ -222,6 +205,15 @@ Extract park names/addresses from these sources:
     point geometry; address comes from the joined facilities table's
     A_Street/A_City/A_Zip fields (A_Zip has trailing whitespace in the source
     data, stripped like every other source's zip).
+  - Extra parks: parks that no live source lists are written down by hand in
+    seattle_parks_extra.py (as ListedPark records, with each one's source and how
+    sure its location is) and added by fetch_new_extra_parks like any other
+    source's. That covers the few parks in towns without usable map data (Clyde
+    Hill, Yarrow Point, Hunts Point, and Algona), King County's natural areas in
+    unincorporated Boulevard Park (Glendale Forest and Hamm Creek, labelled
+    Burien), and parks a source's data misses (such as Walker Preserve and
+    Brittany Park in Normandy Park, three Newcastle parks, and several in
+    Bothell, Federal Way, Tukwila, and Woodinville).
 
 Anything with "dog" in the name or "off-leash" (dog parks, dog corrals, off-leash areas), cemeteries, gyms, and "complex"-named facilities (e.g. sports
 complexes) are excluded from every source (by a name-keyword check applied

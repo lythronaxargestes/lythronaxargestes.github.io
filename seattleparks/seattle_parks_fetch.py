@@ -17,7 +17,6 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 from seattle_parks_constants import (
-    ALGONA_PARKS,
     API_URL,
     AUBURN_URL,
     BELLEVUE_BASE_URL,
@@ -25,11 +24,8 @@ from seattle_parks_constants import (
     BOTHELL_ADDRESS_RE,
     BOTHELL_BASE_URL,
     BOTHELL_LIST_URL,
-    BOULEVARD_PARK_PARKS,
     BURIEN_BASE_URL,
     BURIEN_LIST_URL,
-    CLYDE_HILL_PARKS,
-    HUNTS_POINT_PARKS,
     DEFAULT_CITY,
     DES_MOINES_ADDRESS_URL,
     DES_MOINES_PARKS_URL,
@@ -52,7 +48,6 @@ from seattle_parks_constants import (
     REDMOND_URL,
     RENTON_URL,
     SEATAC_URL,
-    YARROW_POINT_PARKS,
     SHORELINE_URL,
     TRACKED_CITIES,
     TUKWILA_LIST_URL,
@@ -60,6 +55,7 @@ from seattle_parks_constants import (
     WOODINVILLE_DETAIL_URL,
     WOODINVILLE_PARK_IDS,
 )
+from seattle_parks_extra import EXTRA_PARKS
 from seattle_parks_helpers import (
     ListedPark,
     fetch_new_listed_parks,
@@ -374,60 +370,6 @@ def fetch_new_medina_parks(existing_keys: set[tuple[str, str, str]]) -> list[dic
     return new_parks
 
 
-def fetch_new_clyde_hill_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
-    """Clyde Hill's parks, from the hand-listed CLYDE_HILL_PARKS (its parks page
-    is prose only; the Points Loop Trail it also mentions spans four towns, so
-    it's not included)."""
-    new_parks = fetch_new_listed_parks(
-        existing_keys, [ListedPark(name, address, lat, lon, "Clyde Hill") for name, address, lat, lon in CLYDE_HILL_PARKS],
-    )
-    print("Finished fetching Clyde Hill")
-    return new_parks
-
-
-def fetch_new_yarrow_point_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
-    """Yarrow Point's public spaces, from the hand-listed YARROW_POINT_PARKS
-    (Town Hall and the multi-town Points Loop Trail are not included)."""
-    new_parks = fetch_new_listed_parks(
-        existing_keys,
-        [ListedPark(name, address, lat, lon, "Yarrow Point") for name, address, lat, lon in YARROW_POINT_PARKS],
-    )
-    print("Finished fetching Yarrow Point")
-    return new_parks
-
-
-def fetch_new_hunts_point_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
-    """Hunts Point's parks, from the hand-listed HUNTS_POINT_PARKS."""
-    new_parks = fetch_new_listed_parks(
-        existing_keys,
-        [ListedPark(name, address, lat, lon, "Hunts Point") for name, address, lat, lon in HUNTS_POINT_PARKS],
-    )
-    print("Finished fetching Hunts Point")
-    return new_parks
-
-
-def fetch_new_boulevard_park_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
-    """King County natural areas in unincorporated Boulevard Park, 
-    from the hand-listed BOULEVARD_PARK_PARKS, labelled Burien."""
-    new_parks = fetch_new_listed_parks(
-        existing_keys,
-        [ListedPark(name, address, lat, lon, "Burien") for name, address, lat, lon in BOULEVARD_PARK_PARKS],
-    )
-    print("Finished fetching Boulevard Park")
-    return new_parks
-
-
-def fetch_new_algona_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
-    """Algona's seven parks, from the hand-listed ALGONA_PARKS (its parks page is
-    only a PDF map)."""
-    new_parks = fetch_new_listed_parks(
-        existing_keys,
-        [ListedPark(name, address, lat, lon, "Algona") for name, address, lat, lon in ALGONA_PARKS],
-    )
-    print("Finished fetching Algona")
-    return new_parks
-
-
 def fetch_new_normandy_park_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Pull parks from Normandy Park's own ArcGIS Online "NP_Parks" layer (found by
     searching ArcGIS Online for the city's GIS account). It's a parcel layer, so a
@@ -474,6 +416,14 @@ def fetch_new_normandy_park_parks(existing_keys: set[tuple[str, str, str]]) -> l
         print(f"Skipped {skipped} Normandy Park row(s) missing a name or geometry", file=sys.stderr)
     print("Finished fetching Normandy Park")
     return fetch_new_listed_parks(existing_keys, listed_parks)
+
+
+def fetch_new_extra_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
+    """Add the hand-written EXTRA_PARKS (seattle_parks_extra.py), the parks no live
+    source lists."""
+    new_parks = fetch_new_listed_parks(existing_keys, EXTRA_PARKS)
+    print("Finished fetching extra parks")
+    return new_parks
 
 
 def fetch_new_kirkland_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
@@ -1374,10 +1324,9 @@ FETCH_FUNCTIONS = (
     fetch_new_shoreline_parks,
     fetch_new_bellevue_parks,
     fetch_new_mercer_island_parks,
-    fetch_new_clyde_hill_parks,
-    fetch_new_yarrow_point_parks,
-    fetch_new_hunts_point_parks,
-    fetch_new_boulevard_park_parks,
+    # Before Kirkland, whose layer also lists Yarrow Point's Morningside Park; the
+    # duplicate check then drops Kirkland's copy
+    fetch_new_extra_parks,
     fetch_new_kirkland_parks,
     fetch_new_redmond_parks,
     fetch_new_medina_parks,
@@ -1392,7 +1341,6 @@ FETCH_FUNCTIONS = (
     fetch_new_lake_forest_park_parks,
     fetch_new_kenmore_parks,
     fetch_new_newcastle_parks,
-    fetch_new_algona_parks,
     fetch_new_normandy_park_parks,
     fetch_new_bothell_parks,
     fetch_new_woodinville_parks,

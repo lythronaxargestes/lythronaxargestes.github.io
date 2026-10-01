@@ -28,60 +28,6 @@ KIRKLAND_URL = "https://maps.kirklandwa.gov/host/rest/services/Parks/FeatureServ
 REDMOND_URL = "https://gis.redmond.gov/arcgis/rest/services/PV/Cadastral/MapServer/2/query"
 MEDINA_BASE_URL = "https://www.medina-wa.gov"
 MEDINA_LIST_URL = "https://www.medina-wa.gov/publicworks/page/city-parks"
-# Clyde Hill and Yarrow Point publish only a prose list of parks (no map data,
-# no coordinates), so their few parks are listed here by hand: (name, address,
-# latitude, longitude). Source pages: CLYDE_HILL_PARKS_URL, YARROW_POINT_PARKS_URL.
-CLYDE_HILL_PARKS_URL = "https://clydehill.org/government/departments/public_works/parks.php"
-CLYDE_HILL_PARKS = (
-    # OSM's "Clyde Hill City Park" polygon centre (way 422278031)
-    ("Clyde Hill Park", "Near 9605 NE 24th St", 47.6299295, -122.2133213),
-    # The next three: Census geocoder, at the cross streets the city gives
-    ("Muromoto Memorial Park", "92nd Ave NE & NE 26th St", 47.633766, -122.217803),
-    ("NE 97th & NE 14th St Park", "97th Ave NE & NE 14th St", 47.622924, -122.211586),
-    ("Rogerson Corner Park", "NE 24th St & 98th Ave NE", 47.631982, -122.209724),
-)
-# Algona: the city's seven parks (comprehensive plan inventory), with addresses or
-# cross streets from King County's South King County Parks Guide. Coordinates are
-# OSM park polygon centres, except Waffle Park (Census geocoder at its address)
-# and 3rd Avenue Pocket Park (approximate: where 3rd Ave N meets the Interurban
-# Trail; no address or map data is published for it).
-ALGONA_PARKS_URL = "https://www.algonawa.gov/services/public_works/parks.php"
-ALGONA_PARKS = (
-    ("John Matchett Memorial Park", "400 Warde St", 47.2776597, -122.2483127),
-    ("David E. Hill Wetland Preserve", "Pacific Ave N & Ellingson Rd", 47.2700421, -122.2415588),
-    ("7th Avenue Park", "7th Ave N & Main St", 47.2875415, -122.2570722),
-    ("Stanley Avenue Park", "Stanley Ave & Pullman Ave", 47.2808699, -122.2479254),
-    ("Stanley Tot Lot", "Stanley Ave & Iron Ave", 47.2813432, -122.2475381),
-    ("Waffle Park", "290 1st Ave N", 47.279042, -122.252306),
-    ("3rd Avenue Pocket Park", "3rd Ave N", 47.2815, -122.2492),
-)
-HUNTS_POINT_PARKS_URL = "https://huntspoint-wa.gov/wetherillnaturepreserve"
-HUNTS_POINT_PARKS = (
-    # Next to Town Hall (3000 Hunts Point Rd); OSM way 422278032. Wetherill Nature
-    # Preserve, which Hunts Point shares with Yarrow Point, is listed once, under
-    # Yarrow Point, below.
-    ("D. K. McDonald Park", "3000 Hunts Point Rd", 47.63708, -122.2271792),
-)
-# King County Parks natural areas in unincorporated North Highline (the Census's
-# "Boulevard Park" area, the remains of the old Riverton-Boulevard Park CDP), which
-# have no city source. Glendale Forest: King County Parks page; OSM park way centre.
-# Hamm Creek Natural Area: OSM nature reserve centre (King County strategic
-# acquisitions map). Labelled Burien, the mailing city King County itself gives.
-BOULEVARD_PARK_PARKS_URL = "https://kingcounty.gov/en/dept/dnrp/nature-recreation/parks-recreation/king-county-parks/natural-working-lands/glendale-forest"
-BOULEVARD_PARK_PARKS = (
-    ("Glendale Forest", "8th Ave S & S 104th St", 47.5109909, -122.3225427),
-    ("Hamm Creek Natural Area", "", 47.511591, -122.3104671),
-)
-YARROW_POINT_PARKS_URL = "https://yarrowpointwa.gov/public-spaces/"
-YARROW_POINT_PARKS = (
-    # Morningside Park keeps the Town Hall address, so Kirkland's layer (which also
-    # lists it) dedups against it by (name, address); OSM way 922988438
-    ("Morningside Park", "4030 95th Ave NE", 47.6470909, -122.2130823),
-    ("Road End Beach", "9000 NE 47th St", 47.6518672, -122.2180739),  # OSM way 449744782
-    ("42nd Street Launch Area", "NE 42nd St & 91st Ave NE", 47.647439, -122.218895),  # Census geocoder
-    ("Sally's Alley", "Between 94th & 95th Ave NE", 47.6446083, -122.214422),  # OSM way 925741916
-    ("Wetherill Nature Preserve", "", 47.6394891, -122.2229699),  # OSM relation 6278123
-)
 BURIEN_BASE_URL = "https://www.burienwa.gov"
 BURIEN_LIST_URL = "https://www.burienwa.gov/residents/parks_recreation_cultural_services/city_parks_trails_facilities"
 TUKWILA_LIST_URL = "https://www.tukwilawa.gov/departments/parks-and-recreation/parks-and-trails/"
