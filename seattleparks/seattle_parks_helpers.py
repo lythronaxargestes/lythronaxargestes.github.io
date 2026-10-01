@@ -86,8 +86,9 @@ def distance_m(a: dict, b: dict) -> float:
 def is_duplicate_park(park: dict, others: list[dict]) -> bool:
     """True if `park` is the same park as one in `others` but reported by a
     different source with a slightly different name/address spelling, which the
-    exact (name, address) check in each fetch function can't catch. Same city
-    required, plus either:
+    exact (name, address, city) check in each fetch function can't catch. Same
+    name and same address is enough in any city; otherwise same city is required,
+    plus either:
       - the same name (case-insensitive) and either the same normalized address
         or a location within DUPLICATE_DISTANCE_M ("Big Finn Hill Park" listed
         by two sources); or
@@ -100,9 +101,13 @@ def is_duplicate_park(park: dict, others: list[dict]) -> bool:
     "Woodland Park Zoo" / "Woodland Park" or "Rotary Park" / "Rotary D"."""
     address = normalize_address(park["address"])
     for other in others:
+        same_address = bool(address) and address == normalize_address(other["address"])
+        if same_address and other["name"].casefold() == park["name"].casefold():
+            # Same name at the same address: one park listed under two cities, e.g.
+            # Yarrow Point's Morningside Park, which Kirkland's layer also lists
+            return True
         if other["city"] != park["city"]:
             continue
-        same_address = bool(address) and address == normalize_address(other["address"])
         distance = distance_m(park, other)
         if same_address and distance <= SAME_SPOT_DISTANCE_M:
             return True
@@ -302,6 +307,14 @@ def geocode_census(address: str, city: str, state: str = "WA") -> tuple[float, f
     return match["coordinates"]["y"], match["coordinates"]["x"], match["addressComponents"].get("zip", "")
 
 
+def park_key(name: str, address: str, city: str) -> tuple[str, str, str]:
+    """The (name, address, city) a fetcher checks against existing_keys to avoid
+    re-adding a park already in the CSV. City is part of the key because some
+    sources publish no address, so two cities' same-named parks (e.g. Kenmore's
+    and Normandy Park's "City Hall Park") would otherwise look like one."""
+    return name, address, city
+
+
 class ListedPark(NamedTuple):
     """One park as a fetcher found it, before it becomes a CSV row."""
 
@@ -314,10 +327,10 @@ class ListedPark(NamedTuple):
 
 
 def fetch_new_listed_parks(
-    existing_keys: set[tuple[str, str]], listed_parks: Iterable[ListedPark],
+    existing_keys: set[tuple[str, str, str]], listed_parks: Iterable[ListedPark],
 ) -> list[dict]:
     """Turn each fetcher's ListedPark records into park dicts (not yet visited),
-    returning only ones whose (name, address) isn't already in existing_keys."""
+    returning only ones whose (name, address, city) isn't already in existing_keys."""
     return [
         {
             "name": park.name,
@@ -330,7 +343,7 @@ def fetch_new_listed_parks(
             "visited_date": "",
         }
         for park in listed_parks
-        if (park.name, park.address) not in existing_keys
+        if park_key(park.name, park.address, park.city) not in existing_keys
     ]
 
 

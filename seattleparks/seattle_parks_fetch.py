@@ -47,7 +47,6 @@ from seattle_parks_constants import (
     MERCER_ISLAND_BASE_URL,
     MERCER_ISLAND_DIRECTORY_URL,
     MERCER_ISLAND_LIST_URL,
-    NEWCASTLE_EXTRA_PARKS,
     NORMANDY_PARK_URL,
     NEWCASTLE_URL,
     REDMOND_URL,
@@ -67,11 +66,12 @@ from seattle_parks_helpers import (
     geocode_census,
     get_with_retries,
     normalize_allcaps_text,
+    park_key,
     polygon_centroid,
 )
 
 
-def fetch_new_seattle_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_seattle_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Pull parks from the Socrata API, returning only ones not already in existing_keys."""
     resp = get_with_retries(API_URL, params={"$limit": 1000}, timeout=30)
     rows = resp.json()
@@ -85,7 +85,7 @@ def fetch_new_seattle_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         if not name or not lat or not lon:
             skipped += 1
             continue
-        if (name, address) in existing_keys:
+        if park_key(name, address, DEFAULT_CITY) in existing_keys:
             continue
         listed_parks.append(
             ListedPark(
@@ -103,7 +103,7 @@ def fetch_new_seattle_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
-def fetch_new_shoreline_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_shoreline_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Pull named park polygons from Shoreline's public ArcGIS Server, returning only
     ones not already in existing_keys, skipping "Landbank" parcels. Each park's
     location is its polygon centroid, since this layer stores boundaries, not points."""
@@ -134,7 +134,7 @@ def fetch_new_shoreline_parks(existing_keys: set[tuple[str, str]]) -> list[dict]
         # both "Landbank" and "Land Bank")
         if (attrs.get("PARKTYPE") or "").replace(" ", "").lower() == "landbank":
             continue
-        if (name, address) in existing_keys:
+        if park_key(name, address, "Shoreline") in existing_keys:
             continue
         lat, lon = polygon_centroid(rings)
         listed_parks.append(ListedPark(name=name, address=address, city="Shoreline", latitude=lat, longitude=lon))
@@ -181,7 +181,7 @@ def _parse_bellevue_park_page(html: str) -> dict | None:
     }
 
 
-def fetch_new_bellevue_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_bellevue_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Scrape Bellevue's parks directory page plus each individual park page it
     links to (~80 of them), returning only ones not already in existing_keys."""
     resp = get_with_retries(BELLEVUE_LIST_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
@@ -196,7 +196,7 @@ def fetch_new_bellevue_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         if park is None:
             skipped += 1
             continue
-        if (park["name"], park["address"]) in existing_keys:
+        if park_key(park["name"], park["address"], park["city"]) in existing_keys:
             continue
         listed_parks.append(
             ListedPark(
@@ -285,7 +285,7 @@ def _parse_civicplus_park_page(page_html: str, default_city: str) -> dict:
 
 
 def _fetch_new_civicplus_parks(
-    existing_keys: set[tuple[str, str]], list_url: str, base_url: str, default_city: str,
+    existing_keys: set[tuple[str, str, str]], list_url: str, base_url: str, default_city: str,
 ) -> list[dict]:
     """Shared fetch logic for CivicPlus-family sites (Mercer Island, Medina): Pull
     names/coordinates from the listing page's embedded map JSON, then each park's
@@ -298,7 +298,7 @@ def _fetch_new_civicplus_parks(
         page = get_with_retries(park["url"], headers={"User-Agent": USER_AGENT}, timeout=30)
         time.sleep(0.2)
         details = _parse_civicplus_park_page(page.text, default_city)
-        if (park["name"], details["address"]) in existing_keys:
+        if park_key(park["name"], details["address"], details["city"]) in existing_keys:
             continue
         listed_parks.append(
             ListedPark(
@@ -313,7 +313,7 @@ def _fetch_new_civicplus_parks(
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
-def fetch_new_mercer_island_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_mercer_island_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Fetch Mercer Island's parks. Most come from the /parksites listing page's
     embedded map widget (precise point coordinates, no geocoding needed, via
     _fetch_new_civicplus_parks), but that widget only covers a curated subset --
@@ -346,7 +346,7 @@ def fetch_new_mercer_island_parks(existing_keys: set[tuple[str, str]]) -> list[d
         title_tag = soup.find(id="page-title")
         name = html.unescape(title_tag.get_text(strip=True)) if title_tag else ""
         details = _parse_civicplus_park_page(page.text, "Mercer Island")
-        if not name or not details["address"] or (name, details["address"]) in existing_keys:
+        if not name or not details["address"] or park_key(name, details["address"], details["city"]) in existing_keys:
             continue
         geocoded = geocode_census(details["address"], "Mercer Island")
         if geocoded is None:
@@ -367,14 +367,14 @@ def fetch_new_mercer_island_parks(existing_keys: set[tuple[str, str]]) -> list[d
     return new_parks + fetch_new_listed_parks(existing_keys, listed_parks)
 
 
-def fetch_new_medina_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_medina_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Fetch Medina's parks listing page and each linked park page."""
     new_parks = _fetch_new_civicplus_parks(existing_keys, MEDINA_LIST_URL, MEDINA_BASE_URL, "Medina")
     print("Finished fetching Medina")
     return new_parks
 
 
-def fetch_new_clyde_hill_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_clyde_hill_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Clyde Hill's parks, from the hand-listed CLYDE_HILL_PARKS (its parks page
     is prose only; the Points Loop Trail it also mentions spans four towns, so
     it's not included)."""
@@ -385,7 +385,7 @@ def fetch_new_clyde_hill_parks(existing_keys: set[tuple[str, str]]) -> list[dict
     return new_parks
 
 
-def fetch_new_yarrow_point_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_yarrow_point_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Yarrow Point's public spaces, from the hand-listed YARROW_POINT_PARKS
     (Town Hall and the multi-town Points Loop Trail are not included)."""
     new_parks = fetch_new_listed_parks(
@@ -396,7 +396,7 @@ def fetch_new_yarrow_point_parks(existing_keys: set[tuple[str, str]]) -> list[di
     return new_parks
 
 
-def fetch_new_hunts_point_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_hunts_point_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Hunts Point's parks, from the hand-listed HUNTS_POINT_PARKS."""
     new_parks = fetch_new_listed_parks(
         existing_keys,
@@ -406,7 +406,7 @@ def fetch_new_hunts_point_parks(existing_keys: set[tuple[str, str]]) -> list[dic
     return new_parks
 
 
-def fetch_new_boulevard_park_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_boulevard_park_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """King County natural areas in unincorporated Boulevard Park, 
     from the hand-listed BOULEVARD_PARK_PARKS, labelled Burien."""
     new_parks = fetch_new_listed_parks(
@@ -417,7 +417,7 @@ def fetch_new_boulevard_park_parks(existing_keys: set[tuple[str, str]]) -> list[
     return new_parks
 
 
-def fetch_new_algona_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_algona_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Algona's seven parks, from the hand-listed ALGONA_PARKS (its parks page is
     only a PDF map)."""
     new_parks = fetch_new_listed_parks(
@@ -428,7 +428,7 @@ def fetch_new_algona_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     return new_parks
 
 
-def fetch_new_normandy_park_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_normandy_park_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Pull parks from Normandy Park's own ArcGIS Online "NP_Parks" layer (found by
     searching ArcGIS Online for the city's GIS account). It's a parcel layer, so a
     park can be several polygons (Nature Trails Park is five); those are combined
@@ -466,7 +466,7 @@ def fetch_new_normandy_park_parks(existing_keys: set[tuple[str, str]]) -> list[d
 
     listed_parks = []
     for name, rings in rings_by_name.items():
-        if (name, "") in existing_keys:
+        if park_key(name, "", "Normandy Park") in existing_keys:
             continue
         lat, lon = polygon_centroid(rings)
         listed_parks.append(ListedPark(name=name, address="", city="Normandy Park", latitude=lat, longitude=lon))
@@ -476,7 +476,7 @@ def fetch_new_normandy_park_parks(existing_keys: set[tuple[str, str]]) -> list[d
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
-def fetch_new_kirkland_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_kirkland_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Pull named park polygons from Kirkland's public ArcGIS Server (kirklandwa.gov
     itself is WAF-blocked, same as shorelinewa.gov), filtered to CATEGORY='PARKS'
     to exclude raw open-space parcels, a cemetery, and a pool. Returns only ones
@@ -504,7 +504,7 @@ def fetch_new_kirkland_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         if not name or not rings:
             skipped += 1
             continue
-        if (name, address) in existing_keys:
+        if park_key(name, address, "Kirkland") in existing_keys:
             continue
         lat, lon = polygon_centroid(rings)
         listed_parks.append(ListedPark(name=name, address=address, city="Kirkland", latitude=lat, longitude=lon))
@@ -514,7 +514,7 @@ def fetch_new_kirkland_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
-def fetch_new_redmond_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_redmond_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Pull park polygons from Redmond's public ArcGIS Server, returning only ones
     not already in existing_keys. One name ("Redmond Central Connector") repeats
     across multiple blank-address segments, so this also dedups within its own
@@ -544,7 +544,7 @@ def fetch_new_redmond_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         if not name or not rings:
             skipped += 1
             continue
-        key = (name, address)
+        key = park_key(name, address, "Redmond")
         if key in existing_keys or key in seen:
             continue
         seen.add(key)
@@ -595,7 +595,7 @@ def _parse_burien_park_page(page_html: str) -> dict | None:
     }
 
 
-def fetch_new_burien_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_burien_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Scrape Burien's parks directory page plus each individual park page it links
     to (~30 of them), returning only ones not already in existing_keys."""
     resp = get_with_retries(BURIEN_LIST_URL, headers={"User-Agent": USER_AGENT}, timeout=30)
@@ -609,7 +609,7 @@ def fetch_new_burien_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         if park is None:
             skipped += 1
             continue
-        if (park["name"], park["address"]) in existing_keys:
+        if park_key(park["name"], park["address"], "Burien") in existing_keys:
             continue
         listed_parks.append(
             ListedPark(
@@ -662,7 +662,7 @@ def _parse_tukwila_park_page(page_html: str) -> tuple[str, str] | None:
     return name, address
 
 
-def fetch_new_tukwila_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_tukwila_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Scrape Tukwila's parks directory page plus each individual park page it links
     to (~18 of them), geocoding each address via the free Census geocoder (the page
     has no coordinates), returning only ones not already in existing_keys."""
@@ -678,7 +678,7 @@ def fetch_new_tukwila_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
             skipped += 1
             continue
         name, address = parsed
-        if (name, address) in existing_keys:
+        if park_key(name, address, "Tukwila") in existing_keys:
             continue
         geocoded = geocode_census(address, "Tukwila") if address else None
         if geocoded is None:
@@ -714,7 +714,7 @@ def _parse_renton_location(name: str, location: str) -> str:
     return " ".join(location.split())
 
 
-def fetch_new_renton_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_renton_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Pull parks from Renton's public ArcGIS Server, filtered to OWNER='Renton'
     since this layer is a regional facilities dataset covering several
     neighboring jurisdictions' parks too. Most records have direct Latitude/
@@ -751,7 +751,7 @@ def fetch_new_renton_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
             skipped += 1
             continue
         address = _parse_renton_location(name, attrs.get("LOCATION") or "")
-        key = (name, address)
+        key = park_key(name, address, "Renton")
         if key in existing_keys or key in seen:
             continue
         seen.add(key)
@@ -770,7 +770,7 @@ def fetch_new_renton_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
-def fetch_new_seatac_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_seatac_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Pull parks from SeaTac's public ArcGIS Server (seatacwa.gov itself is
     WAF-blocked, same as Shoreline/Kirkland). Has direct point geometry and
     separate Name/Address/City/Zipcode fields, all owned by "City of SeaTac"
@@ -799,7 +799,7 @@ def fetch_new_seatac_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
             skipped += 1
             continue
         address = normalize_allcaps_text((attrs.get("Address") or "").strip())
-        if (name, address) in existing_keys:
+        if park_key(name, address, "SeaTac") in existing_keys:
             continue
         listed_parks.append(
             ListedPark(
@@ -817,7 +817,7 @@ def fetch_new_seatac_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
-def fetch_new_kent_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_kent_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Pull parks from Kent's public ArcGIS Server. Has direct point geometry and
     a clean parkname/address field pair; addresses are recased from the same
     all-caps style as Kirkland/SeaTac's layers. Both developed and undeveloped
@@ -845,7 +845,7 @@ def fetch_new_kent_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
             skipped += 1
             continue
         address = normalize_allcaps_text((attrs.get("address") or "").strip())
-        if (name, address) in existing_keys:
+        if park_key(name, address, "Kent") in existing_keys:
             continue
         listed_parks.append(
             ListedPark(
@@ -866,7 +866,7 @@ def _des_moines_name_key(name: str) -> str:
     return re.sub(r"\s+", " ", name.replace(".", "")).strip().casefold()
 
 
-def fetch_new_des_moines_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_des_moines_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Pull parks from Des Moines' public ArcGIS Server (desmoineswa.gov's own
     "Parks" page just redirects to a static PDF map, no structured data). The
     point layer has no address field, so addresses come from a best-effort join
@@ -913,7 +913,7 @@ def fetch_new_des_moines_parks(existing_keys: set[tuple[str, str]]) -> list[dict
             skipped += 1
             continue
         address = address_by_key.get(_des_moines_name_key(name), "")
-        key = (name, address)
+        key = park_key(name, address, "Des Moines")
         if key in existing_keys or key in seen:
             continue
         seen.add(key)
@@ -973,7 +973,7 @@ def _parse_federal_way_accordion(page_html: str) -> list[dict]:
     return parks
 
 
-def fetch_new_federal_way_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_federal_way_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Scrape Federal Way's "Our Parks" page (fetchable, unlike several
     neighboring cities' WAF-blocked sites). Most parks' coordinates come
     straight from an embedded Bing map link; the few without one are geocoded
@@ -986,7 +986,7 @@ def fetch_new_federal_way_parks(existing_keys: set[tuple[str, str]]) -> list[dic
     skipped = 0
     for park in _parse_federal_way_accordion(resp.text):
         name, address = park["name"], park["address"]
-        if (name, address) in existing_keys:
+        if park_key(name, address, "Federal Way") in existing_keys:
             continue
         latitude, longitude, zip_code = park["latitude"], park["longitude"], park["zip_code"]
         if latitude is None or longitude is None:
@@ -1014,7 +1014,7 @@ def fetch_new_federal_way_parks(existing_keys: set[tuple[str, str]]) -> list[dic
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
-def fetch_new_auburn_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_auburn_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Pull named park polygons from Auburn's public ArcGIS Server (found via its
     Experience Builder parks app's underlying web map, not a direct GIS search).
     All owned by "COA" (no regional-dataset filtering needed). Name and address
@@ -1043,7 +1043,7 @@ def fetch_new_auburn_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         if not name or not rings:
             skipped += 1
             continue
-        if (name, address) in existing_keys:
+        if park_key(name, address, "Auburn") in existing_keys:
             continue
         lat, lon = polygon_centroid(rings)
         listed_parks.append(ListedPark(name=name, address=address, city="Auburn", latitude=lat, longitude=lon))
@@ -1053,7 +1053,7 @@ def fetch_new_auburn_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
-def fetch_new_lake_forest_park_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_lake_forest_park_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Pull the small "Park_Boundary" polygon layer from Lake Forest Park's ArcGIS
     Online organization (found via its Hub site's dataset metadata, same discovery
     path as Kent/SeaTac). Only 7 named parks, all clean. Each address already
@@ -1084,7 +1084,7 @@ def fetch_new_lake_forest_park_parks(existing_keys: set[tuple[str, str]]) -> lis
         raw_address = (attrs.get("Address") or "").strip()
         addr_match = LAKE_FOREST_PARK_ADDRESS_RE.match(raw_address)
         address, zip_code = addr_match.groups() if addr_match else (raw_address, "")
-        if (name, address) in existing_keys:
+        if park_key(name, address, "Lake Forest Park") in existing_keys:
             continue
         lat, lon = polygon_centroid(rings)
         listed_parks.append(
@@ -1103,7 +1103,7 @@ def fetch_new_lake_forest_park_parks(existing_keys: set[tuple[str, str]]) -> lis
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
-def fetch_new_kenmore_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_kenmore_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Pull parks from Kenmore's own ArcGIS Server (found via an embedded
     Experience Builder app on kenmorewa.gov, which is itself WAF-blocked like
     Shoreline/Kirkland/SeaTac). The "Parks" layer is a regional dataset spanning
@@ -1134,7 +1134,7 @@ def fetch_new_kenmore_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         if not name or not rings:
             skipped += 1
             continue
-        if (name, "") in existing_keys:
+        if park_key(name, "", "Kenmore") in existing_keys:
             continue
         lat, lon = polygon_centroid(rings)
         listed_parks.append(ListedPark(name=name, address="", city="Kenmore", latitude=lat, longitude=lon))
@@ -1144,14 +1144,14 @@ def fetch_new_kenmore_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
-def fetch_new_newcastle_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_newcastle_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Pull parks from Newcastle's own ArcGIS Online "City Park Areas" layer
     (found by searching ArcGIS Online for the city's admin account, since
     newcastlewa.gov blocks automated fetches). It has only a park number and
     name, so address is always blank. Each park's location is its polygon
     centroid. One park ("Newcastle Commons Central Square") is split across two
     polygons, so this also dedups within its own fetch. Three parks from the
-    city's City Parks page that the layer lacks come from NEWCASTLE_EXTRA_PARKS."""
+    city's City Parks page that the layer lacks are in the backup CSV."""
     resp = get_with_retries(
         NEWCASTLE_URL,
         params={"where": "Park IS NOT NULL", "outFields": "Park", "returnGeometry": "true", "outSR": "4326", "f": "json"},
@@ -1168,16 +1168,11 @@ def fetch_new_newcastle_parks(existing_keys: set[tuple[str, str]]) -> list[dict]
         if not name or not rings:
             skipped += 1
             continue
-        if (name, "") in existing_keys or name in seen:
+        if park_key(name, "", "Newcastle") in existing_keys or name in seen:
             continue
         seen.add(name)
         lat, lon = polygon_centroid(rings)
         listed_parks.append(ListedPark(name=name, address="", city="Newcastle", latitude=lat, longitude=lon))
-    listed_parks += [
-        ListedPark(name, address, lat, lon, "Newcastle")
-        for name, address, lat, lon in NEWCASTLE_EXTRA_PARKS
-        if name not in seen
-    ]
     if skipped:
         print(f"Skipped {skipped} Newcastle row(s) missing a name or geometry", file=sys.stderr)
     print("Finished fetching Newcastle")
@@ -1216,7 +1211,7 @@ def _parse_bothell_park_page(page_html: str) -> str:
     return html.unescape(re.sub(r"<[^>]+>", "", match.group(1))).strip()
 
 
-def fetch_new_bothell_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_bothell_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Scrape Bothell's parks directory page plus each individual park page it
     links to (~23 of them), geocoding each address via the free Census geocoder
     (neither page has coordinates). Used instead of the city's ArcGIS Server,
@@ -1232,7 +1227,7 @@ def fetch_new_bothell_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
         raw_address = _parse_bothell_park_page(page.text)
         addr_match = BOTHELL_ADDRESS_RE.match(raw_address)
         address = addr_match.group(1) if addr_match else raw_address
-        if (name, address) in existing_keys:
+        if park_key(name, address, "Bothell") in existing_keys:
             continue
         geocoded = geocode_census(address, "Bothell") if address else None
         if geocoded is None:
@@ -1269,7 +1264,7 @@ def _parse_woodinville_park_page(page_html: str) -> tuple[str, str, str]:
     return name, address, zip_code
 
 
-def fetch_new_woodinville_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_woodinville_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Fetch each of Woodinville's 8 parks directly by facility ID (its
     "Facilities" booking page only renders 5 facilities by default via a
     JS-paginated widget, 2 of which aren't parks, so the paginated listing isn't
@@ -1289,7 +1284,7 @@ def fetch_new_woodinville_parks(existing_keys: set[tuple[str, str]]) -> list[dic
         if not name:
             skipped += 1
             continue
-        if (name, address) in existing_keys:
+        if park_key(name, address, "Woodinville") in existing_keys:
             continue
         geocoded = geocode_census(address, "Woodinville") if address else None
         if geocoded is None:
@@ -1312,7 +1307,7 @@ def fetch_new_woodinville_parks(existing_keys: set[tuple[str, str]]) -> list[dic
     return fetch_new_listed_parks(existing_keys, listed_parks)
 
 
-def fetch_new_king_county_parks(existing_keys: set[tuple[str, str]]) -> list[dict]:
+def fetch_new_king_county_parks(existing_keys: set[tuple[str, str, str]]) -> list[dict]:
     """Pull point parks from King County's public ArcGIS Server (surfaced by the
     "Backyard Fun Finder" ArcGIS Experience Builder app's underlying web map, not
     a direct GIS search). This layer is county-wide, spanning cities this project
@@ -1354,7 +1349,7 @@ def fetch_new_king_county_parks(existing_keys: set[tuple[str, str]]) -> list[dic
             out_of_scope += 1
             continue
         address = (attrs.get(street_field) or "").strip()
-        if (name, address) in existing_keys:
+        if park_key(name, address, city) in existing_keys:
             continue
         listed_parks.append(
             ListedPark(

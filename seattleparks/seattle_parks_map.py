@@ -168,8 +168,8 @@ Extract park names/addresses from these sources:
     split across two polygons, so this also dedups within its own fetch. The
     layer's "Historic Cemetery" is excluded by the usual cemetery rule. Three
     parks on the city's City Parks page that the layer lacks (Hillside Park,
-    Park at 95th, and Newcastle Historical Park) are listed by hand, and the
-    page's street addresses are in the backup CSV.
+    Park at 95th, and Newcastle Historical Park) are in the backup CSV, along
+    with the page's street addresses.
   - Algona: its seven parks (per the comprehensive plan's inventory) are listed
     by hand in seattle_parks_constants.py, since its parks page is only a PDF
     map. Addresses or cross streets come from King County's South King County
@@ -302,6 +302,7 @@ from seattle_parks_helpers import (
     parks_visited_since,
     read_last_updated_date,
     load_parks_from_csv,
+    park_key,
 )
 
 
@@ -309,13 +310,13 @@ def sync_parks() -> list[dict]:
     """Fetch from all sources. Existing CSV rows are kept exactly as-is (order and
     edits untouched); only parks not already present are appended."""
     existing = load_existing_parks()
-    existing_keys = {(p["name"], p["address"]) for p in existing}
+    existing_keys = {park_key(p["name"], p["address"], p["city"]) for p in existing}
     new_parks = []
     for fetch in FETCH_FUNCTIONS:
         found = fetch(existing_keys)
         for p in found:
             p["name"] = normalize_name(p["name"])
-        existing_keys |= {(p["name"], p["address"]) for p in found}
+        existing_keys |= {park_key(p["name"], p["address"], p["city"]) for p in found}
         new_parks += found
     new_parks = [p for p in new_parks if not is_excluded_name(p["name"], p["city"])]
     kept: list[dict] = []
