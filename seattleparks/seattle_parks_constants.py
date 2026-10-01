@@ -88,6 +88,8 @@ TRACKED_CITIES = (
     "Newcastle",
     "Algona",
     "Normandy Park",
+    "Pacific",
+    "Milton",
     "Bothell",
     "Woodinville",
 )

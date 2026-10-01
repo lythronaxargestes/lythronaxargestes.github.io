@@ -3,7 +3,7 @@ added to the CSV by fetch_new_extra_parks (seattle_parks_fetch.py), like any oth
 source's parks (they can be marked visited in the CSV afterward). That covers:
 
   - Parks in towns without usable map data (Clyde Hill, Yarrow Point, Hunts Point,
-    and Algona), plus King County's natural areas in unincorporated Boulevard Park
+    Algona, Pacific, and Milton), plus King County's natural areas in unincorporated Boulevard Park
     (Glendale Forest and Hamm Creek, labelled Burien).
   - Parks that a source's data misses, such as Walker Preserve and Brittany Park in
     Normandy Park, three Newcastle parks, and several Bothell, Federal Way, Tukwila,
@@ -516,5 +516,208 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
         longitude=-122.2229699,
         city="Yarrow Point",
         zip_code="98004",
+    ),
+    # Pacific
+    # Pacific City Park - Medium-high confidence - One of the City of Pacific's parks, listed
+    # with its address in King County's South King County Parks Guide; Pacific has no parks map
+    # data. The coordinates are the center of OSM's park polygon (way 25681090). Source:
+    # https://www.pacificwa.gov/services/parks___recreation;
+    # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
+    ListedPark(
+        name="Pacific City Park",
+        address="600 3rd Ave SE",
+        latitude=47.2630737,
+        longitude=-122.236751,
+        city="Pacific",
+    ),
+    # Clint Steiger Memorial Park - Medium-high confidence - One of the City of Pacific's parks,
+    # listed with its address in King County's South King County Parks Guide; Pacific has no
+    # parks map data. The coordinates are the center of OSM's park polygon (way 488860914); the
+    # guide calls it 'Clint Steiger Memorial (Volunteer) Park'. Source:
+    # https://www.pacificwa.gov/services/parks___recreation;
+    # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
+    ListedPark(
+        name="Clint Steiger Memorial Park",
+        address="100 3rd Ave SE",
+        latitude=47.2640197,
+        longitude=-122.2481631,
+        city="Pacific",
+    ),
+    # Elise Park - Medium-high confidence - One of the City of Pacific's parks, listed with its
+    # address in King County's South King County Parks Guide; Pacific has no parks map data. The
+    # coordinates are the center of OSM's park polygon (way 505076794). Source:
+    # https://www.pacificwa.gov/services/parks___recreation;
+    # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
+    ListedPark(
+        name="Elise Park",
+        address="225 Elise Lane",
+        latitude=47.2685558,
+        longitude=-122.25425,
+        city="Pacific",
+    ),
+    # Aspen Park - Medium-high confidence - One of the City of Pacific's parks, listed with its
+    # address in King County's South King County Parks Guide; Pacific has no parks map data. The
+    # coordinates are the center of OSM's park polygon (way 1149789640). Source:
+    # https://www.pacificwa.gov/services/parks___recreation;
+    # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
+    ListedPark(
+        name="Aspen Park",
+        address="101 Aspen Ln N",
+        latitude=47.2686097,
+        longitude=-122.2347128,
+        city="Pacific",
+    ),
+    # Milwaukee Park - Medium-high confidence - One of the City of Pacific's parks, listed with
+    # its address in King County's South King County Parks Guide; Pacific has no parks map data.
+    # The coordinates are the center of OSM's park polygon (way 480155292). Source:
+    # https://www.pacificwa.gov/services/parks___recreation;
+    # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
+    ListedPark(
+        name="Milwaukee Park",
+        address="522 Milwaukee Blvd S",
+        latitude=47.2601422,
+        longitude=-122.2506422,
+        city="Pacific",
+    ),
+    # Beaver Park - Medium-high confidence - One of the City of Pacific's parks, listed with its
+    # address in King County's South King County Parks Guide; Pacific has no parks map data. The
+    # coordinates are the center of OSM's park polygon (way 480155324). Source:
+    # https://www.pacificwa.gov/services/parks___recreation;
+    # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
+    ListedPark(
+        name="Beaver Park",
+        address="550 Beaver Blvd",
+        latitude=47.260025,
+        longitude=-122.2588408,
+        city="Pacific",
+    ),
+    # Blueberry Park - Medium-high confidence - One of the City of Pacific's parks, listed with
+    # its address in King County's South King County Parks Guide; Pacific has no parks map data.
+    # The coordinates are the center of OSM's park polygon (way 1376352643). Source:
+    # https://www.pacificwa.gov/services/parks___recreation;
+    # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
+    ListedPark(
+        name="Blueberry Park",
+        address="117 5th Ave SW",
+        latitude=47.2608447,
+        longitude=-122.2514609,
+        city="Pacific",
+    ),
+    # Otter Park - Medium-high confidence - One of the City of Pacific's parks, listed with its
+    # address in King County's South King County Parks Guide; Pacific has no parks map data. The
+    # coordinates are the Census geocoder at its address. Source:
+    # https://www.pacificwa.gov/services/parks___recreation;
+    # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
+    ListedPark(
+        name="Otter Park",
+        address="215 Otter Dr SW",
+        latitude=47.259346,
+        longitude=-122.256096,
+        city="Pacific",
+    ),
+    # Strawberry Park - Medium-high confidence - One of the City of Pacific's parks, listed with
+    # its address in King County's South King County Parks Guide; Pacific has no parks map data.
+    # The coordinates are the Census geocoder, which matched the address as 132 Strawberry St
+    # SW. Source: https://www.pacificwa.gov/services/parks___recreation;
+    # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
+    ListedPark(
+        name="Strawberry Park",
+        address="132 Strawberry Ct SW",
+        latitude=47.259352,
+        longitude=-122.250687,
+        city="Pacific",
+    ),
+    # Sunset Park - Medium-high confidence - One of the City of Pacific's parks, listed with its
+    # address in King County's South King County Parks Guide; Pacific has no parks map data. The
+    # coordinates are the Census geocoder at its address. Source:
+    # https://www.pacificwa.gov/services/parks___recreation;
+    # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
+    ListedPark(
+        name="Sunset Park",
+        address="244 Sunset Dr",
+        latitude=47.265374,
+        longitude=-122.244417,
+        city="Pacific",
+    ),
+    # Rhubarb Park - Medium confidence - One of the City of Pacific's parks, listed with its
+    # address in King County's South King County Parks Guide; Pacific has no parks map data. The
+    # coordinates are an approximation: the Census geocoder doesn't know 215 Rhubarb Ave SW, so
+    # this is its match for 200 Rhubarb Ave SW on the same street, and the pin may be a little
+    # off. Source: https://www.pacificwa.gov/services/parks___recreation;
+    # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
+    ListedPark(
+        name="Rhubarb Park",
+        address="215 Rhubarb Ave SW",
+        latitude=47.260472,
+        longitude=-122.254301,
+        city="Pacific",
+    ),
+    # Milton
+    # Milton Community Park - Medium-high confidence - On the City of Milton's Parks & Trails
+    # page, whose park pages give the address or cross streets; Milton has no parks map data.
+    # The coordinates are the center of OSM's park polygon (way 467548589); the city also calls
+    # it Triangle Park. Source: https://www.miltonwa.gov/177/Parks-Trails
+    ListedPark(
+        name="Milton Community Park",
+        address="15th Ave & Milton Way",
+        latitude=47.2475912,
+        longitude=-122.3161775,
+        city="Milton",
+    ),
+    # Hill Tower Park - Medium-high confidence - On the City of Milton's Parks & Trails page,
+    # whose park pages give the address or cross streets; Milton has no parks map data. The
+    # coordinates are the center of OSM's park polygon (way 540132151). Source:
+    # https://www.miltonwa.gov/177/Parks-Trails
+    ListedPark(
+        name="Hill Tower Park",
+        address="600 19th Ave",
+        latitude=47.2521429,
+        longitude=-122.3086957,
+        city="Milton",
+    ),
+    # Milltown Commons Skatepark - Medium-high confidence - On the City of Milton's Parks &
+    # Trails page, whose park pages give the address or cross streets; Milton has no parks map
+    # data. The coordinates are the Census geocoder at the cross streets the city gives. Source:
+    # https://www.miltonwa.gov/177/Parks-Trails
+    ListedPark(
+        name="Milltown Commons Skatepark",
+        address="23rd Ave & Milton Way",
+        latitude=47.250109,
+        longitude=-122.304276,
+        city="Milton",
+    ),
+    # West Milton Park - Medium-high confidence - On the City of Milton's Parks & Trails page,
+    # whose park pages give the address or cross streets; Milton has no parks map data. The
+    # coordinates are the Census geocoder at its address. Source:
+    # https://www.miltonwa.gov/177/Parks-Trails
+    ListedPark(
+        name="West Milton Park",
+        address="700 Kent St",
+        latitude=47.249728,
+        longitude=-122.324989,
+        city="Milton",
+    ),
+    # West Milton Nature Preserve - Medium confidence - On the City of Milton's Parks & Trails
+    # page, whose park pages give the address or cross streets; Milton has no parks map data.
+    # The coordinates are the Census geocoder at its address; the preserve is larger than a
+    # point, so this is only a representative spot. Source:
+    # https://www.miltonwa.gov/177/Parks-Trails
+    ListedPark(
+        name="West Milton Nature Preserve",
+        address="604 5th Ave",
+        latitude=47.252144,
+        longitude=-122.328167,
+        city="Milton",
+    ),
+    # Olympic View Park - Medium-high confidence - On the City of Milton's Parks & Trails page,
+    # whose park pages give the address or cross streets; Milton has no parks map data. The
+    # coordinates are the center of OSM's park polygon (way 703797654). Source:
+    # https://www.miltonwa.gov/177/Parks-Trails
+    ListedPark(
+        name="Olympic View Park",
+        address="32 Hylebos Ave",
+        latitude=47.2600024,
+        longitude=-122.3072427,
+        city="Milton",
     ),
 )

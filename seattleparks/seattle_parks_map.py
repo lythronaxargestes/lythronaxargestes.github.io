@@ -209,7 +209,7 @@ Extract park names/addresses from these sources:
     seattle_parks_extra.py (as ListedPark records, with each one's source and how
     sure its location is) and added by fetch_new_extra_parks like any other
     source's. That covers the few parks in towns without usable map data (Clyde
-    Hill, Yarrow Point, Hunts Point, and Algona), King County's natural areas in
+    Hill, Yarrow Point, Hunts Point, Algona, Pacific, and Milton), King County's natural areas in
     unincorporated Boulevard Park (Glendale Forest and Hamm Creek, labelled
     Burien), and parks a source's data misses (such as Walker Preserve and
     Brittany Park in Normandy Park, three Newcastle parks, and several in
