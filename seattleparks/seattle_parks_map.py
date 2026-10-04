@@ -269,6 +269,7 @@ import sys
 from datetime import date
 
 import folium
+import requests
 from folium.plugins import LocateControl
 
 from seattle_parks_constants import (
@@ -306,7 +307,12 @@ def sync_parks() -> list[dict]:
     existing_keys = {park_key(p["name"], p["address"], p["city"]) for p in existing}
     new_parks = []
     for fetch in FETCH_FUNCTIONS:
-        found = fetch(existing_keys)
+        try:
+            found = fetch(existing_keys)
+        except requests.exceptions.RequestException as e:
+            # An unreachable source shouldn't abort the run; its parks already in the CSV are kept
+            print(f"Skipping {fetch.__name__}: {e}", file=sys.stderr)
+            continue
         for p in found:
             p["name"] = normalize_name(p["name"])
         existing_keys |= {park_key(p["name"], p["address"], p["city"]) for p in found}
