@@ -54,6 +54,14 @@ FEDERAL_WAY_ADDRESS_RE = re.compile(r"^(.*?),\s*Federal Way,\s*WA\s*(\d{5})$")
 FEDERAL_WAY_COORD_RE = re.compile(r"cp=([\-0-9.]+)~([\-0-9.]+)")
 LAKE_FOREST_PARK_ADDRESS_RE = re.compile(r"^(.*?),\s*Lake Forest Park,\s*WA\s*(\d{5})$")
 BOTHELL_ADDRESS_RE = re.compile(r"^(.*?),\s*Bothell,\s*WA\s*(\d{5})$")
+# Address trimming: leading filler words, trailing city/state/zip, and the
+# street-type words that mark a leftover as a real street name
+ADDRESS_LEADING_NOISE_RE = re.compile(r"^(?:near|around|off|theoretically,?|intersection of)\s+", re.IGNORECASE)
+ADDRESS_HOUSE_NUMBER_RE = re.compile(r"^\d+(?:-\d+)?[A-Za-z]?\s+\S")
+ADDRESS_STREET_RE = re.compile(
+    r"\b(?:ave|avenue|st|street|rd|road|blvd|boulevard|way|pl|place|dr|drive|ln|lane|ct|court|hwy|highway|terrace|loop)\b",
+    re.IGNORECASE,
+)
 
 # Name-exclusion and geographic-scope rules
 # Whole-word match (plural allowed), so e.g. "Dogwood Park" isn't excluded

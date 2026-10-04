@@ -293,6 +293,7 @@ from seattle_parks_helpers import (
     normalize_name,
     parks_visited_since,
     read_last_updated_date,
+    clean_addresses,
     load_parks_from_csv,
     park_key,
 )
@@ -319,6 +320,7 @@ def sync_parks() -> list[dict]:
     if existing:
         print(f"Found {len(new_parks)} new park(s) to add to the existing {len(existing)}")
     parks = existing + new_parks
+    print(f"Trimmed {clean_addresses(parks)} address(es)")
     print(f"Filled in {fill_missing_zip_codes(parks)} missing zip code(s)")
     return parks
 
@@ -538,9 +540,10 @@ def main() -> None:
         except FileNotFoundError:
             print(f"{CSV_PATH} not found — run without --from-csv first", file=sys.stderr)
             sys.exit(1)
+        trimmed = clean_addresses(parks)
         filled = fill_missing_zip_codes(parks)
-        if filled:
-            print(f"Filled in {filled} missing zip code(s)")
+        if trimmed or filled:
+            print(f"Trimmed {trimmed} address(es), filled in {filled} missing zip code(s)")
             write_csv(parks)
         plot_map(apply_backup_data(parks), last_updated, since_date)
     else:

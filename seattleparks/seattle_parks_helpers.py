@@ -18,6 +18,9 @@ from typing import NamedTuple
 import requests
 
 from seattle_parks_constants import (
+    ADDRESS_HOUSE_NUMBER_RE,
+    ADDRESS_LEADING_NOISE_RE,
+    ADDRESS_STREET_RE,
     ALLCAPS_ADDRESS_DIRECTIONALS,
     BACKUP_CSV_PATH,
     CENSUS_GEOCODE_URL,
@@ -73,6 +76,35 @@ def normalize_address(address: str) -> str:
     Drive NE") compares equal."""
     tokens: list[str] = re.findall(r"[a-z0-9]+|&", address.lower())
     return " ".join(ADDRESS_ABBREVIATIONS.get(t, t) for t in tokens)
+
+
+def clean_address(address: str, city: str = "") -> str:
+    """Trim a raw address to just a street address or an intersection: drops
+    parenthetical notes, leading filler ("Near ..."), a trailing city/state/zip,
+    and trailing sentences. Descriptive text that names a street is kept
+    ("Between 94th & 95th Ave NE"). Returns "" when no street is named at all
+    (e.g. "Narco Property", "Green River")."""
+    address = re.sub(r"\([^)]*\)", "", address)
+    address = address.split(" - ")[-1]
+    address = re.sub(r",\s*(?:WA\b.*|\d{5})$", "", address.strip())
+    if city:
+        address = re.sub(rf",\s*{re.escape(city)}$", "", address, flags=re.IGNORECASE)
+    address = ADDRESS_LEADING_NOISE_RE.sub("", address.strip())
+    address = re.split(r"(?<=[a-z])\.\s+(?=[A-Z][a-z]{2})", address)[0].strip(" ,.")
+    if not (ADDRESS_HOUSE_NUMBER_RE.match(address) or ADDRESS_STREET_RE.search(address)):
+        return ""
+    return address
+
+
+def clean_addresses(parks: list[dict]) -> int:
+    """clean_address() every park's address in place; returns how many changed."""
+    changed = 0
+    for park in parks:
+        cleaned = clean_address(park["address"], park["city"])
+        if cleaned != park["address"]:
+            park["address"] = cleaned
+            changed += 1
+    return changed
 
 
 def distance_m(a: dict, b: dict) -> float:
@@ -312,7 +344,7 @@ def park_key(name: str, address: str, city: str) -> tuple[str, str, str]:
     re-adding a park already in the CSV. City is part of the key because some
     sources publish no address, so two cities' same-named parks (e.g. Kenmore's
     and Normandy Park's "City Hall Park") would otherwise look like one."""
-    return name, address, city
+    return name, clean_address(address, city), city
 
 
 class ListedPark(NamedTuple):
