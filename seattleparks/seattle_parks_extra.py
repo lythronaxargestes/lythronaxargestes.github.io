@@ -147,6 +147,141 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
         city="Federal Way",
         zip_code="98023",
     ),
+    # Seattle
+    # Franklin Place - Medium confidence - missing from the city's park dataset and has no page of
+    # its own on seattle.gov; OSM has it as a small named park (way 49734703) in Queen Anne just
+    # below Kerry Park, operated by Seattle Parks and Recreation (its website tag points to the
+    # Bayview-Kinnear (Lower Kerry Park) page). The coordinates are the center of that polygon;
+    # the address is as given by the user. Source: https://www.openstreetmap.org/way/49734703
+    ListedPark(
+        name="Franklin Place",
+        address="1016 2nd Ave W",
+        latitude=47.6282495,
+        longitude=-122.3594388,
+        city="Seattle",
+        zip_code="98119",
+    ),
+    # The next twelve are missing from the city's park dataset but have a Seattle Parks 'rainbow'
+    # sign (sign type RAINBOW in the city's Park Signs layer, a sign on a park-managed site)
+    # inside or beside their boundary in the city's Park Boundary layer. For each, the
+    # coordinates are the middle of that boundary polygon and the address is OSM's reverse
+    # geocode there (street only where OSM has no house number). Source:
+    # https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Signs/FeatureServer/0;
+    # https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/Park_Boundary_(outline)/FeatureServer/1
+    # Broadway Hill Park - Medium-high confidence - small (~1,100 m2) park; street only.
+    ListedPark(
+        name="Broadway Hill Park",
+        address="E Republican St",
+        latitude=47.623365,
+        longitude=-122.318529,
+        city="Seattle",
+        zip_code="98102",
+    ),
+    # Cheryl Chow Park - Medium-high confidence - street only.
+    ListedPark(
+        name="Cheryl Chow Park",
+        address="35th Ave S",
+        latitude=47.570179,
+        longitude=-122.289413,
+        city="Seattle",
+        zip_code="98144",
+    ),
+    # Helene Madison Pool - Medium-high confidence - a pool, not a park; OSM names it at this
+    # address.
+    ListedPark(
+        name="Helene Madison Pool",
+        address="13401 Meridian Ave N",
+        latitude=47.725942,
+        longitude=-122.334932,
+        city="Seattle",
+        zip_code="98133",
+    ),
+    # Homewood Natural Area on Thornton Creek - Medium-high confidence.
+    ListedPark(
+        name="Homewood Natural Area on Thornton Creek",
+        address="2635 NE 120th St",
+        latitude=47.715116,
+        longitude=-122.298721,
+        city="Seattle",
+        zip_code="98125",
+    ),
+    # Langston Hughes Cultural Arts - Medium-high confidence - an arts center, not a park.
+    ListedPark(
+        name="Langston Hughes Cultural Arts",
+        address="104 17th Ave S",
+        latitude=47.601204,
+        longitude=-122.30971,
+        city="Seattle",
+        zip_code="98144",
+    ),
+    # Mount Baker Boulevard - Medium - a long, narrow boulevard strip, so the middle of its
+    # polygon is only a representative spot.
+    ListedPark(
+        name="Mount Baker Boulevard",
+        address="3409 S Mount Baker Blvd",
+        latitude=47.577005,
+        longitude=-122.289418,
+        city="Seattle",
+        zip_code="98144",
+    ),
+    # North Leschi Moorage - Medium-high confidence - a moorage on Lake Washington; OSM calls
+    # it Leschi North Marina.
+    ListedPark(
+        name="North Leschi Moorage",
+        address="324 Lake Washington Blvd",
+        latitude=47.604049,
+        longitude=-122.283081,
+        city="Seattle",
+        zip_code="98122",
+    ),
+    # North Park Shops - Medium - a Parks-managed site whose address OSM doesn't know; street
+    # only.
+    ListedPark(
+        name="North Park Shops",
+        address="N 82nd St",
+        latitude=47.688138,
+        longitude=-122.338431,
+        city="Seattle",
+        zip_code="98103",
+    ),
+    # Rainier Beach Community Center - Medium-high confidence - a community center beside
+    # Rainier Beach Playfield, not a park.
+    ListedPark(
+        name="Rainier Beach Community Center",
+        address="8825 Rainier Ave S",
+        latitude=47.524539,
+        longitude=-122.270795,
+        city="Seattle",
+        zip_code="98118",
+    ),
+    # South Park Plaza - Medium-high confidence - street only.
+    ListedPark(
+        name="South Park Plaza",
+        address="S Orr St",
+        latitude=47.527923,
+        longitude=-122.315371,
+        city="Seattle",
+        zip_code="98108",
+    ),
+    # Southwest Community Center and Pool - Medium-high confidence - the city's layer names it
+    # 'S.W. Community Center and Pool'; a community center, not a park.
+    ListedPark(
+        name="Southwest Community Center and Pool",
+        address="2801 SW Thistle St",
+        latitude=47.527785,
+        longitude=-122.368644,
+        city="Seattle",
+        zip_code="98126",
+    ),
+    # Trudys Triangle - Medium-high confidence - small (~1,000 m2) triangle; street only.
+    ListedPark(
+        name="Trudys Triangle",
+        address="Mount Rainier Dr S",
+        latitude=47.576632,
+        longitude=-122.286119,
+        city="Seattle",
+        zip_code="98144",
+    ),
     # Tukwila
     # 57th Avenue Mini Park - High confidence - official city page's map link resolves to a
     # Google-named place matching this exact park. Source:
