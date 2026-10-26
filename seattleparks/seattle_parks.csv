@@ -1,4 +1,98 @@
 name,address,city,zip_code,latitude,longitude,visited,visited_date
+Piers 62 and 63,1951 Alaskan Way,Seattle,98101,47.608656,-122.345237,Y,2024-05-28
+Waterfront Park,1401 Alaskan Way,Seattle,98101,47.606778,-122.342196,Y,2024-05-28
+Union Station Square,316 S Jackson St,Seattle,98104,47.599362,-122.330086,Y,2024-06-03
+Occidental Square,117 S Washington St,Seattle,98104,47.600463,-122.333272,Y,2024-06-06
+Pioneer Square,100 Yesler Way,Seattle,98104,47.602076,-122.333886,Y,2024-06-06
+Washington Street Public Boat Landing,199 Alaskan Way S,Seattle,98104,47.601007,-122.336045,Y,2024-06-06
+Hing Hay Park,423 Maynard Ave S,Seattle,98104,47.598609,-122.325435,Y,2024-06-14
+Fremont Canal Park,199 N Canal St,Seattle,98103,47.651802,-122.357864,Y,2024-06-15
+Gas Works Park,2101 N Northlake Way,Seattle,98103,47.645639,-122.334906,Y,2024-06-22
+Lake Union Park,860 Terry Ave N,Seattle,98109,47.627015,-122.338848,Y,2024-07-04
+Washington Park Arboretum,2300 Arboretum Dr E,Seattle,98112,47.636477,-122.294835,Y,2024-07-07
+Discovery Park,3801 Discovery Park Blvd,Seattle,98199,47.66083,-122.415282,Y,2024-07-20
+Olympic Sculpture Park,2901 Western Ave,Seattle,98121,47.616577,-122.35418,Y,2024-07-20
+Woodland Park Zoo,700 N 50th St,Seattle,98103,47.666183,-122.35043,Y,2024-07-21
+Volunteer Park,1247 15th Ave E,Seattle,98112,47.630378,-122.315568,Y,2024-08-04
+Volunteer Park Conservatory,1400 E Galer St,Seattle,98112,47.632063,-122.315708,Y,2024-08-04
+Magnuson Park,7400 Sand Point Way NE,Seattle,98115,47.680304,-122.255084,Y,2025-09-13
+Kerry Park,211 W Highland Dr,Seattle,98119,47.629023,-122.359874,Y,2025-12-31
+Alki Beach Park,1702 Alki Ave SW,Seattle,98116,47.582912,-122.402173,Y,2026-03-07
+Green Lake Park,7201 E Greenlake Dr N,Seattle,98115,47.678938,-122.330394,Y,2026-03-24
+Magnolia Tidelands Park,,Seattle,98144,47.630922,-122.391648,Y,2026-04-17
+Open Water Park,2351 W Marina Pl,Seattle,98199,47.629555,-122.386693,Y,2026-04-17
+Smith Cove,23rd Ave West,Seattle,98199,47.632602,-122.387679,Y,2026-04-17
+Commodore Park,3330 W Commodore Way,Seattle,98107,47.66538,-122.40014,Y,2026-04-18
+Magnolia Park,1461 Magnolia Blvd W,Seattle,98199,47.632366,-122.398993,Y,2026-04-24
+Myrtle Edwards Park,3130 Alaskan Way,Seattle,98121,47.618767,-122.36087,Y,2026-04-24
+Ursula Judkins Viewpoint,2605 W Galer St,Seattle,98199,47.632049,-122.390232,Y,2026-04-24
+Lincoln Park,8011 Fauntleroy Way SW,Seattle,98136,47.531176,-122.396012,Y,2026-04-25
+Andover Place,4000 Beach Dr SW,Seattle,98116,47.568517,-122.409993,Y,2026-05-01
+Charles Richey Sr Viewpoint,3521 Beach Dr SW,Seattle,98116,47.57242,-122.413877,Y,2026-05-01
+Cormorant Cove,3701 Beach Dr SW,Seattle,98116,47.570984,-122.412089,Y,2026-05-01
+Don Armeni Park,1222 Harbor Ave SW,Seattle,98116,47.59274,-122.382295,Y,2026-05-01
+Emma Schmitz Memorial Overlook,4503 Beach Dr SW,Seattle,98116,47.562898,-122.40712,Y,2026-05-01
+Lowman Beach Park,7017 Beach Dr SW,Seattle,98136,47.540367,-122.396728,Y,2026-05-01
+Seacrest Park,1660 Harbor Ave SW,Seattle,98126,47.589941,-122.381226,Y,2026-05-01
+Weather Watch Park,4035 Beach Dr SW,Seattle,98116,47.568247,-122.409506,Y,2026-05-01
+Seward Park,5900 Lake Washington Blvd S,Seattle,98118,47.54923,-122.250639,Y,2026-05-16
+Matthews Beach Park,5100 NE 93rd St,Seattle,98115,47.694564,-122.271785,Y,2026-05-24
+Adams Street Boat Ramp,Lake Washington Blvd S & S Adams St,Seattle,98118,47.565219,-122.267178,Y,2026-05-27
+Ferdinand Street Boat Ramp,5018 Lake Washington Blvd S,Seattle,98118,47.561358,-122.264912,Y,2026-05-27
+Lakewood Moorage,4400 Lake Washington Blvd S,Seattle,98118,47.562981,-122.268295,Y,2026-05-27
+Fauntleroy Park,3951 SW Barton St,Seattle,98136,47.5192,-122.383222,Y,2026-05-31
+Westlake Greenbelt,Westlake Ave & Halladay St,Seattle,98109,47.641586,-122.34338,Y,2026-06-02
+Ravenna Park,5520 Ravenna Ave NE,Seattle,98105,47.671404,-122.305705,Y,2026-07-09
+Ravenna Park Triangle,Ravenna Ave NE & NE 54th St,Seattle,98105,47.668089,-122.30367,Y,2026-07-09
+Carkeek Park,950 NW Carkeek Park Rd,Seattle,98117,47.712194,-122.379763,Y,2026-07-11
+Roxhill Park,2850 SW Roxbury St,Seattle,98126,47.519496,-122.368881,Y,2026-07-25
+West Queen Anne Playfield,150 W Blaine St,Seattle,98119,47.635514,-122.359504,Y,2026-07-26
+Fauntleroy Creek Ravine,9102 Fauntleroy Way SW,Seattle,98136,47.522599,-122.392498,Y,2026-08-01
+Kilbourne Park,9131 California Ave SW,Seattle,98136,47.52133,-122.388277,Y,2026-08-01
+City Hall Park,450 3rd Ave,Seattle,98119,47.602022,-122.329875,Y,2026-08-02
+Kobe Terrace,650 Main St,Seattle,98104,47.60042,-122.324494,Y,2026-08-02
+Prefontaine Place,425 3rd Ave,Seattle,98104,47.601844,-122.330883,Y,2026-08-02
+Golden Gardens Park,8498 Seaview Pl NW,Seattle,98117,47.686852,-122.403454,Y,2026-08-07
+Madison Park,4201 E Madison St,Seattle,98112,47.635779,-122.276602,Y,2026-08-08
+Madison Park North Beach,2300 43rd Ave E,Seattle,98112,47.639084,-122.276118,Y,2026-08-08
+North Creek Forest,20325 112th Ave NE,Bothell,98011,47.775077401957,-122.191443137084,Y,2026-08-08
+Woodland Park,1000 N 50th St,Seattle,98103,47.668906,-122.344218,Y,2026-08-15
+Woodland Park Rose Garden,750 N 50th St,Seattle,98103,47.666499,-122.35054,Y,2026-08-15
+Fauntleroy Place,4501 Fauntleroy Way SW,Seattle,98126,47.562715,-122.379834,Y,2026-08-21
+Junction Plaza,42nd Ave SW & SW Alaska St,Seattle,98116,47.561204,-122.385491,Y,2026-08-21
+Rotary Viewpoint,4622 35th Ave SW,Seattle,98126,47.560222,-122.375859,Y,2026-08-21
+West Seattle Golf Course,4600 35th Ave SW,Seattle,98126,47.55986,-122.369657,Y,2026-08-21
+West Seattle Stadium,4432 35th Ave SW,Seattle,98126,47.562826,-122.374348,Y,2026-08-21
+Endolyne Park,9827 49th Ave SW,Seattle,98116,47.514542,-122.39438,Y,2026-08-28
+North Shorewood Park,SW 102nd St & 24th Ave SW,Seattle,98146,47.51260820569821,-122.36189399530505,Y,2026-09-04
+Steve Cox Memorial Park,1321 SW 102nd St,Seattle,98146,47.51101766761626,-122.35201422447359,Y,2026-09-04
+Echo Lake Park,1521 N 200th St,Shoreline,98133,47.773133696839636,-122.34118097107317,Y,2026-09-05
+Echo Lake Park West,,Shoreline,98133,47.770909834017544,-122.3445905217715,Y,2026-09-05
+Hemlock Park,,Shoreline,98133,47.76734301073485,-122.34779708857889,Y,2026-09-05
+Interurban Trail,N 145th St to N 205th St,Shoreline,98133,47.769017532262836,-122.34277264918295,Y,2026-09-05
+Park at Town Center,18040 Aurora Ave N,Shoreline,98133,47.759508331707515,-122.34553915437917,Y,2026-09-05
+White Center Heights Park,SW 102nd St and 7th Ave SW,Seattle,98146,47.51111398690191,-122.34427933063283,Y,2026-09-05
+Camp Long,5200 35th Ave SW,Seattle,98126,47.556242,-122.373161,Y,2026-09-12
+East Queen Anne Playground,1912 Warren Ave N,Seattle,98109,47.636139,-122.353786,Y,2026-09-13
+University Playground,4745 9th Ave NE,Seattle,98105,47.664447,-122.319312,Y,2026-09-13
+Wolf Creek Ravine Natural Area,McGraw St between 2nd Ave N & Nobb Hill Ave N,Seattle,98109,47.639775,-122.352314,Y,2026-09-13
+Cottage Grove Park,5206 26th Ave SW,Seattle,98106,47.554364,-122.365311,Y,2026-09-24
+Delridge Playfield,4458 Delridge Way SW,Seattle,98106,47.562842,-122.364371,Y,2026-09-24
+Greg Davis Park,2600 SW Brandon St,Seattle,98106,47.55437,-122.366001,Y,2026-09-24
+Puget Boulevard Commons,5200 26th Ave SW,Seattle,98106,47.555356,-122.365575,Y,2026-09-24
+Myrtle Reservoir,35th Ave SW & SW Myrtle St,Seattle,98126,47.539206,-122.376716,Y,2026-10-02
+Orchard Street Ravine,39th Ave SW & SW Orchard St,Seattle,98136,47.538315,-122.380151,Y,2026-10-02
+Walt Hundley Playfield,6920 34th Ave SW,Seattle,98126,47.54017,-122.373415,Y,2026-10-02
+Plymouth Pillars Park,1050 Pike St,Seattle,98101,47.614124,-122.329092,Y,2026-10-03
+Bayview-Kinnear (Lower Kerry Park),3rd Ave W & W Prospect St,Seattle,98119,47.628948,-122.360626,Y,2026-10-11
+Franklin Place,1016 2nd Ave W,Seattle,98119,47.6282495,-122.3594388,Y,2026-10-11
+West Ewing Mini Park,244 W Ewing St,Seattle,98119,47.65205,-122.360602,Y,2026-10-12
+Counterbalance Park: An Urban Oasis,700 Queen Anne Ave N,Seattle,98109,47.625683,-122.356323,Y,2026-10-18
+"Highland Drive Parkway",165 Highland Dr,Seattle,98109,47.629736,-122.353337,Y,2026-10-18
+Highland Place,93 Highland Dr,Seattle,98109,47.629656,-122.355466,Y,2026-10-18
+Observatory Courts,1405 Warren Ave N,Seattle,98109,47.631342,-122.355134,Y,2026-10-18
+Wallingford Steps,1800 N Northlake Way,Seattle,98103,47.647345,-122.336152,Y,2026-10-20
+Waterway 19,2119 N Northlake Way,Seattle,98103,47.646349,-122.332567,Y,2026-10-20
 12th and Howe Play Park,1200 W Howe St,Seattle,98119,47.636097,-122.372985,N,
 12th Ave S Viewpoint,2821 12TH Ave S,Seattle,98144,47.577953,-122.317765,N,
 12th Ave Square Park,564 12th Ave,Seattle,98122,47.607427,-122.316455,N,
@@ -14,16 +108,13 @@ name,address,city,zip_code,latitude,longitude,visited,visited_date
 6th Ave NW Pocket Park,606  NW 76th St,Seattle,98117,47.684202,-122.363566,N,
 7th Avenue Park,7th Ave N & Main St,Algona,98001,47.2875415,-122.2570722,N,
 A. B. Ernst Park,723 N 35th St,Seattle,98103,47.650087,-122.348826,N,
-Adams Street Boat Ramp,Lake Washington Blvd S & S Adams St,Seattle,98118,47.565219,-122.267178,Y,2026-05-27
 Adelaide Park,30619 16th Ave SW,Federal Way,98003,47.327319,-122.362826,N,
 Albert Davis Park,12526 27th Ave NE,Seattle,98125,47.72016,-122.298752,N,
 Alderdale Park,2700 SW 340th Place,Federal Way,98023,47.29776,-122.379405,N,
-Alki Beach Park,1702 Alki Ave SW,Seattle,98116,47.582912,-122.402173,Y,2026-03-07
 Alki Playground,5817 SW Lander St,Seattle,98116,47.578497,-122.407312,N,
 Alvin Larkins Park,1504 34th Ave,Seattle,98122,47.614318,-122.288745,N,
 Amy Yee Tennis Center,2000 Martin Luther King Jr Way S,Seattle,98144,47.584876,-122.29742,N,
 Anderson Park,7802 168th Avenue NE,Redmond,98052,47.672914123547024,-122.1155920205671,N,
-Andover Place,4000 Beach Dr SW,Seattle,98116,47.568517,-122.409993,Y,2026-05-01
 Angle Lake Nature Trail,,SeaTac,98188,47.4261437916588,-122.2940344762787,N,
 Angle Lake Park,19408 International Blvd,SeaTac,98188,47.42819458371175,-122.2937520724013,N,
 Annex Community Park,425 SW 144th Street,Burien,98166,47.474165479176214,-122.34233108390107,N,
@@ -54,7 +145,6 @@ Bannerwood Sports Park,1790 Richards Road,Bellevue,98005,47.59605,-122.16262,N,
 Bar-S Playground,6425 SW Admiral Way,Seattle,98116,47.575195,-122.416054,N,
 Barnes Creek Nature Trail,,Des Moines,98198,47.39769873086612,-122.31475678158877,N,
 Bayview Playground,2614 24th Ave W,Seattle,98199,47.643802,-122.386786,N,
-Bayview-Kinnear (Lower Kerry Park),3rd Ave W & W Prospect St,Seattle,98119,47.628948,-122.360626,Y,2026-10-11
 Beacon Hill Playground,1902 13th Ave S,Seattle,98144,47.586226,-122.315325,N,
 Beacon Place,1110 S Dearborn St,Seattle,98104,47.596236,-122.318716,N,
 Bear and Evans Creek Open Space,Non-continuous; along Bear Creek from NE 95th Street to Union Hill Road,Redmond,98052,47.68248082054025,-122.08734944382725,N,
@@ -129,11 +219,9 @@ Cal Anderson Park and Bobby Morris Playfield,1635 11th Ave,Seattle,98122,47.6170
 California Place,2099 California Ave SW,Seattle,98116,47.585641,-122.386696,N,
 Cameron Park,3727 Lemon Tree Lane,Auburn,98092,47.276748067102574,-122.15389423270608,N,
 Cameron's Crossing,,Des Moines,98198,47.375296194504294,-122.31171546426265,N,
-Camp Long,5200 35th Ave SW,Seattle,98126,47.556242,-122.373161,Y,2026-09-12
 Campus Park,9890 S 252nd St,Kent,98030,47.37601299574806,-122.20891155011894,N,
 Canterbury Park,24409 100th Ave SE,Kent,98030,47.38311938077068,-122.2085453978176,N,
 Carillon Woods,5429 106th Ave NE,Kirkland,98033,47.656655391673,-122.19950133320589,N,
-Carkeek Park,950 NW Carkeek Park Rd,Seattle,98117,47.712194,-122.379763,Y,2026-07-11
 Carleton Center,2319 Westmont Way W,Seattle,98199,47.639414,-122.406385,N,
 Carleton Highlands,3298 Perkins Ln W,Seattle,98199,47.650028,-122.415934,N,
 Cascade Park,SE 162nd St & 122nd Ave SE,Renton,98058,47.45817121,-122.17578553,N,
@@ -162,7 +250,6 @@ Centennial Park,1130 208th St SE,Bothell,98012,47.80935355528,-122.217574156779,
 Centennial Viewpoint Park,402 Mountain View Dr SW,Auburn,98001,47.30451245712506,-122.25798310643745,N,
 Cesar Chavez Park,700 S Cloverdale St,Seattle,98108,47.52678,-122.32562,N,
 Chandler Neighborhood Park,16692 SE 56th Pl,Bellevue,98006,47.553515377629,-122.11738384924,N,
-Charles Richey Sr Viewpoint,3521 Beach Dr SW,Seattle,98116,47.57242,-122.413877,Y,2026-05-01
 Cheasty Boulevard,Cheasty Blvd S & S Della St,Seattle,98144,47.572682,-122.299204,N,
 Chelsea Park,802 SW 137th Street,Burien,98166,47.480148479176464,-122.34810248423116,N,
 Cherry Crest Mini Park,2532 127th Ave NE,Bellevue,98005,47.633426710847,-122.1703720197,N,
@@ -177,7 +264,6 @@ Chism Beach Park,9600 SE 11th St,Bellevue,98004,47.600990845937,-122.21123683068
 Christie Park,817 NE 43rd St,Seattle,98105,47.659308,-122.319072,N,
 City Dock at 84th Ave NE,84th Ave NE,Medina,98039,47.6115698792,-122.22825096299,N,
 City Dock at Lake Lane,Lake Lane,Medina,98039,47.64226447493,-122.23601869061,N,
-City Hall Park,450 3rd Ave,Seattle,98119,47.602022,-122.329875,Y,2026-08-02
 City Hall Park,,Kenmore,98028,47.75988215459329,-122.24920246950327,N,
 City Hall Park,,Normandy Park,98166,47.44484932478621,-122.34585039547721,N,
 City Park / Kiddie Park,,Des Moines,98198,47.39595054915956,-122.30330987790691,N,
@@ -201,7 +287,6 @@ Colman Park,1800 Lake Washington Blvd S,Seattle,98144,47.58547,-122.288612,N,
 Colman Playground,1740 23rd Ave S,Seattle,98122,47.587625,-122.301957,N,
 Columbia Park,4721 Rainier Ave S,Seattle,98118,47.559792,-122.287394,N,
 Commissioner's Waterway Mini Park,1669 148th Ave NE,Bellevue,98007,47.625518002439,-122.14348135966,N,
-Commodore Park,3330 W Commodore Way,Seattle,98107,47.66538,-122.40014,Y,2026-04-18
 Commons Neighborhood Park,5th Ave N & W James St,Kent,98032,47.390010634860495,-122.23929387843974,N,
 Community Garden,13735 24th Ave S,SeaTac,98168,47.47922392126292,-122.30364697810572,N,
 Community Garden A,1030 8th St NE,Auburn,98002,47.31441365505326,-122.21608370492454,N,
@@ -209,13 +294,10 @@ Conifer View Park,9055 NE 195th St,Bothell,98011,47.769814794825,-122.2204261390
 Conna Park (Formerly Alderbrook Park),1401 SW 325th Pl,Federal Way,98023,47.309388,-122.355778,N,
 Conrad Olson Farm,"the 189th ""block"" of NE 95th Street",Redmond,98052,47.68647730504623,-122.08818416019919,N,
 Corliss Place,2166 N 50th St,Seattle,98103,47.665198,-122.330874,N,
-Cormorant Cove,3701 Beach Dr SW,Seattle,98116,47.570984,-122.412089,Y,2026-05-01
 Coronado Park,2501 SW 349th Pl,Federal Way,98003,47.288327,-122.371151,N,
-Cottage Grove Park,5206 26th Ave SW,Seattle,98106,47.554364,-122.365311,Y,2026-09-24
 Cottage Lake Park,NE Woodinville-Duvall Rd and 188th NE,Woodinville,98072,47.75589411074106,-122.08550367141572,N,
 Cotton Hill Park,11006 NE 98th St,Kirkland,98033,47.68894674722821,-122.19339606929147,N,
 Cougar Mountain Regional Wildland Park,18201 SE Cougar Mountain Dr,Renton,98056,47.52591147552367,-122.11011924742596,N,
-Counterbalance Park: An Urban Oasis,700 Queen Anne Ave N,Seattle,98109,47.625683,-122.356323,Y,2026-10-18
 Cowen Park,5849 15th Ave NE,Seattle,98105,47.672596,-122.313072,N,
 Crescent Place,7515 Orin Ct N,Seattle,98103,47.684317,-122.333029,N,
 Crestview Park,16200 42nd Avenue South,Tukwila,98188,47.457881718693,-122.281087462168,N,
@@ -238,7 +320,6 @@ Day Street Boat Ramp,1402 Lakeside Ave S,Seattle,98144,47.59026,-122.285154,N,
 Deane's Children's Park,5500 Island Crest Way,Mercer Island,98040,47.552309148025,-122.22279774826,N,
 Dearborn Park,2919 S Brandon St,Seattle,98126,47.553389,-122.296225,N,
 Deer Run Park,17600 Village Park Drive SE,Bellevue,98006,47.553669686211,-122.10955036442,N,
-Delridge Playfield,4458 Delridge Way SW,Seattle,98106,47.562842,-122.364371,Y,2026-09-24
 Denny Blaine Lake Park,100 Maiden Ln E,Seattle,98112,47.61833,-122.284838,N,
 Denny Blaine Park,200 Lake Washington Blvd E,Seattle,98112,47.62011,-122.280548,N,
 Denny Park,100 Dexter Ave N,Seattle,98109,47.61913,-122.341049,N,
@@ -250,8 +331,6 @@ Des Moines Memorial,15623 Des Moines Memorial Drive,Burien,98148,47.462765479175
 Des Moines Memorial Park,,Des Moines,98198,47.40868001545717,-122.32667334541907,N,
 Deyoung Park,13680 NE 175th Street,Woodinville,98072,47.754537652024,-122.156529006379,N,
 Dick Thurnau Memorial Park,11050 10th Ave SW,Seattle,98146,47.50387293624236,-122.34431929692295,N,
-Discovery Park,3801 Discovery Park Blvd,Seattle,98199,47.66083,-122.415282,Y,2024-07-20
-Don Armeni Park,1222 Harbor Ave SW,Seattle,98116,47.59274,-122.382295,Y,2026-05-01
 Donegal Park,,Newcastle,98056,47.53640557897326,-122.17513312437488,N,
 Doris Cooper Houghton Beach Park,5811 Lake Washington Blvd NE,Kirkland,98033,47.66030139586085,-122.20747231022023,N,
 Dorthy Bothell Park,1087 Evergreen Way SE,Auburn,98092,47.25656434762447,-122.2166100815913,N,
@@ -279,13 +358,10 @@ East Montlake Park,2802 E Park Drive East,Seattle,98112,47.646662,-122.301441,N,
 East Norway Hill Park,15101 124th Ave NE,Kirkland,98034,47.73806323239473,-122.1803030636446,N,
 East Norway Hill Park,11920 NE 155th St,Bothell,98011,47.739693714821,-122.18144675417,N,
 East Portal Viewpoint,1400 Lake Washington Blvd S,Seattle,98144,47.590222,-122.287893,N,
-East Queen Anne Playground,1912 Warren Ave N,Seattle,98109,47.636139,-122.353786,Y,2026-09-13
 Eastgate Park,14500 SE Newport Way,Bellevue,98006,47.569952183997,-122.14597025947,N,
 Eastlake Triangle,10th Ave E & E Prospect St,Seattle,98109,47.62841,-122.328918,N,
 Eastmont Place,2201 Westmont Way W,Seattle,98199,47.637689,-122.405566,N,
 Eastridge Park,143rd Ave SE & SE 258th St,Kent,98042,47.37037256453636,-122.15181324728012,N,
-Echo Lake Park,1521 N 200th St,Shoreline,98133,47.773133696839636,-122.34118097107317,Y,2026-09-05
-Echo Lake Park West,,Shoreline,98133,47.770909834017544,-122.3445905217715,Y,2026-09-05
 Eddie Vine Boat Ramp,8001 Seaview Ave NW,Seattle,98117,47.686852,-122.403454,N,
 Edgeview Park,Udall Ave SE & 56th St SE,Auburn,98092,47.25903236339068,-122.20145698192557,N,
 Edith Moulton Park,13634 108th Ave NE,Kirkland,98034,47.723492442657836,-122.19400580426756,N,
@@ -294,10 +370,8 @@ Edwin Pratt Memorial Park,,Shoreline,98133,47.76292629786763,-122.34125232172435
 Elise Park,225 Elise Lane,Pacific,98047,47.2685558,-122.25425,N,
 Ella Bailey Park,2601 W Smith St,Seattle,98199,47.640584,-122.39106,N,
 Ellis Pond Park,SE 47th Street & 90th Avenue SE,Mercer Island,98040,47.561898373351,-122.218923135202,N,
-Emma Schmitz Memorial Overlook,4503 Beach Dr SW,Seattle,98116,47.562898,-122.40712,Y,2026-05-01
 Enatai Beach Park,3519 108th Ave SE,Bellevue,98004,47.579799627551,-122.19745354233,N,
 Enatai Neighborhood Park,10661 SE 25th St,Bellevue,98004,47.587494563896,-122.19739586827,N,
-Endolyne Park,9827 49th Ave SW,Seattle,98116,47.514542,-122.39438,Y,2026-08-28
 English Gardens Park,1210 SW 333rd St,Federal Way,98003,47.303811,-122.357805,N,
 Ercolini Park,4542 48th Ave SW,Seattle,98116,47.515021,-122.394275,N,
 Esterra Park,,Redmond,98052,47.63498588379189,-122.13540003965042,N,
@@ -309,11 +383,7 @@ Fairview Park,2900 Fairview Ave E,Seattle,98102,47.647413,-122.325368,N,
 Fairview Walkway,1251 Fairview Ave. N,Seattle,98109,47.630501,-122.328967,N,
 Fairweather Nature Preserve,Evergreen Point Road & NE 32nd St,Medina,98039,47.637691663888,-122.23508219252,N,
 Farrel-McWhirter Park,19545 Redmond Road,Redmond,98053,47.695312840845425,-122.08135083192565,N,
-Fauntleroy Creek Ravine,9102 Fauntleroy Way SW,Seattle,98136,47.522599,-122.392498,Y,2026-08-01
-Fauntleroy Park,3951 SW Barton St,Seattle,98136,47.5192,-122.383222,Y,2026-05-31
-Fauntleroy Place,4501 Fauntleroy Way SW,Seattle,98126,47.562715,-122.379834,Y,2026-08-21
 Fenster Property,2033 4th St SE,Auburn,98002,47.30432019001294,-122.19993251385638,N,
-Ferdinand Street Boat Ramp,5018 Lake Washington Blvd S,Seattle,98118,47.561358,-122.264912,Y,2026-05-27
 Firehouse Mini Park,712 18th Ave,Seattle,98122,47.608448,-122.308558,N,
 First Avenue Plaza,219 First Avenue S,Kent,98032,47.38032056326086,-122.2338945013671,N,
 First Hill Park,1201 University St,Seattle,98101,47.611906,-122.325512,N,
@@ -334,9 +404,7 @@ Former Wayne Golf Course,16721 96th Ave NE,Bothell,98011,47.74912,-122.21341,N,
 Fort Dent Park,6800 Fort Dent Way,Tukwila,98188,47.467091216107,-122.247932652638,N,
 Foster Park,74th Ave S & S 259th St,Kent,98032,47.369768831055595,-122.24032714017704,N,
 Frager Road Trail,,Kent,98032,47.37866053210368,-122.26949289472454,N,
-Franklin Place,1016 2nd Ave W,Seattle,98119,47.6282495,-122.3594388,Y,2026-10-11
 Freeway Park - Jim Ellis Freeway Park,700 Seneca St,Seattle,98101,47.609472,-122.330904,N,
-Fremont Canal Park,199 N Canal St,Seattle,98103,47.651802,-122.357864,Y,2024-06-15
 Fremont Peak Park,4357 Palatine Ave N,Seattle,98103,47.661108,-122.356671,N,
 Frink Park,398 Lake Washington Blvd S,Seattle,98144,47.599506,-122.290256,N,
 Froula Playground,7200 12th Ave NE,Seattle,98115,47.680538,-122.313978,N,
@@ -346,7 +414,6 @@ Game Farm Park,3030 R St SE,Auburn,98002,47.28037417523099,-122.20386339118616,N
 Game Farm Wilderness Park,2401 Stuck River Dr SE,Auburn,98092,47.27985072242682,-122.19569199674052,N,
 Garfield Playfield,537 25th Ave,Seattle,98122,47.607098,-122.301412,N,
 Garrison Creek Park,9615 S 218th St,Kent,98031,47.40646560530024,-122.21123848385545,N,
-Gas Works Park,2101 N Northlake Way,Seattle,98103,47.645639,-122.334906,Y,2024-06-22
 Gateway Park,Logan Ave S & S 3rd St,Renton,98057,47.47994016,-122.20949482,N,
 Gene Coulon Memorial Park,1201 Lake Washington Blvd N,Renton,98056,47.50609831,-122.20187419,N,
 Genesee Park and Playfield,4316 S Genesee St,Seattle,98118,47.564856,-122.278744,N,
@@ -360,7 +427,6 @@ Glenn Nelson Park,3216 S 268th St,Kent,98032,47.361663572210155,-122.29144880712
 Gloria's Path,Fremont Ave N & N 163rd St,Shoreline,98133,47.74613224259341,-122.35096593380725,N,
 Goddard Mini Park,715 100th Ave NE,Bellevue,98004,47.616878955691,-122.20729472884,N,
 Gold Creek Park,16020 148th Ave NE,Woodinville,98072,47.74278919492617,-122.13918305130589,N,
-Golden Gardens Park,8498 Seaview Pl NW,Seattle,98117,47.686852,-122.403454,Y,2026-08-07
 Goldsmith Neighborhood Park,14475 NE 35th Street,Bellevue,98007,47.640290422037,-122.14766065542,N,
 Grace Cole Nature Park,16735 30th Ave NE,Lake Forest Park,98155,47.74940054144415,-122.2978829966953,N,
 Grace M. T.A. Wilson Park,,Normandy Park,98166,47.4499139562609,-122.33596515184813,N,
@@ -368,7 +434,6 @@ Graceview Park,,Des Moines,98198,47.391021301471405,-122.30606280856396,N,
 Grand Army of the Republic Cemetery,1200 E Howe St,Seattle,98102,47.636461,-122.316261,N,
 Grandview Park,3600 S. 228th St Seatac,Burien,98198,47.397563979171316,-122.2878929843767,N,
 Grass Lawn Park,7031 148th Avenue NE,Redmond,98052,47.66827986411564,-122.14604092028996,N,
-Green Lake Park,7201 E Greenlake Dr N,Seattle,98115,47.678938,-122.330394,Y,2026-03-24
 Green River Natural Area,37000 190th Ave SE,Auburn,98092,47.276917976043386,-122.0929708404256,N,
 Green River Natural Resource Area,21901 Russell Rd S,Kent,98032,47.406038929655494,-122.26662503724808,N,
 Green River Trail,,Kent,98032,47.377706670512445,-122.2641975585681,N,
@@ -377,7 +442,6 @@ Green View Park,12033 SE 277th Place,Kent,98030,47.35245016526496,-122.180604263
 Greenbrier Park,18746 144th Ave NE,Woodinville,98072,47.763331493791,-122.147691039011,N,
 Greenwood Park,602 N 87th St,Seattle,98117,47.693048,-122.350647,N,
 Greenwood Triangle,304 NW 55th St,Seattle,98107,47.668902,-122.361032,N,
-Greg Davis Park,2600 SW Brandon St,Seattle,98106,47.55437,-122.366001,Y,2026-09-24
 Groveland Beach Park,SE 58th Street & 80th Avenue SE,Mercer Island,98040,47.550828375409,-122.232369135682,N,
 Gsa Park,413 15th St SW,Auburn,98001,47.29689759373056,-122.23335738061354,N,
 Hamilton Viewpoint Park,1120 California Ave SW,Seattle,98116,47.590748,-122.38907,N,
@@ -394,7 +458,6 @@ Hazelnut Park,14475 59th Avenue South,Tukwila,98168,47.473342446353,-122.2591604
 Hazelwood Park,,Newcastle,98056,47.53694486424138,-122.18025423487843,N,
 Hazen Hills Park,13215 121st Ave NE,Kirkland,98034,47.71869234635964,-122.1789351368479,N,
 Helene Madison Pool,13401 Meridian Ave N,Seattle,98133,47.725942,-122.334932,N,
-Hemlock Park,,Shoreline,98133,47.76734301073485,-122.34779708857889,Y,2026-09-05
 Heritage Morgan Park,,Newcastle,98059,47.5244676666076,-122.15837523277393,N,
 Heritage Park,111 Waverly Way,Kirkland,98033,47.67838580114569,-122.21126302459,N,
 Heritage Park,233 Union Ave NE,Renton,98056,47.48582729,-122.1655636,N,
@@ -404,10 +467,8 @@ Heronfield Wetlands,11225 NE 120th St,Kirkland,98034,47.70852473644645,-122.1935
 Herring's House Park (T'ul'altx),4570 West Marginal Way SW,Seattle,98106,47.561514,-122.349545,N,
 Hiawatha Playfield,2700 California Ave SW,Seattle,98116,47.578272,-122.384965,N,
 Hidden Valley Park,1903 112th Ave NE,Bellevue,98004,47.627258695843,-122.19176595091,N,
-Highland Drive Parkway,165 Highland Dr,Seattle,98109,47.629736,-122.353337,Y,2026-10-18
 Highland Park Playground,1100 SW Cloverdale St,Seattle,98106,47.52738,-122.349034,N,
 "Highland Park, Community Center and Bellevue Skate Park",14224 Bel-Red Road,Bellevue,98007,47.625268077889,-122.1511232635,N,
-Highland Place,93 Highland Dr,Seattle,98109,47.629656,-122.355466,Y,2026-10-18
 Highlands Forest View Park,,Newcastle,98059,47.51900570726394,-122.149138163678,N,
 Highlands Park,11210 NE 102nd St,Kirkland,98033,47.69099974400107,-122.18973931217481,N,
 Highlands Park,800 Edmonds Ave NE,Renton,98056,47.49578512,-122.18419233,N,
@@ -417,7 +478,6 @@ Hillaire Park,15803 NE 6th St,Bellevue,98008,47.614879486814,-122.12961326299,N,
 Hillside Park,14356 SE 92nd St,Newcastle,98059,47.518576,-122.148988,N,
 Hilltop Park,2600 S 128th Street,Burien,98168,47.48901737917695,-122.30157978423091,N,
 Hillwood Park,19001 3rd Ave NW,Shoreline,98177,47.767727388828746,-122.36374916572454,N,
-Hing Hay Park,423 Maynard Ave S,Seattle,98104,47.598609,-122.325435,Y,2024-06-14
 Hitt's Hill Park,5234 37th Ave S,Seattle,98118,47.554207,-122.28455,N,
 Hogan Park,24400 Russell Rd,Kent,98032,47.384196411176994,-122.26205083878803,N,
 Hollywood Hills Equestrian Park,15205 NE 172nd St,Woodinville,98072,47.751382651571056,-122.13535316018806,N,
@@ -443,7 +503,6 @@ Interbay Golf,2501 15th Ave W,Seattle,98119,47.643753,-122.378455,N,
 Interlaken Park,2451 Delmar Dr E,Seattle,98102,47.636257,-122.308316,N,
 International Children's Park,700 S Lane St,Seattle,98104,47.596897,-122.323412,N,
 Interurban ROW access,,Shoreline,98133,47.73679388048971,-122.34745397454638,N,
-Interurban Trail,N 145th St to N 205th St,Shoreline,98133,47.769017532262836,-122.34277264918295,Y,2026-09-05
 Interurban Trail,,Kent,98032,47.38659664099557,-122.24215281717672,N,
 Inverness Ravine Park,8619 45th Ave NE,Seattle,98115,47.691145,-122.280809,N,
 Isaac Evans Park,29827 Green River Rd SE,Auburn,98092,47.331044511605626,-122.21032669416763,N,
@@ -472,7 +531,6 @@ Juanita Woodlands Park,NE 118th St & Juanita Dr NE,Kirkland,98034,47.70584231513
 Judge Charles M. Stokes Overlook,20th Ave S & S Judkins St,Seattle,98144,47.591632,-122.306962,N,
 Judkins Park and Playfield,2150 S Norman St,Seattle,98144,47.592425,-122.303951,N,
 Juel Park,NE 116th Street,Redmond,98052,47.70091498588227,-122.0869464580942,N,
-Junction Plaza,42nd Ave SW & SW Alaska St,Seattle,98116,47.561204,-122.385491,Y,2026-08-21
 Kaibara Park,First Ave Between W Smith & W Meeker,Kent,98032,47.38195160993555,-122.23325645943368,N,
 Kathryn Taylor Equestrian Park,232nd Ave NE and NE 142nd Pl,Redmond,98077,47.72704800802827,-122.03108464293567,N,
 Katie Black's Garden,1150 S Atlantic St,Seattle,98144,47.590421,-122.317642,N,
@@ -485,10 +543,8 @@ Kent Community Garden,5th Ave N & W James St,Kent,98032,47.38938097974394,-122.2
 Kent Historical Society Museum,855 E Smith St,Kent,98030,47.38395758950945,-122.22439326023628,N,
 Kent Memorial Park,850 Central Ave N,Kent,98031,47.38970775151562,-122.23070250388963,N,
 Kenyon-Dobson Property,3447 Lincoln Dr NE,Renton,98056,47.52231374,-122.18770955,N,
-Kerry Park,211 W Highland Dr,Seattle,98119,47.629023,-122.359874,Y,2025-12-31
 Keystone Place,5664 Keystone Pl N,Seattle,98103,47.670304,-122.333769,N,
 Kherson Park,307 W Gowe St,Kent,98032,47.38109751980559,-122.23521054376508,N,
-Kilbourne Park,9131 California Ave SW,Seattle,98136,47.52133,-122.388277,Y,2026-08-01
 Killarney Glen Park,1933 104th Ave SE,Bellevue,98004,47.593352562073,-122.20187419869,N,
 Kingfisher Natural Area on Thornton Creek,15th Ave NE & NE 105th St,Seattle,98125,47.704889,-122.312411,N,
 Kingsgate Park,11532 NE 140th St,Kirkland,98034,47.726713248709764,-122.18760383666573,N,
@@ -502,7 +558,6 @@ Kiwanis Tot Lot #1,532 1st Ave S,Kent,98032,47.376887368673906,-122.233636290880
 Kiwanis Tot Lot #2,N 2nd Ave & W Cloudy St,Kent,98032,47.38818743246182,-122.23513809874234,N,
 Kiwanis Tot Lot #3,874 E Chicago St,Kent,98030,47.37647255454524,-122.22340122409338,N,
 Kiwanis Tot Lot #4,557 5th Ave S,Kent,98032,47.376555194127675,-122.23893304274755,N,
-Kobe Terrace,650 Main St,Seattle,98104,47.60042,-122.324494,Y,2026-08-02
 Kruckeberg Botanic Garden,20312 15 Ave NW,Shoreline,98177,47.776450355695246,-122.37585027919344,N,
 Kubota Garden,9817 55th Ave S,Seattle,98118,47.513543,-122.266125,N,
 Lake Ave W Street End Park,297 Lake Ave W,Kirkland,98033,47.67979100795097,-122.21431274704682,N,
@@ -519,7 +574,6 @@ Lake Killarney Open Space Park,34902 Weyerhaeuser Way S,Federal Way,98003,47.312
 Lake Meridian Park,14800 SE 272nd St,Kent,98042,47.358484203276056,-122.14312744748192,N,
 Lake People Park (Xacua'bs),3100 S Bradford st,Seattle,98108,47.569133,-122.292012,N,
 Lake Sammamish Landing,,Bellevue,98008,47.59457204682,-122.1101563611,N,
-Lake Union Park,860 Terry Ave N,Seattle,98109,47.627015,-122.338848,Y,2024-07-04
 Lakeland Hills Park,1401 Evergreen Way SE,Auburn,98092,47.25979055873535,-122.21138174484963,N,
 Lakemont Community Park,5170 Village Park Drive SE,Bellevue,98006,47.556919787178,-122.11343002657,N,
 Lakemont Highlands Neighborhood Park,15800 SE 63rd St,Bellevue,98006,47.547082182528,-122.13052763138,N,
@@ -528,7 +582,6 @@ Lakeridge Playfield,10145 Rainier Ave S,Seattle,98178,47.510319,-122.246841,N,
 Lakeview Park,340 37th Ave E,Seattle,98112,47.62205,-122.284732,N,
 Lakeview Park,422 SW 160th Street,Burien,98166,47.4605875791752,-122.34300198423172,N,
 Lakeview Place,1042 Lakeview Blvd E,Seattle,98102,47.62939,-122.325705,N,
-Lakewood Moorage,4400 Lake Washington Blvd S,Seattle,98118,47.562981,-122.268295,Y,2026-05-27
 Lakewood Playfield,5013 S Angeline St,Seattle,98118,47.558831,-122.27006,N,
 Lakewood Triangle,3114 Cascadia Ave S,Seattle,98144,47.576058,-122.28372,N,
 Lakota Park,31334 SW Dash Point Rd,Federal Way,98023,47.3205,-122.35822,N,
@@ -552,7 +605,6 @@ Lewis Park,1120 15th Ave S,Seattle,98144,47.592857,-122.314435,N,
 Liberty Park,1101 Bronson Way N,Renton,98057,47.48262809,-122.20030026,N,
 Licorice Fern Natural Area on Thornton Creek,12th Ave NE & NE 130th St,Seattle,98115,47.723106,-122.315433,N,
 Licton Springs Park,9536 Ashworth Ave N,Seattle,98103,47.698542,-122.338735,N,
-Lincoln Park,8011 Fauntleroy Way SW,Seattle,98136,47.531176,-122.396012,Y,2026-04-25
 Linda Heights Park,S 248th St & 35th Ave S,Kent,98032,47.37959448253615,-122.28922506237623,N,
 Linde Hill Park,651 SW 141st Street,Burien,98166,47.476951079176224,-122.3461886842313,N,
 Linden Orchard Park,Linden Ave N & N 67th St,Seattle,98103,47.678016,-122.347727,N,
@@ -563,17 +615,14 @@ Llandover Woods Greenspace,14499 3rd Ave NW,Seattle,98177,47.733024,-122.364545,
 Log Boom Park,,Kenmore,98028,47.756945131844,-122.26458127146097,N,
 Longfellow Creek Greenspace,Delridge Way SW & SW Graham St,Seattle,98106,47.530167,-122.363435,N,
 Louisa Boren Park,1606 15th Ave E,Seattle,98112,47.635274,-122.311628,N,
-Lowman Beach Park,7017 Beach Dr SW,Seattle,98136,47.540367,-122.396728,Y,2026-05-01
 Loyal Heights Playfield,2101 NW 77th St,Seattle,98117,47.684106,-122.38324,N,
 Luke McRedmond Landing,15811 Redmond Way,Redmond,98052,47.673130172558544,-122.1313188760615,N,
 Luther Burbank Park,2040 84th Ave SE,Mercer Island,98040,47.590622062431,-122.226773516719,N,
 Lynn Street Mini Park,2291 Fairview Ave E,Seattle,98102,47.639849,-122.32975,N,
 Lyon Creek Waterfront Preserve,17337 Beach Dr. NE,Lake Forest Park,98155,47.75304314657877,-122.27467340759257,N,
 Macadam Winter Garden,5311 South 144th Street,Tukwila,98168,47.4739920877,-122.268150058578,N,
-MacLean Park,1922 Taylor Ave N,Seattle,98109,47.636191,-122.345276,N,
+MacLean Park,1922 Taylor Ave N,Seattle,98109,47.636191,-122.345276,Y,2026-10-25
 Madison Lane Park,,Newcastle,98056,47.54136164964222,-122.18723729299039,N,
-Madison Park,4201 E Madison St,Seattle,98112,47.635779,-122.276602,Y,2026-08-08
-Madison Park North Beach,2300 43rd Ave E,Seattle,98112,47.639084,-122.276118,Y,2026-08-08
 Madrona Briar Patch,1605 Madrona Dr,Seattle,98122,47.615231,-122.284261,N,
 Madrona Park,853 Lake Washington Blvd,Seattle,98122,47.609299,-122.282679,N,
 Madrona Park,1095 S 324th Street,Federal Way,98003,47.282649,-122.35411,N,
@@ -581,10 +630,7 @@ Madrona Playground,3211 E Spring St,Seattle,98122,47.611022,-122.289885,N,
 Madrona Ravine,3799 E Spring St,Seattle,98122,47.611456,-122.285412,N,
 Magnolia Greenbelt,W Howe St & Dartmouth Ave W,Seattle,98199,47.636006,-122.389073,N,
 Magnolia Manor Park,3500 28th Ave W,Seattle,98119,47.651085,-122.390877,N,
-Magnolia Park,1461 Magnolia Blvd W,Seattle,98199,47.632366,-122.398993,Y,2026-04-24
 Magnolia Playfield,2518 34th Ave W,Seattle,98199,47.643746,-122.399472,N,
-Magnolia Tidelands Park,,Seattle,98144,47.630922,-122.391648,Y,2026-04-17
-Magnuson Park,7400 Sand Point Way NE,Seattle,98115,47.680304,-122.255084,Y,2025-09-13
 Manhattan Park,18386 4th Ave S,Burien,98148,47.43794697917395,-122.33113468423252,N,
 Maple Leaf Community Garden,529 NE 103rd St,Seattle,98125,47.70326,-122.322269,N,
 Maple Leaf Resevoir Park,1020 NE 82nd St,Seattle,98115,47.689015,-122.315613,N,
@@ -609,7 +655,6 @@ Marymoor Park,6046 West Lake Sammamish Pkwy NE,Redmond,98052,47.65731621995348,-
 Marymoor Park Fields,6046 W Lake Sammamish Pkwy NE,Redmond,98052,47.6619303273,-122.12584587556,N,
 Massey Creek Plaza,,Des Moines,98198,47.396549294613976,-122.32251604784004,N,
 Mathison Park,533 S 146th Street,Burien,98168,47.471416979175935,-122.32888668423138,N,
-Matthews Beach Park,5100 NE 93rd St,Seattle,98115,47.694564,-122.271785,Y,2026-05-24
 May Creek Park,,Newcastle,98056,47.520279709573444,-122.17506475108243,N,
 May Valley Park,SE 112th St & 152nd Ave SE,Renton,98059,47.504222603833384,-122.13918369917018,N,
 Mayfair Park,2600 2nd Ave N,Seattle,98109,47.643241,-122.353356,N,
@@ -661,8 +706,6 @@ Mt. Baker Ridge Viewpoint,1403 31st Ave S,Seattle,98144,47.589983,-122.292616,N,
 Mt. Claire Park,2523 Mount Claire Dr S,Seattle,98144,47.580737,-122.28642,N,
 Municipal Campus,North of NE 85th Street; between Sammamish River and 160th Ave NE,Redmond,98052,47.6801137368843,-122.13011131289271,N,
 Muromoto Memorial Park,92nd Ave NE & NE 26th St,Clyde Hill,98004,47.633766,-122.217803,N,
-Myrtle Edwards Park,3130 Alaskan Way,Seattle,98121,47.618767,-122.36087,Y,2026-04-24
-Myrtle Reservoir,35th Ave SW & SW Myrtle St,Seattle,98126,47.539206,-122.376716,Y,2026-10-02
 N 195th St Trail,19500 Meridian Ave N,Shoreline,98133,47.770542528650175,-122.33256318417612,N,
 Nantes Park,5062 SW Admiral Way,Seattle,98116,47.579565,-122.397063,N,
 Narco Property,,Renton,98057,47.4760121,-122.19266303,N,
@@ -681,7 +724,6 @@ Nike Park,17207 NE 92nd Street,Redmond,98052,47.68313369900059,-122.108262322343
 Nora's Woods,720 29th Ave,Seattle,98122,47.608732,-122.294573,N,
 North Beach Park,8999 24th Ave NW,Seattle,98117,47.69471,-122.390258,N,
 North City Park,19201 10th Ave NE,Shoreline,98155,47.76873718724478,-122.31998498539393,N,
-North Creek Forest,20325 112th Ave NE,Bothell,98011,47.775077401957,-122.191443137084,Y,2026-08-08
 North Creek Sportsfields,19016 North Creek Pkwy,Bothell,98011,47.76863,-122.18484,N,
 North Green River Park,26400 Green River Rd,Kent,98030,47.363436850043435,-122.21677171120263,N,
 North Highlands Park,3000 NE 16th St,Renton,98056,47.5074578,-122.17958442,N,
@@ -692,10 +734,9 @@ North Park Shops,N 82nd St,Seattle,98103,47.688138,-122.338431,N,
 North Passage Point Park,600 NE Northlake Way,Seattle,98105,47.653963,-122.322428,N,
 North Rose Hill Woodlands Park,9930 124th Ave NE,Kirkland,98033,47.68797119498327,-122.17197137839257,N,
 North SeaTac Park,S 128th St & 20th Ave S,SeaTac,98168,47.484498384824576,-122.30993817331321,N,
-North Shorewood Park,SW 102nd St & 24th Ave SW,Seattle,98146,47.51260820569821,-122.36189399530505,Y,2026-09-04
 Northacres Park,12718 1st Ave NE,Seattle,98125,47.721775,-122.326124,N,
 Northcrest Park,827 NE 170th St,Shoreline,98155,47.750346370942815,-122.31997955125352,N,
-Northeast Queen Anne Greenbelt,Dexter Way N & Lynn St & Wheeler,Seattle,98109,47.635866,-122.345011,N,
+Northeast Queen Anne Greenbelt,Dexter Way N & Lynn St & Wheeler,Seattle,98109,47.635866,-122.345011,Y,2026-10-25
 Northeast Renton Park,Duvall Ave NE,Renton,98059,47.51562173658792,-122.15569314447671,N,
 Northgate Park,10510 5th Ave NE,Seattle,98125,47.705194,-122.322424,N,
 Northlake Park,699 NE Northlake Way,Seattle,98105,47.654365,-122.320826,N,
@@ -708,15 +749,10 @@ Novelty Hill Little League Fields,228th Ave NE and NE Novelty Hill Rd,Redmond,98
 NRH5,12012 NE 90th St,Kirkland,98033,47.682921530044965,-122.17964426901433,N,
 O O Denny Park,12032 Holmes Point Dr NE,Kirkland,98034,47.709273581359895,-122.2509467344921,N,
 O'Leary Park,Leary Way & Redmond Way,Redmond,98052,47.67421886116663,-122.12329438733319,N,
-Observatory Courts,1405 Warren Ave N,Seattle,98109,47.631342,-122.355134,Y,2026-10-18
-Occidental Square,117 S Washington St,Seattle,98104,47.600463,-122.333272,Y,2024-06-06
 Ohde Avenue Pea Patch,11425 Ohde Ave,Kirkland,98033,47.67726406287366,-122.18763583756748,N,
 Old Fishing Hole,24950 Frager Rd S,Kent,98032,47.377404897822046,-122.26893534582084,N,
-Olympic Sculpture Park,2901 Western Ave,Seattle,98121,47.616577,-122.35418,Y,2024-07-20
 Olympic View Park,,Federal Way,98023,47.307732,-122.372476,N,
 Olympic View Park,32 Hylebos Ave,Milton,98354,47.2600024,-122.3072427,N,
-Open Water Park,2351 W Marina Pl,Seattle,98199,47.629555,-122.386693,Y,2026-04-17
-Orchard Street Ravine,39th Ave SW & SW Orchard St,Seattle,98136,47.538315,-122.380151,Y,2026-10-02
 Othello Playground,4351 S Othello St,Seattle,98118,47.536214,-122.278105,N,
 Otter Park,215 Otter Dr SW,Pacific,98047,47.259346,-122.256096,N,
 Overlook I,,Des Moines,98198,47.40178451271731,-122.32824531414802,N,
@@ -728,7 +764,6 @@ Paramount Open Space,946 NE 147th St,Shoreline,98155,47.736743519374336,-122.317
 Paramount School Park,15300 8th Ave NE,Shoreline,98155,47.74029569653012,-122.31974834680267,N,
 Park at 95th,12700 SE 95th Way,Newcastle,98056,47.51778,-122.170814,N,
 Park at Bothell Landing,9919 NE 180th St,Bothell,98011,47.758374066056,-122.207690853909,N,
-Park at Town Center,18040 Aurora Ave N,Shoreline,98133,47.759508331707515,-122.34553915437917,Y,2026-09-05
 Park Home Circle,5622 Park Rd NE,Seattle,98105,47.67005,-122.305464,N,
 Park Orchard Park,11058 SE 230th SE,Kent,98031,47.396076826046915,-122.19451151300696,N,
 Parkmont Place,2401 West Viewmont Way W,Seattle,98199,47.640142,-122.410083,N,
@@ -748,24 +783,19 @@ Phantom Lake Loop,2064-2098 156th Ave SE,Bellevue,98007,47.592599723713,-122.131
 Philip Arnold Park,720 Jones Ave S,Renton,98057,47.47200442,-122.19554743,N,
 Phyllis A. Needy - Houghton Neighborhood Park,10811 NE 47th St,Kirkland,98033,47.65165508267763,-122.1957748465052,N,
 Piazza Park,233 Burnett Ave S,Renton,98057,47.4800632,-122.2085769,N,
-Piers 62 and 63,1951 Alaskan Way,Seattle,98101,47.608656,-122.345237,Y,2024-05-28
 Pigeon Point Park,4418 21st Ave SW,Seattle,98106,47.563271,-122.356966,N,
 Pike's Peak Greenbelt,3850 122nd Avenue NE,Bellevue,98005,47.645737055149,-122.17805917371,N,
 Pine Tree Park,27700 114th Ave SE,Kent,98030,47.35296231063946,-122.18859434026575,N,
 Pinehurst Playground,12029 14th Ave NE,Seattle,98125,47.716436,-122.314628,N,
 Pinehurst Pocket Park,11700 19th Ave NE,Seattle,98125,47.714186,-122.308222,N,
 Pioneer Park,Island Crest Way & 68th Street,Mercer Island,98040,47.542080374704,-122.221677139489,N,
-Pioneer Square,100 Yesler Way,Seattle,98104,47.602076,-122.333886,Y,2024-06-06
 Pipers Creek Natural Area,600 NW 117th St,Seattle,98133,47.714678,-122.364699,N,
 Plaza Park,25 W Main St,Auburn,98001,47.30724713288523,-122.2303044648188,N,
 Plum Tree Park,1717 26th Ave,Seattle,98122,47.617053,-122.299142,N,
-Plymouth Pillars Park,1050 Pike St,Seattle,98101,47.614124,-122.329092,Y,2026-10-03
 Powell Barnett Park,352 Martin Luther King Jr Way,Seattle,98112,47.605197,-122.295998,N,
 Pratt Park,1800 S Main St,Seattle,98144,47.601407,-122.307257,N,
-Prefontaine Place,425 3rd Ave,Seattle,98104,47.601844,-122.330883,Y,2026-08-02
 Prentis I. Frazier Park,401 24th Ave E,Seattle,98112,47.622895,-122.301614,N,
 Pritchard Island Beach,8400 55th Ave S,Seattle,98118,47.528948,-122.26283,N,
-Puget Boulevard Commons,5200 26th Ave SW,Seattle,98106,47.555356,-122.365575,Y,2026-09-24
 Puget Creek Greenspace,1901 SW Brandon St,Seattle,98106,47.55187,-122.358556,N,
 Puget Park,4767 Puget Way SW,Seattle,98106,47.558473,-122.356922,N,
 Puget Power Trail,64th Ave S & S 226th St,Kent,98032,47.40209065099127,-122.25806885149925,N,
@@ -777,8 +807,6 @@ Rainier Beach Community Center,8825 Rainier Ave S,Seattle,98118,47.524539,-122.2
 Rainier Beach Playfield,8802 Rainier Ave S,Seattle,98118,47.525041,-122.273136,N,
 Rainier Place,230 NW 53rd St,Seattle,98107,47.667567,-122.359434,N,
 Rainier Playfield,3700 S Alaska St,Seattle,98118,47.561817,-122.2862,N,
-Ravenna Park,5520 Ravenna Ave NE,Seattle,98105,47.671404,-122.305705,Y,2026-07-09
-Ravenna Park Triangle,Ravenna Ave NE & NE 54th St,Seattle,98105,47.668089,-122.30367,Y,2026-07-09
 Ravenna Ravine,6215 24th Ave NE,Seattle,98115,47.674823,-122.301707,N,
 Ravenna Woods,4633 Ravenna Ave NE,Seattle,98105,47.662559,-122.303161,N,
 Ravenna-Eckstein Park,6535 Ravenna Ave NE,Seattle,98115,47.676873,-122.304964,N,
@@ -826,8 +854,6 @@ Rotary Park,10th Ave NE & NE 185th St,Shoreline,98155,47.76325584886814,-122.318
 Rotary Park,88th Avenue SE & SE 44th Street,Mercer Island,98040,47.568353835833,-122.22070683463,N,
 Rotary Park,154th Ave NE/Redmond Way,Redmond,98052,47.672996960735546,-122.13280631852605,N,
 Rotary Park,2635 Alpine St SE,Auburn,98002,47.28584860820032,-122.19791166883799,N,
-Rotary Viewpoint,4622 35th Ave SW,Seattle,98126,47.560222,-122.375859,Y,2026-08-21
-Roxhill Park,2850 SW Roxbury St,Seattle,98126,47.519496,-122.368881,Y,2026-07-25
 Royal Oaks Park,20155 106th Ave NE,Bothell,98011,47.774706423117,-122.199082698548,N,
 Russell Woods Park,5311 S 237th Place,Kent,98032,47.39605509374157,-122.27263639955125,N,
 S 239th Beach Access/Zenith Overlook,,Des Moines,98198,47.387918213874705,-122.32660507567472,N,
@@ -854,7 +880,6 @@ Scotts Pond,"Triangle bordered by NE 80th Street, Redmond Way and 140th Ave NE",
 SE 40th Street Boat Launch,SE 40th Street,Bellevue,98006,47.575129065393,-122.1886374997,N,
 SE Redmond Open Space,,Redmond,98052,47.6634345285573,-122.08292566412361,N,
 SE Redmond Park,between 188th Ave NE and 192nd Ave NE; North of NE 67th St,Redmond,98052,47.66648628098545,-122.08562819378623,N,
-Seacrest Park,1660 Harbor Ave SW,Seattle,98126,47.589941,-122.381226,Y,2026-05-01
 Seahurst Ed Munro Park,1600 SW Seahurst Park Road,Burien,98166,47.47723537917628,-122.36325358423126,N,
 SeaTac Des Moines Creek Park,2151 S 200th St,SeaTac,98198,47.41958656734548,-122.3069097180828,N,
 Seattle Aquarium,1483 Alaskan Way,Seattle,98101,47.607411,-122.342836,N,
@@ -864,7 +889,6 @@ Service Club Ballfields,14608 SE 288th St,Kent,98042,47.34400934765914,-122.1479
 Settler's Landing,1001 Lake St S,Kirkland,98033,47.66766533509347,-122.20785547137591,N,
 Seven Hills Park,1514 E Howell St,Seattle,98122,47.617684,-122.312534,N,
 Seven Oaks Park,25900 118th Pl SE,Kent,98030,47.36884585530814,-122.18505558135394,N,
-Seward Park,5900 Lake Washington Blvd S,Seattle,98118,47.54923,-122.250639,Y,2026-05-16
 Shaughnessy Park,3302 21st St SE,Auburn,98092,47.28985975881849,-122.18516029077153,N,
 Shoreline Park,19030 1st Ave NE,Shoreline,98155,47.76753245610807,-122.3283208681074,N,
 Shoreview Park,700 NW Innis Arden Way,Shoreline,98133,47.7510861803976,-122.36663978387004,N,
@@ -878,7 +902,6 @@ Sixty Acres Park,NE 116th St and 154th Pl NE,Redmond,98052,47.7059085564227,-122
 Skyridge Park,13601 SE 20th Street,Bellevue,98005,47.592277587647,-122.15862037668,N,
 Skyway Park,S 120th Pl and 70th Pl S,Seattle,98178,47.49478353276941,-122.24268254427263,N,
 Slater Park,2835 60th Place SE,Mercer Island,98040,47.584981797029,-122.252366708142,N,
-Smith Cove,23rd Ave West,Seattle,98199,47.632602,-122.387679,Y,2026-04-17
 Smith Woods,176 Ave NE and NE 124th Street,Redmond,98052,47.710114478038946,-122.10390232506408,N,
 Snyder's Corner Park,6720 132nd Ave NE,Kirkland,98033,47.66598341505253,-122.16280847363726,N,
 Solstice Park,7400 Fauntleroy Way SW,Seattle,98136,47.536414,-122.390347,N,
@@ -912,7 +935,6 @@ Stan Sayres Memorial Park,3808 Lake Washington Blvd S,Seattle,98118,47.571222,-1
 Stanley Avenue Park,Stanley Ave & Pullman Ave,Algona,98001,47.2808699,-122.2479254,N,
 Stanley Tot Lot,Stanley Ave & Iron Ave,Algona,98001,47.2813432,-122.2475381,N,
 Steel Lake Park,2410 S 312th St,Federal Way,98003,47.322366690936,-122.302607028347,N,
-Steve Cox Memorial Park,1321 SW 102nd St,Seattle,98146,47.51101766761626,-122.35201422447359,Y,2026-09-04
 Steven J. Underwood Mem. Park,,Des Moines,98198,47.40579694210023,-122.30651805652622,N,
 Stevens Place,2919 Beacon Ave S,Seattle,98144,47.577122,-122.310563,N,
 Stevens Triangle,3809 E John St,Seattle,98112,47.619443,-122.283592,N,
@@ -978,7 +1000,7 @@ Town Square Plaza,211 2nd Ave N,Kent,98032,47.38255272851592,-122.23528661323091
 Trail Run Park,5014 Pike St NE,Auburn,98002,47.35305584410839,-122.20998712963248,N,
 Tralee Park,,Newcastle,98059,47.531356836277645,-122.13247511027451,N,
 Triangle Park,15245 Ambaum Blvd SW,Burien,98166,47.465920479175644,-122.34715378423172,N,
-Trolley Hill Park,1800 Taylor Ave N,Seattle,98109,47.635143,-122.347039,N,
+Trolley Hill Park,1800 Taylor Ave N,Seattle,98109,47.635143,-122.347039,Y,2026-10-25
 Trudys Triangle,Mount Rainier Dr S,Seattle,98144,47.576632,-122.286119,N,
 Tudor Square Park,26755 112th Ave SE,Kent,98030,47.36194921428966,-122.19289909807486,N,
 Tukwila Park,15460 65th Avenue South,Tukwila,98188,47.463598066741,-122.252255379942,N,
@@ -986,13 +1008,10 @@ Tukwila Pond,299 Strander Boulevard,Tukwila,98188,47.455831084332,-122.259851339
 Turnkey Park,23312 100th Ave SE,Kent,98031,47.3931536882724,-122.20703676874443,N,
 Twin Ponds Park,15401 1st Ave NE,Shoreline,98133,47.73922167407878,-122.33105956592728,N,
 Twin Springs,,Kenmore,98028,47.76824160045416,-122.23044755817858,N,
-Union Station Square,316 S Jackson St,Seattle,98104,47.599362,-122.330086,Y,2024-06-03
 University Circle,5801 University Circle NE,Seattle,98105,47.67203,-122.275181,N,
 University Lake Shore Place,4275 NE 125th St,Seattle,98125,47.718937,-122.28006,N,
-University Playground,4745 9th Ave NE,Seattle,98105,47.664447,-122.319312,Y,2026-09-13
 Uplands Extension,805 W Smith St,Kent,98032,47.38458563254047,-122.24193513327923,N,
 Uplands Playfield,836 W Smith,Kent,98032,47.38222604387148,-122.24176008442491,N,
-Ursula Judkins Viewpoint,2605 W Galer St,Seattle,98199,47.632049,-122.390232,Y,2026-04-24
 Valley Ridge Park,4644 S 188th St,SeaTac,98188,47.43638660936646,-122.27503557478019,N,
 Van Aalst Park,335 13th Ave,Kirkland,98033,47.68490224687049,-122.20248582283016,N,
 Van Asselt Playground,7050 Beacon Ave S,Seattle,98108,47.539446,-122.294068,N,
@@ -1011,46 +1030,32 @@ Viewpoint Park,Overlake Drive West & 84th Ave NE,Medina,98039,47.612698696763,-1
 Village Square Park,12111 SE 310th St,Auburn,98092,47.323833527084815,-122.18005758009699,N,
 Viretta Park,151 Lake Washington Blvd E,Seattle,98112,47.61875,-122.282003,N,
 Virgil Flaim Park,2700 NE 123rd St,Seattle,98125,47.717955,-122.299374,N,
-Volunteer Park,1247 15th Ave E,Seattle,98112,47.630378,-122.315568,Y,2024-08-04
 Volunteer Park,9621 Main St,Bothell,98011,47.75994,-122.21167,N,
-Volunteer Park Conservatory,1400 E Galer St,Seattle,98112,47.632063,-122.315708,Y,2024-08-04
 Waffle Park,290 1st Ave N,Algona,98001,47.279042,-122.252306,N,
 Walker Creek Wetland,South 176th Street and Des Moines Memorial Drive South,Burien,98148,47.4445,-122.3275,N,
 Walker Preserve,168th St & SW 2nd Ave,Normandy Park,98166,47.4503045,-122.3432005,N,
 Wallace Swamp Creek Park,,Kenmore,98028,47.77035373447405,-122.24560383620691,N,
 Wallingford Playfield,4219 Wallingford Ave N,Seattle,98103,47.658544,-122.337444,N,
-Wallingford Steps,1800 N Northlake Way,Seattle,98103,47.647345,-122.336152,N,
 Walnut Grove,24414 94th Ave S,Kent,98030,47.385528741713365,-122.21498208204446,N,
-Walt Hundley Playfield,6920 34th Ave SW,Seattle,98126,47.54017,-122.373415,Y,2026-10-02
 Ward Springs Park,4th Ave N & Ward St,Seattle,98109,47.627747,-122.349245,N,
-Washington Park Arboretum,2300 Arboretum Dr E,Seattle,98112,47.636477,-122.294835,Y,2024-07-07
 Washington Park Playfield,1017 Lake Washington Blvd E,Seattle,98112,47.627064,-122.293925,N,
-Washington Street Public Boat Landing,199 Alaskan Way S,Seattle,98104,47.601007,-122.336045,Y,2024-06-06
 Water Tower Park,,Des Moines,98198,47.41572520598485,-122.32794668681304,N,
-Waterfront Park,1401 Alaskan Way,Seattle,98101,47.606778,-122.342196,Y,2024-05-28
 Watershed Park,4500 110th Ave NE,Kirkland,98033,47.64971869454218,-122.19034810464835,N,
 Watershed Preserve,218th Avenue NE & Novelty Hill RD,Redmond,98053,47.707169554532115,-122.04736528629726,N,
-Waterway 19,2119 N Northlake Way,Seattle,98103,47.646349,-122.332567,N,
 Waverly Beach Park,633 Waverly Park Way,Kirkland,98033,47.68696652913511,-122.21721530588292,N,
-Weather Watch Park,4035 Beach Dr SW,Seattle,98116,47.568247,-122.409506,Y,2026-05-01
 Webster Park,3025 NW 68th St,Seattle,98117,47.677832,-122.397851,N,
 Wedgewood Park,3913 SW 337th St,Federal Way,98023,47.298922,-122.387738,N,
 Wedgwood Square,8126 31st Ave NE,Seattle,98115,47.688151,-122.294772,N,
 Welcome Park,,Redmond,98052,47.67676418285114,-122.1522303781931,N,
 Weowna Park,1420 168th Avenue SE,Bellevue,98008,47.59867,-122.11624,N,
 West Duwamish Greenbelt,W Marginal Way SW & Highland Park Way SW,Seattle,98106,47.563271,-122.356966,N,
-West Ewing Mini Park,244 W Ewing St,Seattle,98119,47.65205,-122.360602,Y,2026-10-12
 West Fenwick,3808 Reith Rd,Kent,98032,47.370416606589814,-122.28333051577772,N,
 West Hill Skate Park,25815 42nd Ave S,Kent,98032,47.36971154728043,-122.28090642927442,N,
 West Hylebos Wetlands,411 S 348th Street,Federal Way,98003,47.289816104088,-122.328457061761,N,
 West Milton Nature Preserve,604 5th Ave,Milton,98354,47.252144,-122.328167,N,
 West Milton Park,700 Kent St,Milton,98354,47.249728,-122.324989,N,
 West Montlake Park,2815 W Park Dr E,Seattle,98112,47.646219,-122.30982,N,
-West Queen Anne Playfield,150 W Blaine St,Seattle,98119,47.635514,-122.359504,Y,2026-07-26
-West Seattle Golf Course,4600 35th Ave SW,Seattle,98126,47.55986,-122.369657,Y,2026-08-21
-West Seattle Stadium,4432 35th Ave SW,Seattle,98126,47.562826,-122.374348,Y,2026-08-21
 Westcrest Park,9000 8th Ave SW,Seattle,98106,47.525783,-122.341719,N,
-Westlake Greenbelt,Westlake Ave & Halladay St,Seattle,98109,47.641586,-122.34338,Y,2026-06-02
 Westlake Park,401 Pine St,Seattle,98101,47.611099,-122.33724,N,
 Westlake Square,1900 Westlake Ave,Seattle,98109,47.613627,-122.337285,N,
 Westminster Park,709 N 150th St,Shoreline,98133,47.737477333292965,-122.3503384661962,N,
@@ -1060,7 +1065,6 @@ Westwood Highlands Neighborhood Park,5501 136th Place SE,Bellevue,98006,47.55316
 Westwood Park,,Des Moines,98148,47.4303025476014,-122.32787725612933,N,
 Wetherill Nature Preserve,,Yarrow Point,98004,47.6394891,-122.2229699,N,
 Whispering Willow Park,17038 44th Ave NE,Lake Forest Park,98155,47.75321132398889,-122.28147363990863,N,
-White Center Heights Park,SW 102nd St and 7th Ave SW,Seattle,98146,47.51111398690191,-122.34427933063283,Y,2026-09-05
 Whitney Bridge Park,SE Green Valley Rd and 218th Ave SE,Auburn,98092,47.28408245028997,-122.05629931110164,N,
 Wilburton Hill Park,12400 Main Street,Bellevue,98005,47.61014,-122.17363,N,
 Wildwood Park,260 101st Avenue SE,Bellevue,98004,47.6088,-122.20474,N,
@@ -1078,12 +1082,8 @@ Windsor Hills Park,432 Windsor Way NE,Renton,98056,47.48914064,-122.18683301,N,
 Windsor Vista Park,14251 111th Ave NE,Kirkland,98034,47.729952161544134,-122.19378112609792,N,
 Windtree Park,,Newcastle,98056,47.52022943082192,-122.17987615813527,N,
 Winters House,2102 Bellevue Way SE,Bellevue,98004,47.591592896058,-122.19321199123,N,
-Wolf Creek Ravine Natural Area,McGraw St between 2nd Ave N & Nobb Hill Ave N,Seattle,98109,47.639775,-122.352314,Y,2026-09-13
 Woodin Creek Park,13201 NE 171st Street,Woodinville,98072,47.75092,-122.16393,N,
 Woodinville Heights Park,18199 146th Ave NE,Woodinville,98072,47.758982089088,-122.145026596164,N,
-Woodland Park,1000 N 50th St,Seattle,98103,47.668906,-122.344218,Y,2026-08-15
-Woodland Park Rose Garden,750 N 50th St,Seattle,98103,47.666499,-122.35054,Y,2026-08-15
-Woodland Park Zoo,700 N 50th St,Seattle,98103,47.666183,-122.35043,Y,2024-07-21
 Woodmont Park,,Des Moines,98198,47.362581613914024,-122.3195050922856,N,
 Woodridge Water Tower Park,1843 125th Avenue SE,Bellevue,98005,47.593364768363,-122.17395780169,N,
 Wooton Park,,Des Moines,98198,47.34851794486507,-122.3224501692641,N,
