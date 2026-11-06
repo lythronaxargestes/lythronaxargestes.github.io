@@ -93,6 +93,13 @@ Highland Place,93 Highland Dr,Seattle,98109,47.629656,-122.355466,Y,2026-10-18
 Observatory Courts,1405 Warren Ave N,Seattle,98109,47.631342,-122.355134,Y,2026-10-18
 Wallingford Steps,1800 N Northlake Way,Seattle,98103,47.647345,-122.336152,Y,2026-10-20
 Waterway 19,2119 N Northlake Way,Seattle,98103,47.646349,-122.332567,Y,2026-10-20
+MacLean Park,1922 Taylor Ave N,Seattle,98109,47.636191,-122.345276,Y,2026-10-25
+Northeast Queen Anne Greenbelt,Dexter Way N & Lynn St & Wheeler,Seattle,98109,47.635866,-122.345011,Y,2026-10-25
+Trolley Hill Park,1800 Taylor Ave N,Seattle,98109,47.635143,-122.347039,Y,2026-10-25
+Morgan Junction,6413 California Ave SW,Seattle,98136,47.545507,-122.387528,Y,2026-11-03
+3001 E Madison,3001 E Madison St,Seattle,98112,47.625169,-122.293173,Y,2026-11-05
+Japanese Garden,1075 Lake Washington Blvd E,Seattle,98112,47.627312,-122.2952,Y,2026-11-05
+Washington Park Playfield,1017 Lake Washington Blvd E,Seattle,98112,47.627064,-122.293925,Y,2026-11-05
 12th and Howe Play Park,1200 W Howe St,Seattle,98119,47.636097,-122.372985,N,
 12th Ave S Viewpoint,2821 12TH Ave S,Seattle,98144,47.577953,-122.317765,N,
 12th Ave Square Park,564 12th Ave,Seattle,98122,47.607427,-122.316455,N,
@@ -100,7 +107,6 @@ Waterway 19,2119 N Northlake Way,Seattle,98103,47.646349,-122.332567,Y,2026-10-2
 14th Ave NW Boat Ramp,4400 14th Ave NW,Seattle,98107,47.660775,-122.373536,N,
 21st Street Playground,405 21st St SE,Auburn,98002,47.29020521997026,-122.22383265812871,N,
 2nd Avenue South Dock,203 Lake St S,Kirkland,98033,47.67352254582274,-122.20738532331515,N,
-3001 E Madison,3001 E Madison St,Seattle,98112,47.625169,-122.293173,N,
 32nd Ave W Boat Launch,32nd Ave W,Seattle,98199,47.632345,-122.398685,N,
 3rd Avenue Pocket Park,3rd Ave N,Algona,98001,47.2815,-122.2492,N,
 42nd Street Launch Area,NE 42nd St & 91st Ave NE,Yarrow Point,98004,47.647439,-122.218895,N,
@@ -513,7 +519,6 @@ Jack Crawford Skate Park,,Kenmore,98028,47.76107085416241,-122.24944165387461,N,
 Jackson Park Golf Course,1100 NE 135th St,Seattle,98125,47.729254,-122.319103,N,
 Jacob Ambaum Park,12621 Ambaum Blvd. SW,Burien,98146,47.489386779177195,-122.35253068423087,N,
 James Keough Park,2301 N 167th St,Shoreline,98133,47.75129029337077,-122.3308452957841,N,
-Japanese Garden,1075 Lake Washington Blvd E,Seattle,98112,47.627312,-122.2952,N,
 Jefferson Park,3801 Beacon Ave S,Seattle,98108,47.568067,-122.311441,N,
 Jefferson Park Golf Course,4101 Beacon Ave S,Seattle,98108,47.567202,-122.305242,N,
 Jimi Hendrix Park,2400 S Massachusetts St,Seattle,98144,47.588907,-122.300842,N,
@@ -621,7 +626,6 @@ Luther Burbank Park,2040 84th Ave SE,Mercer Island,98040,47.590622062431,-122.22
 Lynn Street Mini Park,2291 Fairview Ave E,Seattle,98102,47.639849,-122.32975,N,
 Lyon Creek Waterfront Preserve,17337 Beach Dr. NE,Lake Forest Park,98155,47.75304314657877,-122.27467340759257,N,
 Macadam Winter Garden,5311 South 144th Street,Tukwila,98168,47.4739920877,-122.268150058578,N,
-MacLean Park,1922 Taylor Ave N,Seattle,98109,47.636191,-122.345276,Y,2026-10-25
 Madison Lane Park,,Newcastle,98056,47.54136164964222,-122.18723729299039,N,
 Madrona Briar Patch,1605 Madrona Dr,Seattle,98122,47.615231,-122.284261,N,
 Madrona Park,853 Lake Washington Blvd,Seattle,98122,47.609299,-122.282679,N,
@@ -696,7 +700,6 @@ Mock Creek Ravine,9612 35th Ave NE,Seattle,98115,47.699037,-122.28962,N,
 Montlake Boulevard,2811 Montlake Blvd E,Seattle,98112,47.645971,-122.30474,N,
 Montlake Playfield,1618 E Calhoun St,Seattle,98112,47.642407,-122.310081,N,
 Moorlands Park,,Kenmore,98028,47.73954687658514,-122.23041588215911,N,
-Morgan Junction,6413 California Ave SW,Seattle,98136,47.545507,-122.387528,N,
 Morningside Park,4030 95th Ave NE,Yarrow Point,98004,47.6470909,-122.2130823,N,
 Morrill Meadows Park,10600 SE 248th St,Kent,98030,47.38022604535906,-122.20013615025168,N,
 Moshier Memorial Park,430 S 156th Street,Burien,98148,47.464872879175516,-122.32904868390128,N,
@@ -736,7 +739,6 @@ North Rose Hill Woodlands Park,9930 124th Ave NE,Kirkland,98033,47.6879711949832
 North SeaTac Park,S 128th St & 20th Ave S,SeaTac,98168,47.484498384824576,-122.30993817331321,N,
 Northacres Park,12718 1st Ave NE,Seattle,98125,47.721775,-122.326124,N,
 Northcrest Park,827 NE 170th St,Shoreline,98155,47.750346370942815,-122.31997955125352,N,
-Northeast Queen Anne Greenbelt,Dexter Way N & Lynn St & Wheeler,Seattle,98109,47.635866,-122.345011,Y,2026-10-25
 Northeast Renton Park,Duvall Ave NE,Renton,98059,47.51562173658792,-122.15569314447671,N,
 Northgate Park,10510 5th Ave NE,Seattle,98125,47.705194,-122.322424,N,
 Northlake Park,699 NE Northlake Way,Seattle,98105,47.654365,-122.320826,N,
@@ -1000,7 +1002,6 @@ Town Square Plaza,211 2nd Ave N,Kent,98032,47.38255272851592,-122.23528661323091
 Trail Run Park,5014 Pike St NE,Auburn,98002,47.35305584410839,-122.20998712963248,N,
 Tralee Park,,Newcastle,98059,47.531356836277645,-122.13247511027451,N,
 Triangle Park,15245 Ambaum Blvd SW,Burien,98166,47.465920479175644,-122.34715378423172,N,
-Trolley Hill Park,1800 Taylor Ave N,Seattle,98109,47.635143,-122.347039,Y,2026-10-25
 Trudys Triangle,Mount Rainier Dr S,Seattle,98144,47.576632,-122.286119,N,
 Tudor Square Park,26755 112th Ave SE,Kent,98030,47.36194921428966,-122.19289909807486,N,
 Tukwila Park,15460 65th Avenue South,Tukwila,98188,47.463598066741,-122.252255379942,N,
@@ -1038,7 +1039,6 @@ Wallace Swamp Creek Park,,Kenmore,98028,47.77035373447405,-122.24560383620691,N,
 Wallingford Playfield,4219 Wallingford Ave N,Seattle,98103,47.658544,-122.337444,N,
 Walnut Grove,24414 94th Ave S,Kent,98030,47.385528741713365,-122.21498208204446,N,
 Ward Springs Park,4th Ave N & Ward St,Seattle,98109,47.627747,-122.349245,N,
-Washington Park Playfield,1017 Lake Washington Blvd E,Seattle,98112,47.627064,-122.293925,N,
 Water Tower Park,,Des Moines,98198,47.41572520598485,-122.32794668681304,N,
 Watershed Park,4500 110th Ave NE,Kirkland,98033,47.64971869454218,-122.19034810464835,N,
 Watershed Preserve,218th Avenue NE & Novelty Hill RD,Redmond,98053,47.707169554532115,-122.04736528629726,N,
