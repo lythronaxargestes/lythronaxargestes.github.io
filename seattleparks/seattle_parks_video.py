@@ -1,9 +1,11 @@
 """Render a short video of seattle_parks_map.html for one park.
 
-The video opens centered on the given park's marker with its pop-up open, holds
-for a moment, fades the pop-up out, then zooms out smoothly (continuous
-fractional zoom, not Leaflet's discrete zoom levels) until every marker is on
-screen, and holds on that final view. The map's overlays (title/progress box,
+The video opens centered on the given park's marker with its pop-up open, in a
+slightly magnified view of the map that settles to full size, then zooms out
+smoothly (continuous fractional zoom, not Leaflet's discrete zoom levels) while
+the pop-up fades, until every marker is on screen, and holds on that final
+view. The settle-to-full-size and the zoom-out are one continuous motion: their
+speeds match where they meet. The map's overlays (title/progress box,
 visited legend, zoom and location buttons) are hidden; the OpenStreetMap
 attribution is kept, since the tile license requires it.
 
@@ -26,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import difflib
+import math
 import os
 import shutil
 import subprocess
@@ -84,15 +87,27 @@ SETUP_JS = """
         startPx: map.project(target.getLatLng(), 0),
         endPx: map.project(endCenter, 0),
     };
-    return {markerCount: markers.length, endZoom};
+    return {markerCount: markers.length, startZoom: effectiveStartZoom, endZoom};
 }
 """
 
-# progress is the eased 0..1 zoom progress; popupOpacity < 0 leaves the pop-up alone.
+# progress is the 0..1 map zoom progress (-1 leaves the view alone); introScale > 1
+# magnifies the already-rendered map pane about the screen center (where the
+# park sits) instead; popupOpacity < 0 leaves the pop-up alone.
 FRAME_JS = """
-async ({progress, popupOpacity}) => {
+async ({progress, popupOpacity, introScale}) => {
     const v = window.__video;
     const popup = v.target.getPopup();
+    const pane = v.map.getPane("mapPane");
+    if (introScale > 1) {
+        // The individual `scale` property composes after Leaflet's own inline
+        // translate `transform`, so the fixed point is the container center.
+        const size = v.map.getSize();
+        pane.style.transformOrigin = `${size.x / 2}px ${size.y / 2}px`;
+        pane.style.scale = introScale;
+    } else {
+        pane.style.scale = "";
+    }
     if (popupOpacity >= 0) {
         if (popupOpacity === 0) {
             v.map.closePopup();
@@ -126,8 +141,45 @@ async ({progress, popupOpacity}) => {
 """.replace("__TIMEOUT__", str(TILE_TIMEOUT_MS))
 
 
-def ease_in_out(t: float) -> float:
-    return t * t * (3 - 2 * t)
+def hermite(p0: float, p1: float, m0: float, m1: float, duration: float, tau: float) -> float:
+    """Cubic Hermite interpolation from p0 to p1 over `duration` seconds, with
+    start/end velocities m0/m1 (units per second); tau is the 0..1 time fraction."""
+    tau2 = tau * tau
+    tau3 = tau2 * tau
+    h00 = 2 * tau3 - 3 * tau2 + 1
+    h10 = tau3 - 2 * tau2 + tau
+    h01 = -2 * tau3 + 3 * tau2
+    h11 = tau3 - tau2
+    return h00 * p0 + h10 * duration * m0 + h01 * p1 + h11 * duration * m1
+
+
+def plan_zoom(
+    intro_levels: float, zoom_levels: float, intro_frames: int, zoom_frames: int, fps: int
+) -> tuple[list[float], list[float]]:
+    """Camera position, in zoom levels zoomed out from the opening map view, for
+    each frame: negative is magnified (the intro, via image scaling), positive is
+    a real map zoom-out. Returns (intro positions, zoom positions); the zoom list
+    starts at 0 (full size) and ends at zoom_levels. Both phases are one curve:
+    each starts or ends at rest, and they meet at a shared junction velocity
+    (1.5x the slower phase's average speed, which keeps both cubics monotonic),
+    so there is no stop or kink where image scaling hands over to map zoom."""
+    intro_s = intro_frames / fps
+    zoom_s = zoom_frames / fps
+    slope_in = intro_levels / intro_s if intro_s else 0.0
+    slope_out = zoom_levels / zoom_s if zoom_s else 0.0
+    junction = 1.5 * min(slope_in, slope_out) if intro_frames else 0.0
+
+    intro = []
+    for i in range(intro_frames):
+        tau = i / intro_frames
+        position = hermite(-intro_levels, 0.0, 0.0, junction, intro_s, tau)
+        intro.append(position)
+    zoom = []
+    for i in range(zoom_frames + 1):
+        tau = i / zoom_frames
+        position = hermite(0.0, zoom_levels, junction, 0.0, zoom_s, tau)
+        zoom.append(position)
+    return intro, zoom
 
 
 def find_park(name: str, city: str, address: str | None) -> dict:
@@ -197,7 +249,7 @@ def render(park: dict, args: argparse.Namespace, output: Path) -> None:
     # The fade runs during the first part of the zoom, so it can't outlast it.
     fade_frames = min(round(args.fade * fps), zoom_frames)
     end_hold_frames = round(args.end_hold * fps)
-    total = hold_frames + zoom_frames + end_hold_frames
+    total = hold_frames + zoom_frames + max(end_hold_frames, 1)
     map_url = Path(MAP_PATH).resolve().as_uri()
 
     encoder = start_encoder(output, fps)
@@ -205,14 +257,14 @@ def render(park: dict, args: argparse.Namespace, output: Path) -> None:
     assert encoder_stdin is not None  # start_encoder opens it with stdin=PIPE
     stale_frames = 0
 
-    def capture(page, progress: float, popup_opacity: float, repeat: int = 1) -> None:
+    def capture(page, progress: float, popup_opacity: float, intro_scale: float = 0.0) -> None:
         nonlocal stale_frames
-        settled = page.evaluate(FRAME_JS, {"progress": progress, "popupOpacity": popup_opacity})
+        params = {"progress": progress, "popupOpacity": popup_opacity, "introScale": intro_scale}
+        settled = page.evaluate(FRAME_JS, params)
         if not settled:
             stale_frames += 1
         png = page.screenshot(type="png")
-        for _ in range(repeat):
-            encoder_stdin.write(png)
+        encoder_stdin.write(png)
 
     with sync_playwright() as pw:
         browser = launch_browser(pw)
@@ -230,16 +282,23 @@ def render(park: dict, args: argparse.Namespace, output: Path) -> None:
             sys.exit(info["error"])
         print(f"{info['markerCount']} markers; final zoom {info['endZoom']:.2f}; {total} frames at {fps} fps")
 
-        # Opening hold: one capture, repeated.
-        capture(page, 0, -1, repeat=hold_frames)
+        zoom_levels = info["startZoom"] - info["endZoom"]
+        intro_levels = math.log2(args.intro_scale)
+        intro_positions, zoom_positions = plan_zoom(intro_levels, zoom_levels, hold_frames, zoom_frames, fps)
+
+        # Opening: the map starts magnified and settles to full size, pop-up open.
+        for position in tqdm(intro_positions):
+            intro_scale = 2 ** -position
+            capture(page, -1, -1, intro_scale)
         # Zoom out, fading the pop-up over the first fade_frames of it.
-        for i in tqdm(range(1, zoom_frames + 1)):
-            progress = ease_in_out(i / zoom_frames)
+        for i, position in enumerate(tqdm(zoom_positions)):
+            progress = position / zoom_levels if zoom_levels else 1.0
             opacity = max(0.0, 1 - i / fade_frames) if fade_frames else 0.0
             capture(page, progress, opacity)
-        # Closing hold: the final frame again.
+        # Closing hold: the final frame again. The last zoom frame above already
+        # shows the final view, so it counts as the hold's first frame.
         png = page.screenshot(type="png")
-        for _ in tqdm(range(end_hold_frames)):
+        for _ in tqdm(range(max(end_hold_frames - 1, 0))):
             encoder_stdin.write(png)
         browser.close()
 
@@ -257,11 +316,12 @@ def main() -> None:
     parser.add_argument("name", help="Park name, e.g. 'Gas Works Park' (case-insensitive)")
     parser.add_argument("city", help="City, e.g. Seattle (case-insensitive)")
     parser.add_argument("--address", help="Substring of the address, to pick between distinct same-named parks")
-    parser.add_argument("-o", "--output", type=Path, help="Output .mp4 (default: parks.mp4)")
+    parser.add_argument("-o", "--output", type=Path, help="Output .mp4 (default: seattle_parks.mp4)")
     parser.add_argument("--width", type=int, default=1920)
     parser.add_argument("--height", type=int, default=1080)
     parser.add_argument("--fps", type=int, default=30)
-    parser.add_argument("--hold", type=float, default=2.0, help="Seconds the pop-up stays open at the start")
+    parser.add_argument("--hold", type=float, default=2.0, help="Seconds the opening magnified view takes to settle to full size")
+    parser.add_argument("--intro-scale", type=float, default=1.25, help="Magnification of the opening view (1 = none: a plain hold)")
     parser.add_argument("--fade", type=float, default=1.0, help="Seconds for the pop-up to fade out, starting as the zoom-out begins (capped at --zoom-seconds)")
     parser.add_argument("--zoom-seconds", type=float, default=7.0, help="Seconds spent zooming out")
     parser.add_argument("--end-hold", type=float, default=1.0, help="Seconds to hold the final view")
@@ -282,7 +342,7 @@ def main() -> None:
     print(f"Park: {park['name']} - {park['address']}, {park['city']} ({park['latitude']}, {park['longitude']})")
 
     if output is None:
-        output = launch_dir / "parks.mp4"
+        output = launch_dir / "seattle_parks.mp4"
     render(park, args, output)
 
 
