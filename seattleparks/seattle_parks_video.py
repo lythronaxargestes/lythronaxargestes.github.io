@@ -5,7 +5,8 @@ slightly magnified view of the map that settles to full size, then zooms out
 smoothly (continuous fractional zoom, not Leaflet's discrete zoom levels) while
 the pop-up fades, until every marker is on screen, and holds on that final
 view. The settle-to-full-size and the zoom-out are one continuous motion: their
-speeds match where they meet. The map's overlays (title/progress box,
+speeds and their zoom pivot (a fixed screen point, not the park) match where
+they meet. The map's overlays (title/progress box,
 visited legend, zoom and location buttons) are hidden; the OpenStreetMap
 attribution is kept, since the tile license requires it.
 
@@ -82,10 +83,30 @@ SETUP_JS = """
     map.setView(target.getLatLng(), effectiveStartZoom, {animate: false});
     target.openPopup();
 
+    const startPx = map.project(target.getLatLng(), 0);
+    const endPx = map.project(endCenter, 0);
+
+    // The zoom-out holds one screen point fixed (see FRAME_JS). Find it so the
+    // intro magnification can pivot about the same point; otherwise the two
+    // phases zoom about different points and the motion kinks where they meet.
+    // The world point F is startPx + (endPx - startPx) * inv0 / (inv0 - inv1),
+    // and its screen position at the start is the screen center plus
+    // (F - startPx) scaled to start-zoom pixels.
+    const inv0 = 1 / Math.pow(2, effectiveStartZoom);
+    const inv1 = 1 / Math.pow(2, endZoom);
+    const size = map.getSize();
+    let pivot = {x: size.x / 2, y: size.y / 2};
+    if (inv0 !== inv1) {
+        const f = inv0 / (inv0 - inv1);
+        const scale = Math.pow(2, effectiveStartZoom);
+        pivot = {
+            x: size.x / 2 + (endPx.x - startPx.x) * f * scale,
+            y: size.y / 2 + (endPx.y - startPx.y) * f * scale,
+        };
+    }
+
     window.__video = {
-        map, target, startZoom: effectiveStartZoom, endZoom,
-        startPx: map.project(target.getLatLng(), 0),
-        endPx: map.project(endCenter, 0),
+        map, target, startZoom: effectiveStartZoom, endZoom, startPx, endPx, pivot,
     };
     return {markerCount: markers.length, startZoom: effectiveStartZoom, endZoom};
 }
@@ -95,18 +116,30 @@ SETUP_JS = """
 # magnifies the already-rendered map pane about the screen center (where the
 # park sits) instead; popupOpacity < 0 leaves the pop-up alone.
 FRAME_JS = """
-async ({progress, popupOpacity, introScale}) => {
+async ({progress, popupOpacity, introScale, introMax}) => {
     const v = window.__video;
     const popup = v.target.getPopup();
     const pane = v.map.getPane("mapPane");
     if (introScale > 1) {
         // The individual `scale` property composes after Leaflet's own inline
-        // translate `transform`, so the fixed point is the container center.
-        const size = v.map.getSize();
-        pane.style.transformOrigin = `${size.x / 2}px ${size.y / 2}px`;
+        // translate `transform`, so the origin is in container coordinates. It
+        // is the same screen point the zoom-out below holds fixed.
+        pane.style.transformOrigin = `${v.pivot.x}px ${v.pivot.y}px`;
         pane.style.scale = introScale;
+        // Scaling about the pivot alone would push the park off center at full
+        // magnification. A translate (applied outside the scale) puts it back:
+        // it is the full correction at the largest scale and eases to zero,
+        // with zero slope, at scale 1, so the handoff to the zoom-out stays
+        // a pure zoom about the pivot.
+        const size = v.map.getSize();
+        const u = (introScale - 1) / (introMax - 1);
+        const w = (1 - introMax) * u * u;
+        const tx = (size.x / 2 - v.pivot.x) * w;
+        const ty = (size.y / 2 - v.pivot.y) * w;
+        pane.style.translate = `${tx}px ${ty}px`;
     } else {
         pane.style.scale = "";
+        pane.style.translate = "";
     }
     if (popupOpacity >= 0) {
         if (popupOpacity === 0) {
@@ -259,7 +292,10 @@ def render(park: dict, args: argparse.Namespace, output: Path) -> None:
 
     def capture(page, progress: float, popup_opacity: float, intro_scale: float = 0.0) -> None:
         nonlocal stale_frames
-        params = {"progress": progress, "popupOpacity": popup_opacity, "introScale": intro_scale}
+        params = {
+            "progress": progress, "popupOpacity": popup_opacity,
+            "introScale": intro_scale, "introMax": args.intro_scale,
+        }  # fmt: skip
         settled = page.evaluate(FRAME_JS, params)
         if not settled:
             stale_frames += 1
