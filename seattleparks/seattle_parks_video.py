@@ -247,7 +247,20 @@ def find_park(name: str, city: str, address: str | None) -> dict:
     return distinct[0]
 
 
-def start_encoder(output: Path, fps: int) -> subprocess.Popen:
+def describe_arguments(park: dict, args: argparse.Namespace) -> str:
+    """The arguments that produced the video, defaults included, as one line."""
+    parts = [f"name={park['name']!r}", f"city={park['city']!r}"]
+    if args.address:
+        parts.append(f"address={args.address!r}")
+    parts += [
+        f"width={args.width}", f"height={args.height}", f"fps={args.fps}",
+        f"hold={args.hold}", f"intro_scale={args.intro_scale}", f"fade={args.fade}",
+        f"zoom_seconds={args.zoom_seconds}", f"end_hold={args.end_hold}",
+    ]  # fmt: skip
+    return "seattle_parks_video.py " + " ".join(parts)
+
+
+def start_encoder(output: Path, fps: int, comment: str) -> subprocess.Popen:
     ffmpeg = shutil.which("ffmpeg")
     if ffmpeg is None:
         import imageio_ffmpeg
@@ -257,6 +270,7 @@ def start_encoder(output: Path, fps: int) -> subprocess.Popen:
         ffmpeg, "-y", "-loglevel", "error",
         "-f", "image2pipe", "-framerate", str(fps), "-i", "-",
         "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", "-movflags", "+faststart",
+        "-metadata", f"comment={comment}",
         str(output),
     ]  # fmt: skip
     return subprocess.Popen(cmd, stdin=subprocess.PIPE)
@@ -287,7 +301,7 @@ def render(park: dict, args: argparse.Namespace, output: Path) -> None:
     total = hold_frames + zoom_frames + max(end_hold_frames, 1)
     map_url = Path(MAP_PATH).resolve().as_uri()
 
-    encoder = start_encoder(output, fps)
+    encoder = start_encoder(output, fps, describe_arguments(park, args))
     encoder_stdin = encoder.stdin
     assert encoder_stdin is not None  # start_encoder opens it with stdin=PIPE
     stale_frames = 0
