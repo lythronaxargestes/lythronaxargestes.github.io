@@ -1,6 +1,6 @@
 """Render a short video of seattle_parks_map.html for one park.
 
-The video opens centered on the given park's marker with its pop-up open, in a
+The video opens centred on the given park's marker with its pop-up open, in a
 slightly magnified view of the map that settles to full size, then zooms out
 smoothly (continuous fractional zoom, not Leaflet's discrete zoom levels) while
 the pop-up fades, until every marker is on screen, and holds on that final
@@ -8,7 +8,7 @@ view. The settle-to-full-size and the zoom-out are one continuous motion: their
 speeds and their zoom pivot (a fixed screen point, not the park) match where
 they meet. The map's overlays (title/progress box,
 visited legend, zoom and location buttons) are hidden; the OpenStreetMap
-attribution is kept, since the tile license requires it.
+attribution is kept, since the tile licence requires it.
 
 The park is looked up as a (name, city) pair in the same park list the map is
 rendered from (seattle_parks.csv + the missing-data backup CSV). Same-name,
@@ -38,11 +38,12 @@ from pathlib import Path
 from tqdm import tqdm
 
 from seattle_parks_constants import DUPLICATE_DISTANCE_M, MAP_PATH
-from seattle_parks_helpers import apply_backup_data, distance_m, load_parks_from_csv, normalize_name
+from seattle_parks_helpers import apply_backup_data, distance_m, load_parks_from_csv, normalise_name
 
 START_ZOOM = 19  # capped at the map's max zoom (19) in SETUP_JS
 FIT_PADDING_PX = 60  # margin around the outermost markers in the final view
 TILE_TIMEOUT_MS = 20000
+TILE_TIMEOUT_TEXT = str(TILE_TIMEOUT_MS)  # substituted into FRAME_JS
 
 # Hide the overlays (every position:fixed box, plus Leaflet's top-left zoom and
 # locate controls) and kill CSS transitions so each captured frame is exact.
@@ -74,7 +75,7 @@ SETUP_JS = """
 
     const bounds = L.latLngBounds(markers.map((m) => m.getLatLng()));
     const endZoom = map.getBoundsZoom(bounds, false, L.point(padding, padding));
-    const endCenter = bounds.getCenter();
+    const endCentre = bounds.getCenter();
 
     // Leaflet silently clamps setView to the map's max zoom, so a higher start
     // would leave the camera frozen at the max until the zoom drops below it.
@@ -84,16 +85,16 @@ SETUP_JS = """
     target.openPopup();
 
     const parkPx = map.project(target.getLatLng(), 0);
-    const endPx = map.project(endCenter, 0);
+    const endPx = map.project(endCentre, 0);
 
     // The whole video is one camera zoom about a single fixed screen point
     // (the pivot): the magnified opening, the settle, and the zoom-out. The
     // opening frame is the full-size view at startZoom magnified by introScale,
-    // with the park at screen center. Working backwards from that, with
-    //   f = pivot offset from screen center, in screen px,
-    //   C0 = world center of the full-size view (zoom-0 px),
-    // the park sits at center + f * (1 - 1/introScale) in the full-size view,
-    // so C0 = park - f * (1 - 1/introScale) * inv0; and the zoom-out center
+    // with the park at screen centre. Working backwards from that, with
+    //   f = pivot offset from screen centre, in screen px,
+    //   C0 = world centre of the full-size view (zoom-0 px),
+    // the park sits at centre + f * (1 - 1/introScale) in the full-size view,
+    // so C0 = park - f * (1 - 1/introScale) * inv0; and the zoom-out centre
     // path C(z) = C0 + (end - C0) * (inv0 - inv) / (inv0 - inv1) holds the
     // pivot fixed when f = (end - C0) / (inv0 - inv1). Solving both:
     //   f = (end - park) / (inv0 / introScale - inv1).
@@ -147,8 +148,8 @@ async ({progress, popupOpacity, introScale}) => {
         }
     }
     if (progress >= 0) {
-        // Zooming about a fixed screen point: the center moves along the line
-        // from the park to the final center in proportion to 1/scale, so the
+        // Zooming about a fixed screen point: the centre moves along the line
+        // from the park to the final centre in proportion to 1/scale, so the
         // park drifts across the screen exactly as a real camera zoom would.
         const zoom = v.startZoom + (v.endZoom - v.startZoom) * progress;
         const inv0 = 1 / Math.pow(2, v.startZoom);
@@ -157,8 +158,8 @@ async ({progress, popupOpacity, introScale}) => {
         const k = inv0 === inv1 ? 1 : (inv0 - inv) / (inv0 - inv1);
         const x = v.startPx.x + (v.endPx.x - v.startPx.x) * k;
         const y = v.startPx.y + (v.endPx.y - v.startPx.y) * k;
-        const center = v.map.unproject(L.point(x, y), 0);
-        v.map.setView(center, zoom, {animate: false});
+        const centre = v.map.unproject(L.point(x, y), 0);
+        v.map.setView(centre, zoom, {animate: false});
     }
     const raf = () => new Promise((resolve) => requestAnimationFrame(resolve));
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -169,7 +170,7 @@ async ({progress, popupOpacity, introScale}) => {
     await raf();
     return !pending();
 }
-""".replace("__TIMEOUT__", str(TILE_TIMEOUT_MS))
+""".replace("__TIMEOUT__", TILE_TIMEOUT_TEXT)
 
 
 def hermite(p0: float, p1: float, m0: float, m1: float, duration: float, tau: float) -> float:
@@ -219,15 +220,17 @@ def plan_zoom(
 
 def find_park(name: str, city: str, address: str | None) -> dict:
     """Look up the park among the parks the map renders, collapsing duplicates."""
-    parks = apply_backup_data(load_parks_from_csv())
-    want_name = normalize_name(name).casefold()
+    csv_parks = load_parks_from_csv()
+    parks = apply_backup_data(csv_parks)
+    want_name = normalise_name(name).casefold()
     want_city = city.casefold()
     matches = [p for p in parks if p["name"].casefold() == want_name and p["city"].casefold() == want_city]
 
     if not matches:
         city_parks = [p["name"] for p in parks if p["city"].casefold() == want_city]
         pool = city_parks or [p["name"] for p in parks]
-        close = difflib.get_close_matches(normalize_name(name), pool, n=5, cutoff=0.5)
+        normalised_name = normalise_name(name)
+        close = difflib.get_close_matches(normalised_name, pool, n=5, cutoff=0.5)
         hint = f" Did you mean: {', '.join(close)}?" if close else ""
         sys.exit(f"No park named {name!r} in {city!r}.{hint}")
 
@@ -239,11 +242,13 @@ def find_park(name: str, city: str, address: str | None) -> dict:
 
     distinct: list[dict] = []
     for p in matches:
-        if not any(distance_m(p, q) <= DUPLICATE_DISTANCE_M for q in distinct):
+        near_duplicates = (distance_m(p, q) <= DUPLICATE_DISTANCE_M for q in distinct)
+        if not any(near_duplicates):
             distinct.append(p)
-    if len(distinct) > 1:
+    distinct_count = len(distinct)
+    if distinct_count > 1:
         lines = "\n".join(f"  {p['address'] or '(no address)'}  ({p['latitude']}, {p['longitude']})" for p in distinct)
-        sys.exit(f"{len(distinct)} different parks are named {name!r} in {city!r}; pick one with --address:\n{lines}")
+        sys.exit(f"{distinct_count} different parks are named {name!r} in {city!r}; pick one with --address:\n{lines}")
     return distinct[0]
 
 
@@ -273,20 +278,22 @@ def start_encoder(output: Path, fps: int, comment: str) -> subprocess.Popen:
         "-metadata", f"comment={comment}",
         str(output),
     ]  # fmt: skip
-    return subprocess.Popen(cmd, stdin=subprocess.PIPE)
+    encoder = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+    return encoder
 
 
 def launch_browser(playwright):
     try:
-        return playwright.chromium.launch(channel="chrome", headless=True)
+        browser = playwright.chromium.launch(channel="chrome", headless=True)
     except Exception as chrome_error:
         try:
-            return playwright.chromium.launch(headless=True)
+            browser = playwright.chromium.launch(headless=True)
         except Exception:
             sys.exit(
                 f"Could not launch Chrome ({chrome_error}).\n"
                 "Install Google Chrome, or run: uv run --with playwright playwright install chromium"
             )
+    return browser
 
 
 def render(park: dict, args: argparse.Namespace, output: Path) -> None:
@@ -296,12 +303,14 @@ def render(park: dict, args: argparse.Namespace, output: Path) -> None:
     hold_frames = round(args.hold * fps)
     zoom_frames = round(args.zoom_seconds * fps)
     # The fade runs during the first part of the zoom, so it can't outlast it.
-    fade_frames = min(round(args.fade * fps), zoom_frames)
+    requested_fade_frames = round(args.fade * fps)
+    fade_frames = min(requested_fade_frames, zoom_frames)
     end_hold_frames = round(args.end_hold * fps)
     total = hold_frames + zoom_frames + max(end_hold_frames, 1)
     map_url = Path(MAP_PATH).resolve().as_uri()
 
-    encoder = start_encoder(output, fps, describe_arguments(park, args))
+    comment = describe_arguments(park, args)
+    encoder = start_encoder(output, fps, comment)
     encoder_stdin = encoder.stdin
     assert encoder_stdin is not None  # start_encoder opens it with stdin=PIPE
     stale_frames = 0
@@ -320,11 +329,12 @@ def render(park: dict, args: argparse.Namespace, output: Path) -> None:
         page = browser.new_page(viewport={"width": args.width, "height": args.height})
         page.goto(map_url, wait_until="load")
         page.wait_for_function("Object.keys(window).some(k => k.startsWith('map_') && window[k] instanceof L.Map)")
-        info = page.evaluate(
-            SETUP_JS,
-            {"lat": park["latitude"], "lon": park["longitude"], "startZoom": START_ZOOM,
-             "introScale": max(args.intro_scale, 1.0), "padding": FIT_PADDING_PX, "css": PAGE_CSS},
-        )  # fmt: skip
+        setup_intro_scale = max(args.intro_scale, 1.0)
+        setup_params = {
+            "lat": park["latitude"], "lon": park["longitude"], "startZoom": START_ZOOM,
+            "introScale": setup_intro_scale, "padding": FIT_PADDING_PX, "css": PAGE_CSS,
+        }  # fmt: skip
+        info = page.evaluate(SETUP_JS, setup_params)
         if "error" in info:
             browser.close()
             encoder.kill()
@@ -340,14 +350,17 @@ def render(park: dict, args: argparse.Namespace, output: Path) -> None:
             intro_scale = 2 ** -position
             capture(page, -1, -1, intro_scale)
         # Zoom out, fading the pop-up over the first fade_frames of it.
-        for i, position in enumerate(tqdm(zoom_positions)):
+        zoom_progress_bar = tqdm(zoom_positions)
+        for i, position in enumerate(zoom_progress_bar):
             progress = position / zoom_levels if zoom_levels else 1.0
             opacity = max(0.0, 1 - i / fade_frames) if fade_frames else 0.0
             capture(page, progress, opacity)
         # Closing hold: the final frame again. The last zoom frame above already
         # shows the final view, so it counts as the hold's first frame.
         png = page.screenshot(type="png")
-        for _ in tqdm(range(max(end_hold_frames - 1, 0))):
+        extra_hold_frames = max(end_hold_frames - 1, 0)
+        extra_hold_range = range(extra_hold_frames)
+        for _ in tqdm(extra_hold_range):
             encoder_stdin.write(png)
         browser.close()
 
@@ -383,7 +396,8 @@ def main() -> None:
     # relative to this script's directory, but the video belongs where the user ran it.
     launch_dir = Path.cwd()
     output = args.output.resolve() if args.output else None
-    os.chdir(Path(__file__).resolve().parent)
+    script_dir = Path(__file__).resolve().parent
+    os.chdir(script_dir)
     if not Path(MAP_PATH).exists():
         sys.exit(f"{MAP_PATH} not found; run seattle_parks_update.sh first")
 

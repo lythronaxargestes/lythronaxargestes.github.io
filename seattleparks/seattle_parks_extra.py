@@ -19,7 +19,7 @@ from seattle_parks_helpers import ListedPark
 EXTRA_PARKS: tuple[ListedPark, ...] = (
     # Bothell
     # Doug Allen Sportsfields - Approximate - address confirmed by city site/Yelp/Zillow, but
-    # not directly in Census TIGER ranges; lat/lon interpolated between neighboring geocoded
+    # not directly in Census TIGER ranges; lat/lon interpolated between neighbouring geocoded
     # addresses on the same street. Source:
     # https://www.bothellwa.gov/1665/Doug-Allen-Sportsfields
     ListedPark(
@@ -89,7 +89,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # Glendale Forest - Medium-high confidence - King County Parks natural area in
     # unincorporated North Highline (Boulevard Park), labelled Burien, the mailing city King
-    # County gives; there is no city source. The coordinates are the center of OSM's park
+    # County gives; there is no city source. The coordinates are the centre of OSM's park
     # polygon. Source:
     # https://kingcounty.gov/en/dept/dnrp/nature-recreation/parks-recreation/king-county-parks/natural-working-lands/glendale-forest
     ListedPark(
@@ -102,7 +102,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # Hamm Creek Natural Area - Medium confidence - King County Parks natural area in
     # unincorporated North Highline (Boulevard Park), labelled Burien, the mailing city King
-    # County gives; there is no city source. The coordinates are the center of OSM's nature
+    # County gives; there is no city source. The coordinates are the centre of OSM's nature
     # reserve (it appears on King County's strategic acquisitions map; ownership not confirmed).
     # Source:
     # https://kingcounty.gov/en/dept/dnrp/nature-recreation/parks-recreation/king-county-parks/natural-working-lands/glendale-forest
@@ -151,7 +151,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     # Franklin Place - Medium confidence - missing from the city's park dataset and has no page of
     # its own on seattle.gov; OSM has it as a small named park (way 49734703) in Queen Anne just
     # below Kerry Park, operated by Seattle Parks and Recreation (its website tag points to the
-    # Bayview-Kinnear (Lower Kerry Park) page). The coordinates are the center of that polygon;
+    # Bayview-Kinnear (Lower Kerry Park) page). The coordinates are the centre of that polygon;
     # the address is as given by the user. Source: https://www.openstreetmap.org/way/49734703
     ListedPark(
         name="Franklin Place",
@@ -205,7 +205,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
         city="Seattle",
         zip_code="98125",
     ),
-    # Langston Hughes Cultural Arts - Medium-high confidence - an arts center, not a park.
+    # Langston Hughes Cultural Arts - Medium-high confidence - an arts centre, not a park.
     ListedPark(
         name="Langston Hughes Cultural Arts",
         address="104 17th Ave S",
@@ -244,7 +244,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
         city="Seattle",
         zip_code="98103",
     ),
-    # Rainier Beach Community Center - Medium-high confidence - a community center beside
+    # Rainier Beach Community Center - Medium-high confidence - a community centre beside
     # Rainier Beach Playfield, not a park.
     ListedPark(
         name="Rainier Beach Community Center",
@@ -264,7 +264,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
         zip_code="98108",
     ),
     # Southwest Community Center and Pool - Medium-high confidence - the city's layer names it
-    # 'S.W. Community Center and Pool'; a community center, not a park.
+    # 'S.W. Community Center and Pool'; a community centre, not a park.
     ListedPark(
         name="Southwest Community Center and Pool",
         address="2801 SW Thistle St",
@@ -294,7 +294,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
         city="Tukwila",
     ),
     # Bicentennial Park - High confidence - cross-confirmed by an independent search estimate
-    # landing within meters of the official map-link pin. Source:
+    # landing within metres of the official map-link pin. Source:
     # https://www.tukwilawa.gov/departments/parks-and-recreation/parks-and-trails/bicentennial-park/
     ListedPark(
         name="Bicentennial Park",
@@ -327,7 +327,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # Woodinville
     # Stonehill Meadows Park - Approximate - no park-specific coordinates found; lat/lon is a
-    # proxy from Census TIGER geocoding of a neighboring residence described as directly across
+    # proxy from Census TIGER geocoding of a neighbouring residence described as directly across
     # from the park. Source:
     # https://www.woodinville.gov/facilities/facility/details/Stonehill-Meadows-Park-17
     ListedPark(
@@ -339,7 +339,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
         zip_code="98072",
     ),
     # Tanglin Ridge Park - Approximate - no park-specific coordinates found; lat/lon is a proxy
-    # from Census TIGER geocoding of three neighboring homes on the same block. Source:
+    # from Census TIGER geocoding of three neighbouring homes on the same block. Source:
     # https://www.woodinville.gov/facilities/facility/details/Tanglin-Ridge-Park-16
     ListedPark(
         name="Tanglin Ridge Park",
@@ -377,7 +377,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     # Normandy Park
     # Walker Preserve - Medium-high confidence - missing from the city's GIS park layer; the
     # address is from the city's 2024 parks plan (27.73-acre open space along Walker Creek) and
-    # the coordinates are the center of OSM's 'Walker Creek Preserve' polygon (way 703792747).
+    # the coordinates are the centre of OSM's 'Walker Creek Preserve' polygon (way 703792747).
     # Source: https://www.openstreetmap.org/way/703792747;
     # https://normandyparkwa.gov/wp-content/uploads/NPPROST-Plan-Report-2024-FINAL.pdf
     ListedPark(
@@ -390,7 +390,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # Brittany Park - Medium-high confidence - missing from the city's GIS park layer; the
     # address is from the city's 2024 parks plan (the first park established in Normandy Park,
-    # 0.35 acres) and the coordinates are the center of OSM's 'Brittany Circle Park' polygon
+    # 0.35 acres) and the coordinates are the centre of OSM's 'Brittany Circle Park' polygon
     # (way 1536714190). Source: https://www.openstreetmap.org/way/1536714190;
     # https://normandyparkwa.gov/wp-content/uploads/NPPROST-Plan-Report-2024-FINAL.pdf
     ListedPark(
@@ -403,7 +403,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # Newcastle
     # Hillside Park - Medium-high confidence - on the City of Newcastle's City Parks page
-    # (neighborhood park, 5.5 acres) but missing from the city's GIS park layer; the coordinates
+    # (neighbourhood park, 5.5 acres) but missing from the city's GIS park layer; the coordinates
     # are the Census geocoder's match for the listed address. Source:
     # https://newcastlewa.gov/parks_and_trails/parks-trails/city-parks/
     ListedPark(
@@ -440,7 +440,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # Clyde Hill
     # Clyde Hill Park - Medium-high confidence - Clyde Hill's parks page lists its parks in
-    # prose only, with no map data. The coordinates are the center of OSM's 'Clyde Hill City
+    # prose only, with no map data. The coordinates are the centre of OSM's 'Clyde Hill City
     # Park' polygon (way 422278031). Source:
     # https://clydehill.org/government/departments/public_works/parks.php
     ListedPark(
@@ -490,7 +490,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     # Algona
     # John Matchett Memorial Park - Medium-high confidence - One of Algona's seven parks in its
     # comprehensive plan inventory; addresses and cross streets are from King County's South
-    # King County Parks Guide. The coordinates are the center of OSM's park polygon (way
+    # King County Parks Guide. The coordinates are the centre of OSM's park polygon (way
     # 547150676). Source: https://www.algonawa.gov/services/public_works/parks.php;
     # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
     ListedPark(
@@ -503,7 +503,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # David E. Hill Wetland Preserve - Medium-high confidence - One of Algona's seven parks in
     # its comprehensive plan inventory; addresses and cross streets are from King County's South
-    # King County Parks Guide. The coordinates are the center of OSM's nature reserve polygon
+    # King County Parks Guide. The coordinates are the centre of OSM's nature reserve polygon
     # (way 1317045624). Source: https://www.algonawa.gov/services/public_works/parks.php;
     # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
     ListedPark(
@@ -516,7 +516,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # 7th Avenue Park - Medium-high confidence - One of Algona's seven parks in its
     # comprehensive plan inventory; addresses and cross streets are from King County's South
-    # King County Parks Guide. The coordinates are the center of an unnamed OSM park (way
+    # King County Parks Guide. The coordinates are the centre of an unnamed OSM park (way
     # 1376377688) at the described spot. Source:
     # https://www.algonawa.gov/services/public_works/parks.php;
     # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
@@ -530,7 +530,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # Stanley Avenue Park - Medium-high confidence - One of Algona's seven parks in its
     # comprehensive plan inventory; addresses and cross streets are from King County's South
-    # King County Parks Guide. The coordinates are the center of an unnamed OSM park (way
+    # King County Parks Guide. The coordinates are the centre of an unnamed OSM park (way
     # 1152803210) at the described spot. Source:
     # https://www.algonawa.gov/services/public_works/parks.php;
     # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
@@ -544,7 +544,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # Stanley Tot Lot - Medium-high confidence - One of Algona's seven parks in its
     # comprehensive plan inventory; addresses and cross streets are from King County's South
-    # King County Parks Guide. The coordinates are the center of an unnamed OSM park (way
+    # King County Parks Guide. The coordinates are the centre of an unnamed OSM park (way
     # 1116101448) at the described spot. Source:
     # https://www.algonawa.gov/services/public_works/parks.php;
     # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
@@ -585,7 +585,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # Hunts Point
     # D. K. McDonald Park - Medium-high confidence - The town's own page names it but gives no
-    # map data. The coordinates are the center of OSM's polygon (way 422278032). Source:
+    # map data. The coordinates are the centre of OSM's polygon (way 422278032). Source:
     # https://huntspoint-wa.gov/wetherillnaturepreserve
     ListedPark(
         name="D. K. McDonald Park",
@@ -597,7 +597,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # Yarrow Point
     # Morningside Park - Medium-high confidence - Listed on the town's public spaces page, which
-    # has no map data. The coordinates are the center of OSM's polygon (way 922988438); at Town
+    # has no map data. The coordinates are the centre of OSM's polygon (way 922988438); at Town
     # Hall's address, so a Kirkland layer entry for it is treated as a duplicate. Source:
     # https://yarrowpointwa.gov/public-spaces/
     ListedPark(
@@ -609,7 +609,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
         zip_code="98004",
     ),
     # Road End Beach - Medium-high confidence - Listed on the town's public spaces page, which
-    # has no map data. The coordinates are the center of OSM's polygon (way 449744782). Source:
+    # has no map data. The coordinates are the centre of OSM's polygon (way 449744782). Source:
     # https://yarrowpointwa.gov/public-spaces/
     ListedPark(
         name="Road End Beach",
@@ -631,7 +631,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
         zip_code="98004",
     ),
     # Sally's Alley - Medium-high confidence - Listed on the town's public spaces page, which
-    # has no map data. The coordinates are the center of OSM's park (way 925741916). Source:
+    # has no map data. The coordinates are the centre of OSM's park (way 925741916). Source:
     # https://yarrowpointwa.gov/public-spaces/
     ListedPark(
         name="Sally's Alley",
@@ -642,7 +642,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
         zip_code="98004",
     ),
     # Wetherill Nature Preserve - Medium-high confidence - Listed on the town's public spaces
-    # page, which has no map data. The coordinates are the center of OSM's relation 6278123;
+    # page, which has no map data. The coordinates are the centre of OSM's relation 6278123;
     # shared with Hunts Point. Source: https://yarrowpointwa.gov/public-spaces/
     ListedPark(
         name="Wetherill Nature Preserve",
@@ -655,7 +655,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     # Pacific
     # Pacific City Park - Medium-high confidence - One of the City of Pacific's parks, listed
     # with its address in King County's South King County Parks Guide; Pacific has no parks map
-    # data. The coordinates are the center of OSM's park polygon (way 25681090). Source:
+    # data. The coordinates are the centre of OSM's park polygon (way 25681090). Source:
     # https://www.pacificwa.gov/services/parks___recreation;
     # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
     ListedPark(
@@ -667,7 +667,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # Clint Steiger Memorial Park - Medium-high confidence - One of the City of Pacific's parks,
     # listed with its address in King County's South King County Parks Guide; Pacific has no
-    # parks map data. The coordinates are the center of OSM's park polygon (way 488860914); the
+    # parks map data. The coordinates are the centre of OSM's park polygon (way 488860914); the
     # guide calls it 'Clint Steiger Memorial (Volunteer) Park'. Source:
     # https://www.pacificwa.gov/services/parks___recreation;
     # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
@@ -680,7 +680,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # Elise Park - Medium-high confidence - One of the City of Pacific's parks, listed with its
     # address in King County's South King County Parks Guide; Pacific has no parks map data. The
-    # coordinates are the center of OSM's park polygon (way 505076794). Source:
+    # coordinates are the centre of OSM's park polygon (way 505076794). Source:
     # https://www.pacificwa.gov/services/parks___recreation;
     # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
     ListedPark(
@@ -692,7 +692,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # Aspen Park - Medium-high confidence - One of the City of Pacific's parks, listed with its
     # address in King County's South King County Parks Guide; Pacific has no parks map data. The
-    # coordinates are the center of OSM's park polygon (way 1149789640). Source:
+    # coordinates are the centre of OSM's park polygon (way 1149789640). Source:
     # https://www.pacificwa.gov/services/parks___recreation;
     # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
     ListedPark(
@@ -704,7 +704,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # Milwaukee Park - Medium-high confidence - One of the City of Pacific's parks, listed with
     # its address in King County's South King County Parks Guide; Pacific has no parks map data.
-    # The coordinates are the center of OSM's park polygon (way 480155292). Source:
+    # The coordinates are the centre of OSM's park polygon (way 480155292). Source:
     # https://www.pacificwa.gov/services/parks___recreation;
     # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
     ListedPark(
@@ -716,7 +716,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # Beaver Park - Medium-high confidence - One of the City of Pacific's parks, listed with its
     # address in King County's South King County Parks Guide; Pacific has no parks map data. The
-    # coordinates are the center of OSM's park polygon (way 480155324). Source:
+    # coordinates are the centre of OSM's park polygon (way 480155324). Source:
     # https://www.pacificwa.gov/services/parks___recreation;
     # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
     ListedPark(
@@ -728,7 +728,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # Blueberry Park - Medium-high confidence - One of the City of Pacific's parks, listed with
     # its address in King County's South King County Parks Guide; Pacific has no parks map data.
-    # The coordinates are the center of OSM's park polygon (way 1376352643). Source:
+    # The coordinates are the centre of OSM's park polygon (way 1376352643). Source:
     # https://www.pacificwa.gov/services/parks___recreation;
     # https://cdn.kingcounty.gov/-/media/king-county/depts/council/vonreichbauer/documents/south-king-county-parks-guide_2025.pdf
     ListedPark(
@@ -790,7 +790,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     # Milton
     # Milton Community Park - Medium-high confidence - On the City of Milton's Parks & Trails
     # page, whose park pages give the address or cross streets; Milton has no parks map data.
-    # The coordinates are the center of OSM's park polygon (way 467548589); the city also calls
+    # The coordinates are the centre of OSM's park polygon (way 467548589); the city also calls
     # it Triangle Park. Source: https://www.miltonwa.gov/177/Parks-Trails
     ListedPark(
         name="Milton Community Park",
@@ -801,7 +801,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # Hill Tower Park - Medium-high confidence - On the City of Milton's Parks & Trails page,
     # whose park pages give the address or cross streets; Milton has no parks map data. The
-    # coordinates are the center of OSM's park polygon (way 540132151). Source:
+    # coordinates are the centre of OSM's park polygon (way 540132151). Source:
     # https://www.miltonwa.gov/177/Parks-Trails
     ListedPark(
         name="Hill Tower Park",
@@ -846,7 +846,7 @@ EXTRA_PARKS: tuple[ListedPark, ...] = (
     ),
     # Olympic View Park - Medium-high confidence - On the City of Milton's Parks & Trails page,
     # whose park pages give the address or cross streets; Milton has no parks map data. The
-    # coordinates are the center of OSM's park polygon (way 703797654). Source:
+    # coordinates are the centre of OSM's park polygon (way 703797654). Source:
     # https://www.miltonwa.gov/177/Parks-Trails
     ListedPark(
         name="Olympic View Park",

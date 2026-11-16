@@ -1,6 +1,6 @@
 # seattleparks
 
-A Folium map of every park across Seattle and ~20 neighboring King County cities,
+A Folium map of every park across Seattle and ~20 neighbouring King County cities,
 tracking which ones have been visited. Static output (`seattle_parks_map.html`) is
 served directly by this GitHub Pages site — there's no build step beyond running
 the script below.
@@ -83,7 +83,7 @@ When verifying a coordinate:
   JS — fetching the page gets no usable content, not even embedded
   coordinates. If a Google Maps URL surfaces via search with a
   `!3d<lat>!4d<lon>` segment, that's the real pin and is usable; the
-  `@lat,lon` segment in the same URL is just the map viewport center, not the
+  `@lat,lon` segment in the same URL is just the map viewport centre, not the
   place location. Prefer OSM Nominatim (name lookup, not bare address),
   Wikipedia infoboxes, or Apple Maps links when Google Maps can't be scraped.
 - Don't treat a second source as independent confirmation if it's just

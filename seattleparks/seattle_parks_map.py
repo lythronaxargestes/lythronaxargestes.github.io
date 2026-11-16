@@ -68,7 +68,7 @@ Extract park names/addresses from these sources:
     address is geocoded via the free US Census geocoder.
   - Renton: Its public ArcGIS Server, found directly. The "Parks" layer has
     direct Latitude/Longitude fields (no centroid/geocoding needed), but it's
-    a regional facilities dataset covering several neighboring jurisdictions
+    a regional facilities dataset covering several neighbouring jurisdictions
     too (Seattle, King County, Tukwila, Newcastle, Kent, SeaTac all appear in
     the OWNER field alongside Renton), so it's filtered to OWNER='Renton'.
     The LOCATION field is inconsistently formatted ("<name> - <address>" most
@@ -85,7 +85,7 @@ Extract park names/addresses from these sources:
     same all-caps SITEADDR style as Kirkland's layer, so it reuses that same
     recasing helper.
   - Kent: Its public ArcGIS Server, found via its Open Data Hub's dataset
-    metadata (the Hub catalog itself doesn't list a parks dataset, but one
+    metadata (the Hub catalogue itself doesn't list a parks dataset, but one
     dataset's ArcGIS GeoService distribution URL revealed the underlying
     org's REST services directory, which does have a dedicated parks point
     layer). Direct point geometry and a clean parkname/address field pair;
@@ -123,9 +123,9 @@ Extract park names/addresses from these sources:
     is used since it's always populated and never abbreviated. Name and
     address are both in the same all-caps style as Kirkland/SeaTac/Kent, so
     this reuses that same recasing helper.
-  - Lake Forest Park: Its ArcGIS Online organization, found via its Hub open-
+  - Lake Forest Park: Its ArcGIS Online organisation, found via its Hub open-
     data site's dataset metadata (the same discovery path as Kent/SeaTac);
-    the org's full service catalog (browsed directly, since the Hub page
+    the org's full service catalogue (browsed directly, since the Hub page
     itself doesn't list it) has a "Parks_Map_WFL1" service with a small,
     clean "Park_Boundary" polygon layer (only 7 named city parks — this is a
     small city — with clean SITENAME/Address fields, no jurisdiction or
@@ -179,7 +179,7 @@ Extract park names/addresses from these sources:
   - Woodinville: Its "Facilities" booking page (a CivicPlus widget) only
     renders 5 of the city's facilities by default (the rest are paginated
     behind a JS-driven AJAX search with no working plain-GET or query-string
-    override found), and 2 of those 5 aren't parks at all (a community center
+    override found), and 2 of those 5 aren't parks at all (a community centre
     and a plaza) — so rather than fight that pagination, this hits each
     facility's own detail page directly by ID (/Facilities/Facility/Details/
     {id}, which resolves fine without the name slug in the URL). The city
@@ -219,10 +219,10 @@ Anything with "dog" in the name or "off-leash" (dog parks, dog corrals, off-leas
 complexes) are excluded from every source (by a name-keyword check applied
 after fetching, not per-source) — this project tracks parks in the
 traditional sense, not off-leash areas, burial grounds, standalone fitness
-facilities, or multi-use athletic complexes. Any "center" (community center,
-rec center, senior center, etc.) is excluded the same way, since those are
+facilities, or multi-use athletic complexes. Any "center" (community centre,
+rec centre, senior centre, etc.) is excluded the same way, since those are
 recreation facilities rather than parkland, unless "Park" also appears in the
-name (e.g. a park that happens to house a community center building). None of
+name (e.g. a park that happens to house a community centre building). None of
 these rules apply to the city of Seattle (e.g. its Grand Army of the Republic
 Cemetery and Amy Yee Tennis Center are kept regardless).
 
@@ -279,8 +279,8 @@ from seattle_parks_constants import (
     MAP_PATH,
     MAP_TITLE,
     MARKER_RADIUS,
-    UNVISITED_COLOR,
-    VISITED_COLOR,
+    UNVISITED_COLOUR,
+    VISITED_COLOUR,
 )
 from seattle_parks_fetch import FETCH_FUNCTIONS
 from seattle_parks_helpers import (
@@ -291,7 +291,7 @@ from seattle_parks_helpers import (
     is_excluded_name,
     is_visited,
     load_existing_parks,
-    normalize_name,
+    normalise_name,
     parks_visited_since,
     read_last_updated_date,
     clean_addresses,
@@ -314,7 +314,7 @@ def sync_parks() -> list[dict]:
             print(f"Skipping {fetch.__name__}: {e}", file=sys.stderr)
             continue
         for p in found:
-            p["name"] = normalize_name(p["name"])
+            p["name"] = normalise_name(p["name"])
         existing_keys |= {park_key(p["name"], p["address"], p["city"]) for p in found}
         new_parks += found
     new_parks = [p for p in new_parks if not is_excluded_name(p["name"], p["city"])]
@@ -324,10 +324,14 @@ def sync_parks() -> list[dict]:
             kept.append(p)
     new_parks = kept
     if existing:
-        print(f"Found {len(new_parks)} new park(s) to add to the existing {len(existing)}")
+        new_count = len(new_parks)
+        existing_count = len(existing)
+        print(f"Found {new_count} new park(s) to add to the existing {existing_count}")
     parks = existing + new_parks
-    print(f"Trimmed {clean_addresses(parks)} address(es)")
-    print(f"Filled in {fill_missing_zip_codes(parks)} missing zip code(s)")
+    trimmed = clean_addresses(parks)
+    print(f"Trimmed {trimmed} address(es)")
+    filled = fill_missing_zip_codes(parks)
+    print(f"Filled in {filled} missing zip code(s)")
     return parks
 
 
@@ -337,7 +341,8 @@ def write_csv(parks: list[dict]) -> None:
         writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)
         writer.writeheader()
         writer.writerows(parks)
-    print(f"Wrote {len(parks)} parks to {CSV_PATH}")
+    park_count = len(parks)
+    print(f"Wrote {park_count} parks to {CSV_PATH}")
 
 
 def plot_map(parks: list[dict], last_updated: str, since_date: str | None) -> None:
@@ -350,10 +355,11 @@ def plot_map(parks: list[dict], last_updated: str, since_date: str | None) -> No
     LocateControl(position="topleft", strings={"title": "Find my location"}).add_to(m)
     try:
         with open(FAVICON_PATH, "rb") as f:
-            favicon_b64 = base64.b64encode(f.read()).decode()
-        m.get_root().header.add_child(
-            folium.Element(f'<link rel="icon" type="image/png" href="data:image/png;base64,{favicon_b64}">'),
-        )
+            favicon_bytes = f.read()
+        favicon_b64 = base64.b64encode(favicon_bytes).decode()
+        favicon_html = f'<link rel="icon" type="image/png" href="data:image/png;base64,{favicon_b64}">'
+        favicon_element = folium.Element(favicon_html)
+        m.get_root().header.add_child(favicon_element)
     except FileNotFoundError:
         pass
     latest_parks = parks_visited_since(parks, since_date)
@@ -361,11 +367,13 @@ def plot_map(parks: list[dict], last_updated: str, since_date: str | None) -> No
     latest_markers = {}
     search_index = []
     for p in parks:
-        color = VISITED_COLOR if is_visited(p.get("visited", "N")) else UNVISITED_COLOR
+        visited_flag = p.get("visited", "N")
+        colour = VISITED_COLOUR if is_visited(visited_flag) else UNVISITED_COLOUR
         city_zip = " ".join(part for part in (p["city"], p["zip_code"]) if part)
         address_line = ", ".join(part for part in (p["address"], city_zip) if part)
         popup_html = f"<b>{p['name']}</b><br>{address_line}"
-        visited_date = format_visited_date(p.get("visited_date", ""))
+        raw_visited_date = p.get("visited_date", "")
+        visited_date = format_visited_date(raw_visited_date)
         if visited_date:
             popup_html += f"<br><b>Visited:</b> {visited_date}"
         popup = folium.Popup(popup_html, max_width=250)
@@ -375,21 +383,23 @@ def plot_map(parks: list[dict], last_updated: str, since_date: str | None) -> No
             color="#ffffff",
             weight=1,
             fill=True,
-            fill_color=color,
+            fill_color=colour,
             fill_opacity=0.9,
             popup=popup,
         )
         marker.add_to(m)
-        search_index.append(
-            {"name": p["name"], "lat": p["latitude"], "lon": p["longitude"], "marker": marker.get_name()},
-        )
-        if id(p) in latest_ids:
-            latest_markers[id(p)] = marker
+        marker_name = marker.get_name()
+        search_entry = {"name": p["name"], "lat": p["latitude"], "lon": p["longitude"], "marker": marker_name}
+        search_index.append(search_entry)
+        park_id = id(p)
+        if park_id in latest_ids:
+            latest_markers[park_id] = marker
 
     if latest_parks and latest_markers:
         links = []
         for lp in latest_parks:
-            marker = latest_markers.get(id(lp))
+            latest_id = id(lp)
+            marker = latest_markers.get(latest_id)
             if not marker:
                 continue
             goto_marker_js = (
@@ -405,9 +415,15 @@ def plot_map(parks: list[dict], last_updated: str, since_date: str | None) -> No
         )
     else:
         latest_html = ""
-    visited_count = sum(1 for p in parks if is_visited(p.get("visited", "N")))
     seattle_parks = [p for p in parks if p["city"] == "Seattle"]
-    seattle_visited_count = sum(1 for p in seattle_parks if is_visited(p.get("visited", "N")))
+    visited_count = 0
+    seattle_visited_count = 0
+    for p in parks:
+        visited_flag = p.get("visited", "N")
+        if is_visited(visited_flag):
+            visited_count += 1
+            if p["city"] == "Seattle":
+                seattle_visited_count += 1
     seattle_pct = (seattle_visited_count / len(seattle_parks) * 100) if seattle_parks else 0.0
     metro_pct = (visited_count / len(parks) * 100) if parks else 0.0
     progress_html = (
@@ -446,7 +462,8 @@ def plot_map(parks: list[dict], last_updated: str, since_date: str | None) -> No
       {search_html}
     </div>
     """
-    m.get_root().html.add_child(folium.Element(title_html))
+    title_element = folium.Element(title_html)
+    m.get_root().html.add_child(title_element)
 
     search_index_json = json.dumps(search_index)
     search_script = f"""
@@ -498,7 +515,8 @@ def plot_map(parks: list[dict], last_updated: str, since_date: str | None) -> No
     }})();
     </script>
     """
-    m.get_root().html.add_child(folium.Element(search_script))
+    search_element = folium.Element(search_script)
+    m.get_root().html.add_child(search_element)
 
     legend_html = f"""
     <div style="position: fixed; bottom: 30px; left: 30px; z-index: 1000;
@@ -507,18 +525,20 @@ def plot_map(parks: list[dict], last_updated: str, since_date: str | None) -> No
                 font-size: 13px; color: #0b0b0b;">
       <div style="margin-bottom:4px;">
         <span style="display:inline-block;width:10px;height:10px;border-radius:50%;
-                      background:{VISITED_COLOR};margin-right:6px;"></span>Visited
+                      background:{VISITED_COLOUR};margin-right:6px;"></span>Visited
       </div>
       <div>
         <span style="display:inline-block;width:10px;height:10px;border-radius:50%;
-                      background:{UNVISITED_COLOR};margin-right:6px;"></span>Not visited
+                      background:{UNVISITED_COLOUR};margin-right:6px;"></span>Not visited
       </div>
     </div>
     """
-    m.get_root().html.add_child(folium.Element(legend_html))
+    legend_element = folium.Element(legend_html)
+    m.get_root().html.add_child(legend_element)
 
     m.save(MAP_PATH)
-    print(f"Wrote map with {len(parks)} markers ({visited_count} visited) to {MAP_PATH}")
+    marker_count = len(parks)
+    print(f"Wrote map with {marker_count} markers ({visited_count} visited) to {MAP_PATH}")
 
 
 def main() -> None:
@@ -551,14 +571,16 @@ def main() -> None:
         if trimmed or filled:
             print(f"Trimmed {trimmed} address(es), filled in {filled} missing zip code(s)")
             write_csv(parks)
-        plot_map(apply_backup_data(parks), last_updated, since_date)
+        display_parks = apply_backup_data(parks)
+        plot_map(display_parks, last_updated, since_date)
     else:
         parks = sync_parks()
         if not parks:
             print("No park data retrieved — aborting", file=sys.stderr)
             sys.exit(1)
         write_csv(parks)
-        plot_map(apply_backup_data(parks), last_updated, since_date)
+        display_parks = apply_backup_data(parks)
+        plot_map(display_parks, last_updated, since_date)
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 seattle_parks_map.py: Per-source URLs/regexes, exclusion rules, and file paths."""
 import re
 
-# HTTP fetch behavior
+# HTTP fetch behaviour
 USER_AGENT = "seattle-parks-map-script/1.0 (personal park-tracking project)"
 MAX_FETCH_ATTEMPTS = 3
 RETRY_BACKOFF_SECONDS = 5
@@ -66,7 +66,7 @@ ADDRESS_STREET_RE = re.compile(
 # Name-exclusion and geographic-scope rules
 # Whole-word match (plural allowed), so e.g. "Dogwood Park" isn't excluded
 EXCLUDED_NAME_RE = re.compile(r"\b(?:dog|off-leash|cemetery|cemetary|gym|complex)(?:e?s)?\b", re.IGNORECASE)
-# Mean Earth radius in meters, for distance between coordinates
+# Mean Earth radius in metres, for distance between coordinates
 EARTH_RADIUS_M = 6371000
 # Same-city, same-name parks this close together are treated as one park
 DUPLICATE_DISTANCE_M = 100
@@ -124,6 +124,6 @@ MAP_TITLE = "Seattle Parks Project"
 # default single-hue blue (palette slot 1) from the original single-category
 # map, but that's the same blue Leaflet's LocateControl uses for the user's
 # own "you are here" marker, so it's red instead to avoid the visual clash.
-VISITED_COLOR = "#0ca30c"
-UNVISITED_COLOR = "#d62a2a"
+VISITED_COLOUR = "#0ca30c"
+UNVISITED_COLOUR = "#d62a2a"
 MARKER_RADIUS = 6  # px

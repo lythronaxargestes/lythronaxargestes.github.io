@@ -38,19 +38,20 @@ from seattle_parks_constants import (
 )
 
 
-def normalize_name(name: str) -> str:
-    """Normalize to Unicode NFC so cosmetically-identical park names compare
+def normalise_name(name: str) -> str:
+    """Normalise to Unicode NFC so cosmetically-identical park names compare
     equal even if their combining-character sequences differ byte-for-byte
     (e.g. an accented/Indigenous name copied from two different sources) --
     a raw string mismatch here silently breaks dedup and backup-CSV lookups
     without raising any error, since both spellings render the same on screen."""
-    return unicodedata.normalize("NFC", name)
+    normalised = unicodedata.normalize("NFC", name)
+    return normalised
 
 
 def is_excluded_name(name: str, city: str) -> bool:
     """True if this park should be dropped: A blanket-excluded keyword (dog
-    parks, cemeteries, gyms), or a standalone center -- e.g. a community/rec/
-    senior center, a recreation facility rather than parkland -- unless "park"
+    parks, cemeteries, gyms), or a standalone centre -- e.g. a community/rec/
+    senior centre, a recreation facility rather than parkland -- unless "park"
     also appears in the name. None of these rules apply to Seattle (e.g. its
     Grand Army of the Republic Cemetery and Amy Yee Tennis Center are kept
     regardless)."""
@@ -70,12 +71,15 @@ ADDRESS_ABBREVIATIONS = {
 }
 
 
-def normalize_address(address: str) -> str:
+def normalise_address(address: str) -> str:
     """Lowercase and expand common abbreviations so the same street address
     spelled two ways ("NE 138th St & Juanita Dr NE" vs "NE 138th St and Juanita
     Drive NE") compares equal."""
-    tokens: list[str] = re.findall(r"[a-z0-9]+|&", address.lower())
-    return " ".join(ADDRESS_ABBREVIATIONS.get(t, t) for t in tokens)
+    lowered = address.lower()
+    tokens: list[str] = re.findall(r"[a-z0-9]+|&", lowered)
+    expanded = [ADDRESS_ABBREVIATIONS.get(t, t) for t in tokens]
+    normalised = " ".join(expanded)
+    return normalised
 
 
 def clean_address(address: str, city: str = "") -> str:
@@ -86,11 +90,15 @@ def clean_address(address: str, city: str = "") -> str:
     (e.g. "Narco Property", "Green River")."""
     address = re.sub(r"\([^)]*\)", "", address)
     address = address.split(" - ")[-1]
-    address = re.sub(r",\s*(?:WA\b.*|\d{5})$", "", address.strip())
+    stripped = address.strip()
+    address = re.sub(r",\s*(?:WA\b.*|\d{5})$", "", stripped)
     if city:
-        address = re.sub(rf",\s*{re.escape(city)}$", "", address, flags=re.IGNORECASE)
-    address = ADDRESS_LEADING_NOISE_RE.sub("", address.strip())
-    address = re.split(r"(?<=[a-z])\.\s+(?=[A-Z][a-z]{2})", address)[0].strip(" ,.")
+        escaped_city = re.escape(city)
+        address = re.sub(rf",\s*{escaped_city}$", "", address, flags=re.IGNORECASE)
+    stripped = address.strip()
+    address = ADDRESS_LEADING_NOISE_RE.sub("", stripped)
+    sentences = re.split(r"(?<=[a-z])\.\s+(?=[A-Z][a-z]{2})", address)
+    address = sentences[0].strip(" ,.")
     if not (ADDRESS_HOUSE_NUMBER_RE.match(address) or ADDRESS_STREET_RE.search(address)):
         return ""
     return address
@@ -108,11 +116,14 @@ def clean_addresses(parks: list[dict]) -> int:
 
 
 def distance_m(a: dict, b: dict) -> float:
-    """Approximate distance in meters between two parks (equirectangular; fine at
-    the tens-of-meters scale this is used for)."""
-    x = math.radians(b["longitude"] - a["longitude"]) * math.cos(math.radians(a["latitude"]))
+    """Approximate distance in metres between two parks (equirectangular; fine at
+    the tens-of-metres scale this is used for)."""
+    delta_lon = math.radians(b["longitude"] - a["longitude"])
+    mean_lat = math.radians(a["latitude"])
+    x = delta_lon * math.cos(mean_lat)
     y = math.radians(b["latitude"] - a["latitude"])
-    return EARTH_RADIUS_M * math.hypot(x, y)
+    separation = math.hypot(x, y)
+    return EARTH_RADIUS_M * separation
 
 
 def is_duplicate_park(park: dict, others: list[dict]) -> bool:
@@ -121,19 +132,20 @@ def is_duplicate_park(park: dict, others: list[dict]) -> bool:
     exact (name, address, city) check in each fetch function can't catch. Same
     name and same address is enough in any city; otherwise same city is required,
     plus either:
-      - the same name (case-insensitive) and either the same normalized address
+      - the same name (case-insensitive) and either the same normalised address
         or a location within DUPLICATE_DISTANCE_M ("Big Finn Hill Park" listed
         by two sources); or
-      - the same normalized address and a location within SAME_SPOT_DISTANCE_M
+      - the same normalised address and a location within SAME_SPOT_DISTANCE_M
         regardless of name ("Magnuson Park" vs "Warren G. Magnuson Park").
     Name alone isn't enough (many cities have their own "Rotary Park"), and
     neither is a shared address (city directory pages often list one address
     for several different parks). Fuzzy name matching (one name contained in
-    the other) was tried and rejected: It merges many distinct neighbors, e.g.
+    the other) was tried and rejected: It merges many distinct neighbours, e.g.
     "Woodland Park Zoo" / "Woodland Park" or "Rotary Park" / "Rotary D"."""
-    address = normalize_address(park["address"])
+    address = normalise_address(park["address"])
     for other in others:
-        same_address = bool(address) and address == normalize_address(other["address"])
+        other_address = normalise_address(other["address"])
+        same_address = bool(address) and address == other_address
         if same_address and other["name"].casefold() == park["name"].casefold():
             # Same name at the same address: one park listed under two cities, e.g.
             # Yarrow Point's Morningside Park, which Kirkland's layer also lists
@@ -151,7 +163,8 @@ def is_duplicate_park(park: dict, others: list[dict]) -> bool:
 
 
 def is_visited(value: str) -> bool:
-    return str(value).strip().upper() == "Y"
+    normalised = str(value).strip().upper()
+    return normalised == "Y"
 
 
 def parks_visited_since(parks: list[dict], since_date: str | None) -> list[dict]:
@@ -162,11 +175,17 @@ def parks_visited_since(parks: list[dict], since_date: str | None) -> list[dict]
     visited by hand across several different days between runs. Falls back to
     parks sharing the single latest visited_date if since_date is unknown (e.g.
     the very first run, before any map has ever been generated)."""
-    dated = [p for p in parks if str(p.get("visited_date", "")).strip()]
+    dated = []
+    for park in parks:
+        raw_date = park.get("visited_date", "")
+        visited_date = str(raw_date).strip()
+        if visited_date:
+            dated.append(park)
     if not dated:
         return []
     if since_date is None:
-        since_date = max(p["visited_date"] for p in dated)
+        visited_dates = [p["visited_date"] for p in dated]
+        since_date = max(visited_dates)
     matches = [p for p in dated if p["visited_date"] >= since_date]
     matches.sort(key=lambda p: p["name"].lower())
     matches.sort(key=lambda p: p["visited_date"])
@@ -192,7 +211,9 @@ def format_visited_date(value: str) -> str | None:
     value = str(value).strip()
     if not value:
         return None
-    return datetime.strptime(value, "%Y-%m-%d").strftime("%B %-d, %Y")
+    parsed = datetime.strptime(value, "%Y-%m-%d")
+    formatted = parsed.strftime("%B %-d, %Y")
+    return formatted
 
 
 def load_parks_from_csv() -> list[dict]:
@@ -200,7 +221,7 @@ def load_parks_from_csv() -> list[dict]:
     with open(CSV_PATH, newline="", encoding="utf-8") as f:
         return [
             {
-                "name": normalize_name(row["name"]),
+                "name": normalise_name(row["name"]),
                 "address": row["address"],
                 "city": row.get("city") or DEFAULT_CITY,
                 "zip_code": row["zip_code"],
@@ -216,9 +237,10 @@ def load_parks_from_csv() -> list[dict]:
 def load_existing_parks() -> list[dict]:
     """Same as load_parks_from_csv(), but an absent file just means "no existing rows"."""
     try:
-        return load_parks_from_csv()
+        parks = load_parks_from_csv()
     except FileNotFoundError:
         return []
+    return parks
 
 
 def apply_backup_data(parks: list[dict]) -> list[dict]:
@@ -235,7 +257,8 @@ def apply_backup_data(parks: list[dict]) -> list[dict]:
     are never disturbed by backup-sourced values."""
     try:
         with open(BACKUP_CSV_PATH, newline="", encoding="utf-8") as f:
-            backup_rows = list(csv.DictReader(f))
+            reader = csv.DictReader(f)
+            backup_rows = list(reader)
     except FileNotFoundError:
         return parks
 
@@ -243,7 +266,7 @@ def apply_backup_data(parks: list[dict]) -> list[dict]:
     by_key = {(p["name"], p["city"]): p for p in enriched}
 
     for row in backup_rows:
-        key = (normalize_name(row["name"]), row["city"])
+        key = (normalise_name(row["name"]), row["city"])
         found_address = (row.get("found_address") or "").strip()
         found_zip = (row.get("found_zip") or "").strip()
         found_lat = (row.get("found_latitude") or "").strip()
@@ -261,7 +284,7 @@ def apply_backup_data(parks: list[dict]) -> list[dict]:
                     park["longitude"] = float(found_lon)
         elif row.get("in_main_csv") == "N" and key not in by_key and found_lat and found_lon:
             new_park = {
-                "name": normalize_name(row["name"]),
+                "name": normalise_name(row["name"]),
                 "address": found_address,
                 "city": row["city"],
                 "zip_code": found_zip,
@@ -319,7 +342,7 @@ def polygon_centroid(rings: list[list[list[float]]]) -> tuple[float, float]:
 def geocode_census(address: str, city: str, state: str = "WA") -> tuple[float, float, str] | None:
     """Look up (latitude, longitude, zip) for a one-line address via the free US
     Census geocoder. Returns None if it can't find a match (e.g. an address with
-    no house number or an unrecognized cross-street), or if its best match lands
+    no house number or an unrecognised cross-street), or if its best match lands
     in a different city than expected -- the geocoder doesn't always reject a bad
     address outright; it can instead return a confident-looking match in some
     other, same-named-street city (e.g. it once matched a Tukwila intersection
@@ -422,7 +445,7 @@ def fill_missing_zip_codes(parks: list[dict]) -> int:
     return filled
 
 
-def normalize_allcaps_text(text: str) -> str:
+def normalise_allcaps_text(text: str) -> str:
     """Recase an all-caps value (e.g. "15305 119TH AVE NE", "VAN DOREN'S LANDING")
     into normal title case: Directional abbreviations (NE, SW, ...) stay uppercase,
     ordinal suffixes (119TH -> 119th) go lowercase, and (unlike str.title())
@@ -431,9 +454,16 @@ def normalize_allcaps_text(text: str) -> str:
     (addresses and park names), whose ArcGIS layers all store text this way."""
     words = []
     for word in text.split():
-        if word.upper() in ALLCAPS_ADDRESS_DIRECTIONALS:
-            words.append(word.upper())
+        upper_word = word.upper()
+        if upper_word in ALLCAPS_ADDRESS_DIRECTIONALS:
+            words.append(upper_word)
             continue
         ordinal = re.match(r"^(\d+)(ST|ND|RD|TH)$", word, re.IGNORECASE)
-        words.append(ordinal.group(1) + ordinal.group(2).lower() if ordinal else word.capitalize())
-    return " ".join(words)
+        if ordinal:
+            suffix = ordinal.group(2).lower()
+            recased = ordinal.group(1) + suffix
+        else:
+            recased = word.capitalize()
+        words.append(recased)
+    text_recased = " ".join(words)
+    return text_recased
