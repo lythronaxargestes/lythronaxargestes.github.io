@@ -52,7 +52,7 @@ body > div[style*="fixed"], .leaflet-top.leaflet-left { display: none !important
 """
 
 SETUP_JS = """
-({lat, lon, startZoom, padding, css}) => {
+({lat, lon, startZoom, introScale, padding, css}) => {
     const style = document.createElement("style");
     style.textContent = css;
     document.head.appendChild(style);
@@ -83,27 +83,36 @@ SETUP_JS = """
     map.setView(target.getLatLng(), effectiveStartZoom, {animate: false});
     target.openPopup();
 
-    const startPx = map.project(target.getLatLng(), 0);
+    const parkPx = map.project(target.getLatLng(), 0);
     const endPx = map.project(endCenter, 0);
 
-    // The zoom-out holds one screen point fixed (see FRAME_JS). Find it so the
-    // intro magnification can pivot about the same point; otherwise the two
-    // phases zoom about different points and the motion kinks where they meet.
-    // The world point F is startPx + (endPx - startPx) * inv0 / (inv0 - inv1),
-    // and its screen position at the start is the screen center plus
-    // (F - startPx) scaled to start-zoom pixels.
+    // The whole video is one camera zoom about a single fixed screen point
+    // (the pivot): the magnified opening, the settle, and the zoom-out. The
+    // opening frame is the full-size view at startZoom magnified by introScale,
+    // with the park at screen center. Working backwards from that, with
+    //   f = pivot offset from screen center, in screen px,
+    //   C0 = world center of the full-size view (zoom-0 px),
+    // the park sits at center + f * (1 - 1/introScale) in the full-size view,
+    // so C0 = park - f * (1 - 1/introScale) * inv0; and the zoom-out center
+    // path C(z) = C0 + (end - C0) * (inv0 - inv) / (inv0 - inv1) holds the
+    // pivot fixed when f = (end - C0) / (inv0 - inv1). Solving both:
+    //   f = (end - park) / (inv0 / introScale - inv1).
+    // The park then moves one way, at a continuous speed, from the first frame.
     const inv0 = 1 / Math.pow(2, effectiveStartZoom);
     const inv1 = 1 / Math.pow(2, endZoom);
     const size = map.getSize();
-    let pivot = {x: size.x / 2, y: size.y / 2};
-    if (inv0 !== inv1) {
-        const f = inv0 / (inv0 - inv1);
-        const scale = Math.pow(2, effectiveStartZoom);
-        pivot = {
-            x: size.x / 2 + (endPx.x - startPx.x) * f * scale,
-            y: size.y / 2 + (endPx.y - startPx.y) * f * scale,
-        };
-    }
+    const denom = inv0 / introScale - inv1;
+    // denom is negative in practice (the final view is far more zoomed out than
+    // the start), so only guard against zero.
+    const f = Math.abs(denom) > 1e-15
+        ? {x: (endPx.x - parkPx.x) / denom, y: (endPx.y - parkPx.y) / denom}
+        : {x: 0, y: 0};
+    const pivot = {x: size.x / 2 + f.x, y: size.y / 2 + f.y};
+    const shrink = (1 - 1 / introScale) * inv0;
+    const startPx = L.point(parkPx.x - f.x * shrink, parkPx.y - f.y * shrink);
+    // reset: with an unchanged zoom, setView would otherwise pan the map pane
+    // by an offset instead of re-laying out the tiles, shifting the intro's pivot.
+    map.setView(map.unproject(startPx, 0), effectiveStartZoom, {animate: false, reset: true});
 
     window.__video = {
         map, target, startZoom: effectiveStartZoom, endZoom, startPx, endPx, pivot,
@@ -113,10 +122,9 @@ SETUP_JS = """
 """
 
 # progress is the 0..1 map zoom progress (-1 leaves the view alone); introScale > 1
-# magnifies the already-rendered map pane about the screen center (where the
-# park sits) instead; popupOpacity < 0 leaves the pop-up alone.
+# magnifies the already-rendered map pane about the zoom pivot instead; popupOpacity < 0 leaves the pop-up alone.
 FRAME_JS = """
-async ({progress, popupOpacity, introScale, introMax}) => {
+async ({progress, popupOpacity, introScale}) => {
     const v = window.__video;
     const popup = v.target.getPopup();
     const pane = v.map.getPane("mapPane");
@@ -124,22 +132,12 @@ async ({progress, popupOpacity, introScale, introMax}) => {
         // The individual `scale` property composes after Leaflet's own inline
         // translate `transform`, so the origin is in container coordinates. It
         // is the same screen point the zoom-out below holds fixed.
-        pane.style.transformOrigin = `${v.pivot.x}px ${v.pivot.y}px`;
+        // Origin is relative to the pane, which may itself be offset from the container.
+        const offset = L.DomUtil.getPosition(pane) || L.point(0, 0);
+        pane.style.transformOrigin = `${v.pivot.x - offset.x}px ${v.pivot.y - offset.y}px`;
         pane.style.scale = introScale;
-        // Scaling about the pivot alone would push the park off center at full
-        // magnification. A translate (applied outside the scale) puts it back:
-        // it is the full correction at the largest scale and eases to zero,
-        // with zero slope, at scale 1, so the handoff to the zoom-out stays
-        // a pure zoom about the pivot.
-        const size = v.map.getSize();
-        const u = (introScale - 1) / (introMax - 1);
-        const w = (1 - introMax) * u * u;
-        const tx = (size.x / 2 - v.pivot.x) * w;
-        const ty = (size.y / 2 - v.pivot.y) * w;
-        pane.style.translate = `${tx}px ${ty}px`;
     } else {
         pane.style.scale = "";
-        pane.style.translate = "";
     }
     if (popupOpacity >= 0) {
         if (popupOpacity === 0) {
@@ -175,15 +173,18 @@ async ({progress, popupOpacity, introScale, introMax}) => {
 
 
 def hermite(p0: float, p1: float, m0: float, m1: float, duration: float, tau: float) -> float:
-    """Cubic Hermite interpolation from p0 to p1 over `duration` seconds, with
-    start/end velocities m0/m1 (units per second); tau is the 0..1 time fraction."""
+    """Quintic Hermite interpolation from p0 to p1 over `duration` seconds, with
+    start/end velocities m0/m1 (units per second) and zero acceleration at both
+    ends; tau is the 0..1 time fraction. Zero end accelerations let two segments
+    join with continuous position, velocity and acceleration."""
     tau2 = tau * tau
     tau3 = tau2 * tau
-    h00 = 2 * tau3 - 3 * tau2 + 1
-    h10 = tau3 - 2 * tau2 + tau
-    h01 = -2 * tau3 + 3 * tau2
-    h11 = tau3 - tau2
-    return h00 * p0 + h10 * duration * m0 + h01 * p1 + h11 * duration * m1
+    tau4 = tau3 * tau
+    tau5 = tau4 * tau
+    blend = 10 * tau3 - 15 * tau4 + 6 * tau5
+    v0_basis = tau - 6 * tau3 + 8 * tau4 - 3 * tau5
+    v1_basis = -4 * tau3 + 7 * tau4 - 3 * tau5
+    return p0 * (1 - blend) + p1 * blend + duration * (m0 * v0_basis + m1 * v1_basis)
 
 
 def plan_zoom(
@@ -194,8 +195,9 @@ def plan_zoom(
     a real map zoom-out. Returns (intro positions, zoom positions); the zoom list
     starts at 0 (full size) and ends at zoom_levels. Both phases are one curve:
     each starts or ends at rest, and they meet at a shared junction velocity
-    (1.5x the slower phase's average speed, which keeps both cubics monotonic),
-    so there is no stop or kink where image scaling hands over to map zoom."""
+    (1.5x the slower phase's average speed, which keeps both quintics monotonic)
+    with zero acceleration on both sides, so position, speed and acceleration
+    are all continuous where image scaling hands over to map zoom."""
     intro_s = intro_frames / fps
     zoom_s = zoom_frames / fps
     slope_in = intro_levels / intro_s if intro_s else 0.0
@@ -292,10 +294,7 @@ def render(park: dict, args: argparse.Namespace, output: Path) -> None:
 
     def capture(page, progress: float, popup_opacity: float, intro_scale: float = 0.0) -> None:
         nonlocal stale_frames
-        params = {
-            "progress": progress, "popupOpacity": popup_opacity,
-            "introScale": intro_scale, "introMax": args.intro_scale,
-        }  # fmt: skip
+        params = {"progress": progress, "popupOpacity": popup_opacity, "introScale": intro_scale}
         settled = page.evaluate(FRAME_JS, params)
         if not settled:
             stale_frames += 1
@@ -310,7 +309,7 @@ def render(park: dict, args: argparse.Namespace, output: Path) -> None:
         info = page.evaluate(
             SETUP_JS,
             {"lat": park["latitude"], "lon": park["longitude"], "startZoom": START_ZOOM,
-             "padding": FIT_PADDING_PX, "css": PAGE_CSS},
+             "introScale": max(args.intro_scale, 1.0), "padding": FIT_PADDING_PX, "css": PAGE_CSS},
         )  # fmt: skip
         if "error" in info:
             browser.close()
